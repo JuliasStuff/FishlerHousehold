@@ -1,0 +1,3495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Fishler Household</title>
+<meta name="theme-color" content="#5b8a72" />
+<style>
+  :root{
+    --bg:#f6f3ec;
+    --panel:#ffffff;
+    --panel-2:#efe9dc;
+    --ink:#2a2a2a;
+    --ink-soft:#6b6357;
+    --line:#cdc3ad;
+    --accent:#5b8a72;
+    --accent-2:#3f6b56;
+    --accent-soft:#dbe8df;
+    --warm:#c98a4b;
+    --warm-soft:#f5e3cf;
+    --shadow:0 4px 14px rgba(60,40,20,.10);
+    --b-color:#e3c27a;   /* breakfast accent */
+    --l-color:#7dafce;   /* lunch accent */
+    --d-color:#c98a4b;   /* dinner accent */
+  }
+  *{ box-sizing:border-box; }
+  html,body{
+    margin:0; padding:0; min-height:100%;
+    background:
+      radial-gradient(900px 500px at 90% -10%, rgba(91,138,114,.18), transparent 60%),
+      radial-gradient(700px 400px at -10% 110%, rgba(201,138,75,.16), transparent 60%),
+      var(--bg);
+    color:var(--ink);
+    font-family:"Inter","Segoe UI",system-ui,-apple-system,sans-serif;
+  }
+  .app{ max-width:1180px; margin:0 auto; padding:16px; }
+
+  header.topbar{
+    display:flex; align-items:center; gap:14px;
+    background:var(--panel); border:1px solid var(--line);
+    border-radius:14px; padding:12px 18px; box-shadow:var(--shadow);
+    margin-bottom:14px;
+  }
+  header.topbar .crest{
+    width:54px; height:54px; border-radius:14px;
+    background:linear-gradient(135deg,var(--accent),var(--accent-2));
+    color:#fff; display:flex; align-items:center; justify-content:center;
+    box-shadow:inset 0 -3px 0 rgba(0,0,0,.12);
+    flex-shrink:0;
+  }
+  header.topbar .crest svg{
+    width:36px; height:36px; display:block;
+  }
+  header.topbar h1{
+    margin:0; font-size:clamp(1.4rem,2.5vw,1.9rem); line-height:1.1;
+  }
+  header.topbar p.sub{
+    margin:2px 0 0; font-size:13px; color:var(--ink-soft);
+  }
+
+  nav.tabs{
+    display:flex; gap:6px; flex-wrap:wrap;
+    background:var(--panel); border:1px solid var(--line);
+    border-radius:14px; padding:6px; box-shadow:var(--shadow);
+    margin-bottom:14px;
+  }
+  nav.tabs button{
+    flex:1 1 auto; min-width:120px;
+    padding:10px 14px; border:1px solid transparent; cursor:pointer;
+    background:transparent; color:var(--ink);
+    border-radius:10px; font-weight:600; font-size:14px;
+    transition:.15s;
+  }
+  nav.tabs button:hover{
+    background:var(--accent-soft);
+  }
+  nav.tabs button.active{
+    color:#fff;
+    background:linear-gradient(135deg,var(--accent),var(--accent-2));
+    border-color:var(--accent-2);
+    box-shadow:0 4px 12px rgba(63,107,86,.28);
+  }
+
+  .page{ display:none; }
+  .page.active{ display:block; }
+
+  .card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:14px; padding:16px; box-shadow:var(--shadow);
+    margin-bottom:14px;
+  }
+  .card h2{ margin:0 0 12px; font-size:18px; }
+
+  .row{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+
+  input[type=text], input[type=date], select, textarea{
+    background:#fff; color:var(--ink);
+    border:1px solid var(--line); border-radius:10px;
+    padding:8px 10px; font-size:14px; outline:none;
+    font-family:inherit;
+  }
+  input:focus, select:focus, textarea:focus{
+    border-color:var(--accent);
+    box-shadow:0 0 0 3px rgba(91,138,114,.22);
+  }
+
+  button.btn{
+    border:0; border-radius:10px; padding:9px 14px;
+    cursor:pointer; font-weight:600; font-size:14px;
+    background:linear-gradient(135deg,var(--accent),var(--accent-2));
+    color:#fff; box-shadow:inset 0 -2px 0 rgba(0,0,0,.12);
+  }
+  button.btn:hover{ filter:brightness(1.05); }
+  button.btn.ghost{
+    background:var(--panel-2); color:var(--ink);
+    box-shadow:inset 0 -2px 0 rgba(0,0,0,.04);
+  }
+  button.btn.warm{
+    background:linear-gradient(135deg,var(--warm),#a96a32);
+    color:#fff;
+  }
+  button.btn.danger{
+    background:#b94a4a; color:#fff;
+  }
+  button.icon{
+    background:transparent; border:0; cursor:pointer;
+    color:var(--ink-soft); font-size:16px; padding:4px 6px;
+    border-radius:6px;
+  }
+  button.icon:hover{ background:var(--panel-2); color:var(--ink); }
+
+  .chip-list{ display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+  .chip{
+    display:inline-flex; align-items:center; gap:6px;
+    background:var(--panel-2); border:1px solid var(--line);
+    padding:5px 10px; border-radius:999px; font-size:13px;
+  }
+  .chip button{
+    background:transparent; border:0; cursor:pointer;
+    color:#b94a4a; font-size:14px; padding:0; line-height:1;
+  }
+
+  .empty{
+    text-align:center; color:var(--ink-soft);
+    padding:18px; font-size:13px;
+  }
+
+  /* Meals layout */
+  .meals-toolbar{
+    display:flex; flex-wrap:wrap; gap:10px;
+    align-items:center; justify-content:space-between;
+    margin-bottom:12px;
+  }
+  .meals-toolbar .left{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  .meals-toolbar .right{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  .month-title{
+    font-size:18px; font-weight:700; color:var(--accent-2);
+    margin:18px 0 8px;
+  }
+
+  /* Meal-plan calendar grid */
+  .cal-grid{
+    display:grid; grid-template-columns:repeat(7,1fr); gap:6px;
+  }
+  .cal-dow{
+    text-align:center; font-size:11px; color:var(--ink-soft);
+    font-weight:700; padding:4px 0; letter-spacing:.05em;
+    text-transform:uppercase;
+  }
+  .cal-cell{
+    background:var(--panel-2); border:1px solid var(--line);
+    border-radius:10px; min-height:170px; padding:6px;
+    font-size:12px; position:relative;
+    display:flex; flex-direction:column; gap:4px;
+  }
+  .cal-cell.other{ opacity:.4; }
+  .cal-cell.today{
+    border-color:var(--accent);
+    border-width:2px;
+    background:#fff;
+  }
+  .cal-cell .dnum{
+    font-weight:700; font-size:13px;
+    display:flex; justify-content:space-between; align-items:center;
+    padding-bottom:2px; gap:4px;
+  }
+  .cal-cell .dnum .dow{
+    font-size:10px; color:var(--ink-soft); font-weight:500;
+    text-transform:uppercase;
+  }
+  .cal-cell .dnum .day-edit{
+    background:transparent; border:0; cursor:pointer;
+    color:var(--ink-soft); font-size:13px; padding:0 4px;
+    border-radius:6px; line-height:1; margin-left:auto;
+  }
+  .cal-cell .dnum .day-edit:hover{
+    background:var(--accent-soft); color:var(--accent-2);
+  }
+  .cal-cell .day-notes{
+    font-size:11px; color:var(--ink-soft); font-style:italic;
+    background:var(--warm-soft); border-left:3px solid var(--warm);
+    border-radius:4px; padding:3px 5px; line-height:1.25;
+    overflow:hidden; text-overflow:ellipsis;
+    display:-webkit-box; -webkit-line-clamp:2; line-clamp:2; -webkit-box-orient:vertical;
+    cursor:pointer;
+  }
+  .meal-slot{
+    display:flex; flex-direction:column; gap:2px;
+    background:#fff; border:1px solid var(--line);
+    border-radius:6px; padding:3px 4px;
+  }
+  .meal-slot .lbl{
+    font-size:9px; font-weight:700; letter-spacing:.06em;
+    text-transform:uppercase; color:var(--ink-soft);
+    display:flex; align-items:center; gap:4px;
+  }
+  .meal-slot .lbl .ppl-flag{
+    margin-left:auto; font-size:10px; color:var(--accent-2);
+    cursor:help;
+  }
+  .meal-slot .dot{
+    display:inline-block; width:7px; height:7px; border-radius:50%;
+  }
+  .meal-slot.b .dot{ background:var(--b-color); }
+  .meal-slot.l .dot{ background:var(--l-color); }
+  .meal-slot.d .dot{ background:var(--d-color); }
+  .meal-slot.b{ border-left:3px solid var(--b-color); }
+  .meal-slot.l{ border-left:3px solid var(--l-color); }
+  .meal-slot.d{ border-left:3px solid var(--d-color); }
+  .meal-slot select{
+    border:0; padding:2px 0; font-size:12px; background:transparent;
+    color:var(--ink); width:100%; cursor:pointer;
+    appearance:none; -webkit-appearance:none;
+    text-overflow:ellipsis; overflow:hidden;
+    font-family:inherit; font-weight:600;
+  }
+  .meal-slot select:focus{ outline:none; box-shadow:none; }
+  .meal-slot select.unset{ color:var(--ink-soft); font-weight:400; font-style:italic; }
+
+  /* Per-person override rows inside a meal slot */
+  .meal-overrides{
+    margin-top:3px; padding-top:3px;
+    border-top:1px dashed var(--line);
+    display:flex; flex-direction:column; gap:2px;
+  }
+  .meal-override{
+    display:flex; align-items:center; gap:4px;
+    font-size:11px; line-height:1.2;
+    color:var(--ink);
+  }
+  .meal-override .pdot{
+    width:7px; height:7px; border-radius:50%;
+    flex-shrink:0;
+  }
+  .meal-override .o-val{
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    font-weight:600;
+  }
+
+  /* Menu options config */
+  .menu-cols{
+    display:grid; gap:14px;
+    grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+  }
+  .menu-col h3{
+    margin:0 0 8px; font-size:15px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .menu-col h3 .dot{
+    width:12px; height:12px; border-radius:50%;
+  }
+
+  /* Per-person default meals */
+  .default-meals-tabs{
+    display:inline-flex; gap:0; margin-bottom:12px;
+    background:var(--panel-2); border:1px solid var(--line);
+    border-radius:10px; padding:3px;
+  }
+  .default-meals-tabs button{
+    appearance:none; background:transparent; border:0; cursor:pointer;
+    padding:6px 14px; border-radius:8px; font-size:13px; font-weight:600;
+    color:var(--ink-soft);
+  }
+  .default-meals-tabs button.active{
+    background:var(--panel); color:var(--ink);
+    box-shadow:0 1px 2px rgba(0,0,0,.08);
+  }
+  .dm-table{
+    display:grid; gap:10px;
+  }
+  .dm-row{
+    display:grid; gap:10px; align-items:center;
+    grid-template-columns: 160px 1fr 1fr 1fr;
+    padding:10px; border:1px solid var(--line); border-radius:10px;
+    background:var(--panel);
+  }
+  .dm-row .dm-person{
+    display:flex; align-items:center; gap:8px;
+    font-weight:600;
+  }
+  .dm-row .dm-person .pdot{
+    width:14px; height:14px; border-radius:50%;
+    display:inline-block; flex-shrink:0;
+  }
+  .dm-cell label{
+    display:block; font-size:11px; color:var(--ink-soft);
+    margin-bottom:3px; text-transform:uppercase; letter-spacing:.04em;
+  }
+  .dm-cell select{
+    width:100%; padding:6px 8px; border:1px solid var(--line);
+    border-radius:8px; background:var(--panel); font-size:13px;
+  }
+  @media (max-width: 720px){
+    .dm-row{ grid-template-columns: 1fr; }
+  }
+
+  /* Calendar tab placeholder mini-cal */
+  .placeholder{
+    padding:30px; text-align:center; color:var(--ink-soft);
+    font-size:14px;
+  }
+
+  /* Calendar events */
+  #cal2-scroll .cal-cell{
+    cursor:pointer;
+    transition:background .15s;
+  }
+  #cal2-scroll .cal-cell:hover{ background:var(--accent-soft); }
+  #cal2-scroll .cal-cell.other{ cursor:default; }
+  #cal2-scroll .cal-cell.other:hover{ background:transparent; }
+  .cal-events{
+    margin-top:4px;
+    display:flex; flex-direction:column; gap:2px;
+  }
+  .cal-event{
+    font-size:10px; font-weight:600;
+    padding:2px 5px; border-radius:4px;
+    color:#fff; line-height:1.3;
+    overflow:hidden;
+    border-left:3px solid rgba(0,0,0,.18);
+    display:flex; align-items:flex-start; flex-wrap:wrap; gap:3px 4px;
+    word-break:break-word; overflow-wrap:anywhere;
+  }
+  .cal-event .ev-title{
+    flex:1 1 auto; min-width:0;
+    white-space:normal;
+  }
+  .cal-event .ev-notes{
+    flex-basis:100%;
+    font-size:9px; font-weight:500;
+    opacity:.85; font-style:italic;
+    margin-top:1px;
+    line-height:1.25;
+  }
+  .cal-event.multi-mid,
+  .cal-event.multi-end{ border-top-left-radius:0; border-bottom-left-radius:0; border-left:0; }
+  .cal-event.multi-start,
+  .cal-event.multi-mid{ border-top-right-radius:0; border-bottom-right-radius:0; margin-right:-1px; }
+  .cal-event.multi-mid .ev-time,
+  .cal-event.multi-end .ev-time{ display:none; }
+  .cal-event .ev-time{
+    font-weight:700; opacity:.95;
+    font-size:9px;
+    flex-shrink:0;
+  }
+  .cal-event .ev-att{
+    display:inline-flex; gap:1px; margin-left:auto;
+    flex-shrink:0; align-self:center;
+  }
+  .cal-event .ev-att .pdot{
+    width:6px; height:6px; border-radius:50%;
+    border:1px solid rgba(255,255,255,.6);
+    display:inline-block;
+  }
+  .paste-banner{
+    display:flex; align-items:center; gap:10px;
+    background:linear-gradient(0deg, var(--accent-soft), #eef5f1);
+    border:1px dashed var(--accent);
+    border-radius:8px;
+    padding:8px 12px; margin-bottom:10px;
+    font-size:13px; color:var(--ink);
+  }
+  .time-picker{
+    display:inline-flex; align-items:center; gap:4px;
+    width:100%;
+  }
+  .time-picker select{
+    padding:6px 4px;
+    font-size:13px;
+    border:1px solid var(--line);
+    border-radius:6px;
+    background:#fff;
+    cursor:pointer;
+  }
+  .time-picker .tp-h, .time-picker .tp-m{ flex:1 1 0; min-width:0; text-align:center; }
+  .time-picker .tp-ap{ flex:0 0 auto; }
+  .time-picker .tp-sep{
+    font-weight:700; color:var(--ink-soft);
+  }
+  .paste-banner .pb-msg{ flex:1; }
+  .paste-banner .pb-title{ font-weight:700; color:var(--accent); }
+  body.paste-mode #cal2-scroll .cal-cell:not(.other){
+    outline:2px dashed transparent;
+    cursor:copy;
+  }
+  body.paste-mode #cal2-scroll .cal-cell:not(.other):hover{
+    background:#eef7f1;
+    outline-color:var(--accent);
+  }
+  .cal-toolbar{
+    display:flex; gap:8px; align-items:center;
+    justify-content:space-between; flex-wrap:wrap;
+    margin-bottom:10px;
+  }
+  .event-color-picker{
+    display:flex; gap:6px; flex-wrap:wrap; margin-top:4px;
+  }
+  .event-color-picker label{
+    width:28px; height:28px; border-radius:50%;
+    cursor:pointer; border:2px solid transparent;
+    transition:transform .1s, border-color .1s;
+  }
+  .event-color-picker label:hover{ transform:scale(1.1); }
+  .event-color-picker label.selected{
+    border-color:var(--ink);
+    box-shadow:0 0 0 2px #fff inset;
+  }
+  .event-color-picker input{ display:none; }
+
+  /* Todos */
+  .todo-row{
+    display:flex; align-items:flex-start; gap:10px;
+    padding:10px 8px 10px 10px;
+    border-bottom:1px dashed var(--line);
+    border-left:4px solid transparent;
+    transition:background .15s;
+  }
+  .todo-row:last-child{ border-bottom:0; }
+  .todo-row input[type=checkbox]{
+    width:18px; height:18px; accent-color:var(--accent);
+    cursor:pointer; margin-top:2px;
+  }
+  .todo-row .info{ flex:1; min-width:0; }
+  .todo-row .title{
+    font-size:14px; font-weight:600; line-height:1.3;
+    word-wrap:break-word;
+  }
+  .todo-row.done{ opacity:.65; }
+  .todo-row.done .title{ text-decoration:line-through; color:var(--ink-soft); }
+  .todo-row .meta{
+    margin-top:4px; display:flex; flex-wrap:wrap; gap:6px;
+    font-size:12px; color:var(--ink-soft);
+    align-items:center;
+  }
+  .todo-row .meta .added{ font-size:11px; }
+  .pill{
+    display:inline-flex; align-items:center; gap:5px;
+    padding:2px 8px; border-radius:999px;
+    background:var(--panel-2); color:var(--ink);
+    font-size:11px; font-weight:600;
+    border:1px solid var(--line);
+  }
+  .pill.assignee{
+    border-width:1px; border-style:solid;
+  }
+  .pill.assignee .dot{
+    width:8px; height:8px; border-radius:50%;
+    display:inline-block;
+  }
+  .pill.due{ background:var(--accent-soft); color:var(--accent-2); border-color:#bcd6c5; }
+  .pill.due.overdue{ background:#f6d4d4; color:#9a3636; border-color:#e7b2b2; }
+  .pill.due.today{ background:#fff2c8; color:#7a5a08; border-color:#e8d39a; }
+  .pill.recurring{ background:var(--warm-soft); color:#82531e; border-color:#e7c8a5; }
+  .todo-row .actions{
+    display:flex; gap:2px; flex-shrink:0;
+  }
+
+  /* Todos toolbar / grouping */
+  .todos-toolbar{
+    display:flex; gap:8px; flex-wrap:wrap;
+    align-items:center; justify-content:space-between;
+    margin-bottom:10px;
+  }
+  .todos-toolbar .right{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  .group-section{ margin-bottom:14px; }
+  .group-section h3{
+    margin:14px 0 6px; font-size:14px;
+    color:var(--accent-2);
+    padding:6px 10px; border-radius:8px;
+    background:var(--accent-soft);
+    display:flex; align-items:center; gap:8px;
+    border-left:4px solid transparent;
+  }
+  .group-section.person-section h3{
+    color:var(--ink);
+  }
+  .group-section h3 .pdot{
+    width:10px; height:10px; border-radius:50%; display:inline-block;
+  }
+  details.completed-section > summary{
+    cursor:pointer; padding:6px 0; font-size:13px;
+    color:var(--ink-soft); user-select:none;
+    list-style:none;
+  }
+  details.completed-section > summary::-webkit-details-marker{ display:none; }
+  details.completed-section > summary::before{
+    content:"▸"; display:inline-block; margin-right:6px;
+    transition:transform .15s;
+  }
+  details.completed-section[open] > summary::before{ transform:rotate(90deg); }
+
+  /* Drag-and-drop (person grouping) */
+  .group-section.person-section.drop-target > h3,
+  .group-section.unassigned-section.drop-target > h3{
+    outline:2px dashed var(--accent);
+    outline-offset:2px;
+  }
+  .group-section.person-section.drop-target,
+  .group-section.unassigned-section.drop-target{
+    background:var(--accent-soft);
+    border-radius:10px;
+  }
+  .todo-row.dragging{ opacity:.4; }
+  .todo-row[draggable="true"]{ cursor:grab; }
+  .todo-row[draggable="true"]:active{ cursor:grabbing; }
+
+  /* Modal field group */
+  .assignee-checks{
+    display:grid; grid-template-columns:repeat(auto-fill, minmax(120px, 1fr));
+    gap:6px;
+    background:var(--panel-2); border:1px solid var(--line);
+    border-radius:10px; padding:8px;
+  }
+  .assignee-checks label{
+    display:flex; align-items:center; gap:6px;
+    cursor:pointer; font-size:13px; font-weight:600;
+    padding:4px 6px; border-radius:6px;
+  }
+  .assignee-checks label:hover{ background:var(--accent-soft); }
+  .assignee-checks input[type=checkbox]{
+    width:16px; height:16px; accent-color:var(--accent);
+  }
+  .assignee-checks .pdot{
+    width:10px; height:10px; border-radius:50%;
+  }
+  .recurring-extras{
+    background:var(--panel-2); border:1px solid var(--line);
+    border-radius:10px; padding:10px; margin-top:6px;
+  }
+  .weekday-checks{
+    display:flex; gap:4px; flex-wrap:wrap; margin-top:4px;
+  }
+  .weekday-checks label{
+    display:inline-flex; align-items:center; justify-content:center;
+    width:34px; height:34px; border-radius:8px;
+    background:#fff; border:1px solid var(--line);
+    cursor:pointer; font-size:12px; font-weight:600;
+    color:var(--ink-soft);
+  }
+  .weekday-checks label.on{
+    background:var(--accent); color:#fff; border-color:var(--accent-2);
+  }
+  .weekday-checks input{ display:none; }
+
+  /* Modal */
+  .modal-bg{
+    position:fixed; inset:0; background:rgba(30,20,10,.45);
+    display:none; align-items:flex-start; justify-content:center;
+    padding:24px 16px; z-index:100;
+    overflow-y:auto;
+  }
+  .modal-bg.open{ display:flex; }
+  .modal{
+    background:var(--panel); border:1px solid var(--line);
+    border-radius:16px; padding:20px; width:100%; max-width:560px;
+    box-shadow:0 20px 60px rgba(0,0,0,.3);
+    margin:auto 0;
+  }
+  .modal h3{ margin:0 0 4px; font-size:20px; }
+  .modal .modal-sub{ margin:0 0 14px; color:var(--ink-soft); font-size:13px; }
+  .modal-actions{
+    display:flex; gap:8px; justify-content:flex-end; margin-top:18px;
+    flex-wrap:wrap;
+  }
+  .modal label.field-lbl{
+    display:block; font-size:12px; color:var(--ink-soft);
+    margin:10px 0 4px; font-weight:700; letter-spacing:.04em;
+    text-transform:uppercase;
+  }
+
+  /* Day-edit modal: per-meal section */
+  .meal-section{
+    background:var(--panel-2); border:1px solid var(--line);
+    border-radius:12px; padding:12px; margin-bottom:10px;
+  }
+  .meal-section.b{ border-left:4px solid var(--b-color); }
+  .meal-section.l{ border-left:4px solid var(--l-color); }
+  .meal-section.d{ border-left:4px solid var(--d-color); }
+  .meal-section h4{
+    margin:0 0 8px; font-size:14px;
+    display:flex; align-items:center; gap:6px;
+  }
+  .meal-section h4 .dot{
+    width:10px; height:10px; border-radius:50%;
+  }
+  .meal-section.b h4 .dot{ background:var(--b-color); }
+  .meal-section.l h4 .dot{ background:var(--l-color); }
+  .meal-section.d h4 .dot{ background:var(--d-color); }
+  .meal-section select{ width:100%; }
+  .person-row{
+    display:grid; grid-template-columns:90px 1fr auto;
+    gap:8px; align-items:center; margin-top:6px;
+  }
+  .person-row .pname{
+    font-size:13px; font-weight:600; color:var(--ink);
+    display:flex; align-items:center; gap:6px;
+  }
+  .person-row .pname .pdot{
+    width:10px; height:10px; border-radius:50%;
+    background:var(--accent);
+  }
+  .person-row .same{
+    font-size:11px; color:var(--ink-soft); font-style:italic;
+    text-align:right;
+  }
+  .person-row select{ width:100%; font-size:13px; padding:5px 8px; }
+  .person-row select.same-as-family{ color:var(--ink-soft); font-style:italic; }
+  .toggle-people-btn{
+    background:transparent; border:1px dashed var(--line);
+    color:var(--ink-soft); cursor:pointer; font-size:12px;
+    padding:5px 10px; border-radius:8px; margin-top:8px;
+    font-family:inherit;
+  }
+  .toggle-people-btn:hover{ background:var(--panel); color:var(--ink); }
+
+  /* ---------- Reading tab ---------- */
+  .reading-hero{
+    position:relative; overflow:hidden;
+    background:linear-gradient(135deg, #fff8ed 0%, #f5e9d2 100%);
+    border:1px solid #e6d3a8;
+  }
+  .reading-hero-bg{
+    position:absolute; inset:0;
+    font-size:80px; line-height:1;
+    opacity:.06; letter-spacing:6px;
+    overflow:hidden; pointer-events:none;
+    white-space:nowrap;
+  }
+  .reading-hero-content{
+    position:relative; z-index:1;
+    display:flex; align-items:center; gap:18px; flex-wrap:wrap;
+  }
+  .reading-hero-stats{
+    display:flex; gap:18px; margin-left:auto; flex-wrap:wrap;
+  }
+  .reading-stat{
+    text-align:center;
+    background:rgba(255,255,255,.7);
+    border:1px solid rgba(91,138,114,.2);
+    border-radius:10px;
+    padding:8px 14px;
+    min-width:80px;
+  }
+  .reading-stat .rs-num{
+    display:block;
+    font-size:28px; font-weight:800;
+    color:var(--accent-2); line-height:1;
+  }
+  .reading-stat .rs-lbl{
+    display:block; margin-top:4px;
+    font-size:11px; color:var(--ink-soft);
+    text-transform:uppercase; letter-spacing:.5px;
+  }
+  .reader-board{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));
+    gap:12px;
+  }
+  .reader-card{
+    position:relative;
+    background:var(--panel); border:2px solid var(--line);
+    border-radius:12px; padding:14px;
+    transition:transform .15s, box-shadow .15s;
+  }
+  .reader-card:hover{ transform:translateY(-2px); box-shadow:0 4px 12px rgba(0,0,0,.08); }
+  .reader-card .rc-header{
+    display:flex; align-items:center; gap:10px; margin-bottom:10px;
+  }
+  .reader-card .rc-avatar{
+    width:38px; height:38px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    color:#fff; font-weight:700; font-size:16px;
+    box-shadow:0 2px 4px rgba(0,0,0,.15);
+  }
+  .reader-card .rc-name{ font-weight:700; font-size:16px; }
+  .reader-card .rc-medal{ margin-left:auto; font-size:24px; }
+  .reader-card .rc-count{
+    font-size:32px; font-weight:800; line-height:1;
+  }
+  .reader-card .rc-count-lbl{
+    font-size:12px; color:var(--ink-soft); margin-top:2px;
+  }
+  .reader-card .rc-current{
+    margin-top:10px; padding-top:10px;
+    border-top:1px dashed var(--line);
+    font-size:12px; color:var(--ink-soft);
+  }
+  .reader-card .rc-current strong{ color:var(--ink); font-weight:600; }
+  .reader-card.zero{ opacity:.7; }
+
+  .currently-reading-list{
+    display:flex; flex-direction:column; gap:8px;
+  }
+  .current-book{
+    display:flex; align-items:center; gap:12px;
+    background:var(--panel-2); border:1px solid var(--line);
+    border-radius:10px; padding:10px 14px;
+    border-left:5px solid var(--accent);
+  }
+  .current-book .cb-cover{
+    flex-shrink:0; width:46px; height:64px;
+    border-radius:4px; background:var(--panel);
+    background-size:cover; background-position:center;
+    border:1px solid var(--line);
+    box-shadow:0 1px 3px rgba(0,0,0,.12);
+    display:flex; align-items:center; justify-content:center;
+    font-size:22px; color:var(--ink-soft);
+  }
+  .current-book .cb-info{ flex:1; min-width:0; }
+  .current-book .cb-title{ font-weight:700; font-size:15px; }
+  .current-book .cb-meta{ font-size:12px; color:var(--ink-soft); margin-top:2px; }
+  .current-book .cb-person{
+    display:inline-flex; align-items:center; gap:4px;
+    font-weight:600;
+  }
+  .current-book .cb-person .pdot{ width:9px; height:9px; }
+  .current-book .cb-days{
+    background:var(--accent-soft); color:var(--accent-2);
+    padding:2px 8px; border-radius:10px;
+    font-size:11px; font-weight:700;
+  }
+  .current-book .cb-actions{ display:flex; gap:6px; }
+  .current-book .cb-finish{
+    background:linear-gradient(135deg, #5b8a72, #3f6b56);
+    color:#fff; border:0;
+    padding:6px 12px; border-radius:8px;
+    font-weight:700; font-size:12px; cursor:pointer;
+    font-family:inherit;
+  }
+  .current-book .cb-finish:hover{ filter:brightness(1.1); }
+  .current-book .cb-edit{
+    background:transparent; border:1px solid var(--line);
+    color:var(--ink-soft); cursor:pointer;
+    padding:6px 10px; border-radius:8px;
+    font-size:12px; font-family:inherit;
+  }
+  .current-book .cb-edit:hover{ background:var(--panel); color:var(--ink); }
+
+  .bookshelf{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(170px, 1fr));
+    gap:12px;
+  }
+  .book-spine{
+    position:relative;
+    background:var(--panel-2); border:1px solid var(--line);
+    border-radius:8px; padding:12px 14px;
+    border-left:6px solid var(--accent);
+    cursor:pointer;
+    transition:transform .12s, box-shadow .12s;
+  }
+  .book-spine:hover{ transform:translateY(-2px); box-shadow:0 4px 10px rgba(0,0,0,.08); }
+  .book-spine .bs-cover{
+    width:100%; aspect-ratio:2/3;
+    background:var(--panel);
+    background-size:cover; background-position:center;
+    border-radius:4px;
+    border:1px solid var(--line);
+    box-shadow:0 2px 5px rgba(0,0,0,.12);
+    margin-bottom:8px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:32px; color:var(--ink-soft);
+  }
+  .book-spine .bs-title{
+    font-weight:700; font-size:14px; line-height:1.25;
+    overflow:hidden;
+    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
+  }
+  .book-spine .bs-author{
+    font-size:11px; color:var(--ink-soft); font-style:italic;
+    margin-top:2px;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .book-spine .bs-foot{
+    display:flex; align-items:center; gap:6px;
+    margin-top:8px; font-size:11px; color:var(--ink-soft);
+  }
+  .book-spine .bs-foot .pdot{ width:9px; height:9px; }
+  .book-spine .bs-foot .bs-person{ font-weight:600; color:var(--ink); }
+  .book-spine .bs-medal{
+    position:absolute; top:6px; right:6px;
+    font-size:16px;
+  }
+  .reading-empty{
+    text-align:center; padding:24px 12px;
+    color:var(--ink-soft); font-size:14px;
+  }
+  .reading-empty .re-emoji{ font-size:40px; display:block; margin-bottom:6px; opacity:.6; }
+
+  /* Book modal cover uploader */
+  .cover-uploader{
+    display:flex; gap:12px; align-items:flex-start;
+    background:var(--panel-2); border:1px dashed var(--line);
+    border-radius:10px; padding:10px; margin-top:4px;
+  }
+  .cover-uploader .cu-preview{
+    flex-shrink:0; width:80px; height:110px;
+    border-radius:6px; background:var(--panel);
+    background-size:cover; background-position:center;
+    border:1px solid var(--line);
+    display:flex; align-items:center; justify-content:center;
+    color:var(--ink-soft); font-size:28px;
+  }
+  .cover-uploader .cu-controls{
+    flex:1; display:flex; flex-direction:column; gap:6px;
+    min-width:0;
+  }
+  .cover-uploader .cu-controls .cu-hint{
+    font-size:11px; color:var(--ink-soft); line-height:1.3;
+  }
+  .cover-uploader .cu-btns{ display:flex; gap:6px; flex-wrap:wrap; }
+  .cover-uploader input[type=file]{ display:none; }
+
+  /* Celebration burst when a book is finished */
+  @keyframes book-pop {
+    0%   { transform:scale(.5); opacity:0; }
+    50%  { transform:scale(1.15); opacity:1; }
+    100% { transform:scale(1); opacity:1; }
+  }
+  .book-pop{ animation: book-pop .5s ease-out; }
+  .reading-toast{
+    position:fixed; left:50%; bottom:30px;
+    transform:translateX(-50%);
+    background:linear-gradient(135deg, #5b8a72, #3f6b56);
+    color:#fff; padding:14px 22px; border-radius:14px;
+    font-weight:700; font-size:15px;
+    box-shadow:0 8px 24px rgba(0,0,0,.2);
+    z-index:9999;
+    animation: book-pop .4s ease-out;
+  }
+
+  @media (max-width:700px){
+    .cal-cell{ min-height:130px; }
+    .meal-slot .lbl{ font-size:8px; }
+    .meal-slot select{ font-size:11px; }
+    header.topbar{ flex-direction:column; align-items:flex-start; }
+    .reading-hero-stats{ width:100%; margin-left:0; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="crest" aria-label="Fish logo">
+      <!-- Fish icon -->
+      <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M6 32 C 14 18, 30 14, 42 18 L 56 8 L 52 30 L 56 52 L 42 44 C 30 50, 14 46, 6 32 Z"
+              fill="#ffffff" stroke="#ffffff" stroke-width="1.5" stroke-linejoin="round"/>
+        <circle cx="18" cy="30" r="2.2" fill="#3f6b56"/>
+        <path d="M28 26 C 34 24, 40 24, 44 28" stroke="#3f6b56" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+        <path d="M28 32 C 34 30, 40 30, 44 34" stroke="#3f6b56" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+        <path d="M28 38 C 34 36, 40 36, 44 40" stroke="#3f6b56" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+      </svg>
+    </div>
+    <div>
+      <h1>Fishler Household</h1>
+    </div>
+  </header>
+
+  <nav class="tabs" id="tabs">
+    <button data-tab="calendar" class="active">🗓️ Calendar</button>
+    <button data-tab="todos">✅ Todos</button>
+    <button data-tab="meals">🍽️ Meals</button>
+    <button data-tab="reading">📚 Reading</button>
+  </nav>
+
+  <!-- Meals Page -->
+  <section id="page-meals" class="page">
+    <div class="card">
+      <div class="meals-toolbar">
+        <div class="left">
+          <h2 style="margin:0;">Meal Plan</h2>
+        </div>
+        <div class="right">
+          <button class="btn warm" id="btn-assign-dinners" title="Auto-fill dinner slots for the next 7 days">✨ Assign Dinners</button>
+          <button class="btn ghost" id="btn-toggle-meals-admin" title="Manage menu options">⚙️ Admin</button>
+        </div>
+      </div>
+      <div class="cal-grid" id="cal-dows" style="margin-bottom:6px;"></div>
+      <div id="cal-scroll"></div>
+    </div>
+
+    <div class="card" id="meals-admin-card" style="display:none;">
+      <div class="row" style="justify-content:space-between; margin-bottom:8px;">
+        <h2 style="margin:0;">⚙️ Meals Admin — Menu Options</h2>
+        <button class="btn ghost" id="btn-close-meals-admin" title="Hide admin">Close</button>
+      </div>
+      <p style="margin:0 0 12px; color:var(--ink-soft); font-size:13px;">
+        Add the meals you commonly eat. These show up as choices in the dropdowns and feed into the “Assign Dinners” button.
+      </p>
+      <div class="menu-cols">
+        <div class="menu-col">
+          <h3>👪 Family Members</h3>
+          <p style="margin:0 0 8px; font-size:12px; color:var(--ink-soft);">Used across the app. Re-order or remove as needed.</p>
+          <div class="row">
+            <input type="text" id="new-person" placeholder="Add a family member" style="flex:1;" />
+            <input type="color" id="new-person-color" value="#5b8a72" title="Color" style="width:40px; height:38px; padding:2px; border-radius:8px; border:1px solid var(--line); cursor:pointer; flex-shrink:0;" />
+            <button class="btn" id="btn-add-person">Add</button>
+          </div>
+          <div class="chip-list" id="list-people"></div>
+        </div>
+        <div class="menu-col">
+          <h3><span class="dot" style="background:var(--b-color)"></span>Breakfast</h3>
+          <div class="row">
+            <input type="text" id="new-b" placeholder="Add a breakfast option" style="flex:1;" />
+            <button class="btn" data-add-meal="breakfast">Add</button>
+          </div>
+          <div class="chip-list" id="list-breakfast"></div>
+        </div>
+        <div class="menu-col">
+          <h3><span class="dot" style="background:var(--l-color)"></span>Lunch</h3>
+          <div class="row">
+            <input type="text" id="new-l" placeholder="Add a lunch option" style="flex:1;" />
+            <button class="btn" data-add-meal="lunch">Add</button>
+          </div>
+          <div class="chip-list" id="list-lunch"></div>
+        </div>
+        <div class="menu-col">
+          <h3><span class="dot" style="background:var(--d-color)"></span>Dinner</h3>
+          <div class="row">
+            <input type="text" id="new-d" placeholder="Add a dinner option" style="flex:1;" />
+            <button class="btn" data-add-meal="dinner">Add</button>
+          </div>
+          <div class="chip-list" id="list-dinner"></div>
+        </div>
+      </div>
+
+      <hr style="margin:18px 0 14px; border:0; border-top:1px solid var(--line);" />
+
+      <h3 style="margin:0 0 4px;">🌞 Per-person meal defaults</h3>
+      <p style="margin:0 0 12px; color:var(--ink-soft); font-size:13px;">
+        Pick what each person usually eats on <strong>weekdays</strong> vs <strong>weekends</strong>.
+        These show up automatically on every day (dimmed dot) unless you set an explicit override for that day.
+      </p>
+      <div class="default-meals-tabs" id="default-meals-tabs">
+        <button type="button" data-dm-tab="weekday" class="active">Weekdays (Mon–Fri)</button>
+        <button type="button" data-dm-tab="weekend">Weekends (Sat &amp; Sun)</button>
+      </div>
+      <div id="default-meals-table"></div>
+    </div>
+  </section>
+
+  <!-- Calendar Page -->
+  <section id="page-calendar" class="page active">
+    <div class="card">
+      <div class="cal-toolbar">
+        <h2 style="margin:0;">Calendar</h2>
+        <button class="btn" id="btn-add-event">+ Add Event</button>
+      </div>
+      <div id="paste-banner" class="paste-banner" style="display:none;">
+        <span class="pb-msg"></span>
+        <button class="btn ghost" id="paste-banner-done" style="padding:6px 12px; font-size:12px;">Done</button>
+      </div>
+      <div class="cal-grid" id="cal2-dows" style="margin-bottom:6px;"></div>
+      <div id="cal2-scroll"></div>
+    </div>
+  </section>
+
+  <!-- Todos Page -->
+  <section id="page-todos" class="page">
+    <div class="card">
+      <div class="todos-toolbar">
+        <h2 style="margin:0;">Todos</h2>
+        <div class="right">
+          <label style="font-size:13px; color:var(--ink-soft);">Group by:</label>
+          <select id="todo-group-by" style="font-size:13px; padding:6px 8px;">
+            <option value="none">None (newest first)</option>
+            <option value="person" selected>Person</option>
+            <option value="due">Due date</option>
+          </select>
+          <button class="btn" id="btn-add-todo">+ Add Todo</button>
+        </div>
+      </div>
+      <div class="row" style="margin-bottom:10px;">
+        <input type="text" id="quick-todo" placeholder="Quick add a todo and press Enter…" style="flex:1;" />
+      </div>
+      <div id="todo-list"></div>
+    </div>
+  </section>
+
+  <!-- Reading Page -->
+  <section id="page-reading" class="page">
+    <!-- Hero stats banner -->
+    <div class="card reading-hero">
+      <div class="reading-hero-bg">📖📚✨🌟📖📚✨🌟📖📚</div>
+      <div class="reading-hero-content">
+        <div>
+          <h2 style="margin:0 0 4px;">📚 Reading Adventures</h2>
+          <p style="margin:0; color:var(--ink-soft); font-size:14px;" id="reading-tagline">Log your books and celebrate every page!</p>
+        </div>
+        <div class="reading-hero-stats" id="reading-hero-stats"></div>
+        <button class="btn" id="btn-add-book">+ Log a Book</button>
+      </div>
+    </div>
+
+    <!-- Per-person scoreboard -->
+    <div class="card">
+      <h3 style="margin:0 0 12px;">🏆 Reader Scoreboard</h3>
+      <div class="reader-board" id="reader-board"></div>
+    </div>
+
+    <!-- Currently reading -->
+    <div class="card">
+      <h3 style="margin:0 0 12px;">📖 Currently Reading</h3>
+      <div id="currently-reading"></div>
+    </div>
+
+    <!-- Finished bookshelf -->
+    <div class="card">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; gap:10px; flex-wrap:wrap;">
+        <h3 style="margin:0;">🎉 Finished Bookshelf</h3>
+        <div style="display:flex; gap:6px; align-items:center; font-size:13px;">
+          <label style="color:var(--ink-soft);">Filter:</label>
+          <select id="reading-filter-person" style="font-size:13px; padding:5px 8px;"></select>
+        </div>
+      </div>
+      <div class="bookshelf" id="finished-bookshelf"></div>
+    </div>
+  </section>
+</div>
+
+<!-- Book modal -->
+<div class="modal-bg" id="book-modal-bg" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="book-modal-title">
+    <h3 id="book-modal-title">Log a Book</h3>
+
+    <label class="field-lbl">Title</label>
+    <input type="text" id="book-modal-input-title" placeholder="e.g. Charlotte's Web" style="width:100%;" />
+
+    <label class="field-lbl" for="book-modal-author">Author <span style="color:var(--ink-soft); font-weight:400;">(optional)</span></label>
+    <input type="text" id="book-modal-author" placeholder="e.g. E.B. White" style="width:100%;" />
+
+    <label class="field-lbl">📷 Book cover <span style="color:var(--ink-soft); font-weight:400;">(optional)</span></label>
+    <div class="cover-uploader">
+      <div class="cu-preview" id="book-modal-cover-preview">📖</div>
+      <div class="cu-controls">
+        <div class="cu-btns">
+          <button type="button" class="btn ghost" id="book-modal-cover-pick">Choose image…</button>
+          <button type="button" class="btn ghost" id="book-modal-cover-remove" style="display:none;">Remove</button>
+        </div>
+        <div class="cu-hint">Snap a photo of the cover or pick a file. Auto-resized so it doesn't fill up storage.</div>
+        <input type="file" id="book-modal-cover-input" accept="image/*" />
+      </div>
+    </div>
+
+    <label class="field-lbl">Who's reading?</label>
+    <div class="assignee-checks" id="book-modal-reader" style="flex-wrap:wrap;"></div>
+
+    <div class="row" style="gap:10px; margin-top:6px;">
+      <div style="flex:1;">
+        <label class="field-lbl" for="book-modal-started" style="margin-top:0;">Started on</label>
+        <input type="date" id="book-modal-started" style="width:100%;" />
+      </div>
+      <div style="flex:1;">
+        <label class="field-lbl" for="book-modal-finished" style="margin-top:0;">Finished on <span style="color:var(--ink-soft); font-weight:400;">(optional)</span></label>
+        <input type="date" id="book-modal-finished" style="width:100%;" />
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn danger" id="book-modal-delete" style="margin-right:auto; display:none;">Delete</button>
+      <button class="btn ghost" id="book-modal-cancel">Cancel</button>
+      <button class="btn" id="book-modal-save">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Todo edit modal -->
+<div class="modal-bg" id="todo-modal-bg" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="todo-modal-title">
+    <h3 id="todo-modal-title">Add Todo</h3>
+    <p class="modal-sub" id="todo-modal-sub"></p>
+
+    <label class="field-lbl">Title</label>
+    <input type="text" id="todo-modal-input-title" placeholder="What needs to be done?" style="width:100%;" />
+
+    <label class="field-lbl">Assign to</label>
+    <div class="assignee-checks" id="todo-modal-assignees"></div>
+
+    <label class="field-lbl" for="todo-modal-due">Due date</label>
+    <div class="row">
+      <input type="date" id="todo-modal-due" />
+      <button class="btn ghost" type="button" id="todo-modal-due-clear" style="padding:6px 10px; font-size:12px;">Clear</button>
+    </div>
+
+    <label class="field-lbl" for="todo-modal-recur">Recurring</label>
+    <select id="todo-modal-recur" style="width:100%;">
+      <option value="none">— Not recurring —</option>
+      <option value="daily">Daily</option>
+      <option value="weekly">Weekly</option>
+      <option value="monthly">Monthly</option>
+    </select>
+    <div id="todo-modal-recur-extras" class="recurring-extras" style="display:none;">
+      <div id="todo-modal-interval-row">
+        <label class="field-lbl" style="margin-top:0;">Every</label>
+        <div class="row">
+          <input type="number" id="todo-modal-interval" min="1" value="1" style="width:80px;" />
+          <span id="todo-modal-interval-unit" style="color:var(--ink-soft); font-size:13px;">day(s)</span>
+        </div>
+      </div>
+      <div id="todo-modal-weekday-row" style="display:none;">
+        <label class="field-lbl">On weekdays</label>
+        <div class="weekday-checks" id="todo-modal-weekdays"></div>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn danger" id="todo-modal-delete" style="margin-right:auto;">Delete</button>
+      <button class="btn ghost" id="todo-modal-cancel">Cancel</button>
+      <button class="btn" id="todo-modal-save">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Day-edit modal -->
+<div class="modal-bg" id="day-modal-bg" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="day-modal-title">
+    <h3 id="day-modal-title">Edit Day</h3>
+    <p class="modal-sub" id="day-modal-sub"></p>
+
+    <div id="day-modal-meals"></div>
+
+    <label class="field-lbl" for="day-modal-notes">📝 Notes for this day</label>
+    <textarea id="day-modal-notes" rows="2" placeholder="e.g. Late dinner after volleyball"></textarea>
+
+    <div class="modal-actions">
+      <button class="btn danger" id="day-modal-clear" title="Clear all meal plans and notes for this day">Clear Day</button>
+      <button class="btn ghost" id="day-modal-cancel">Cancel</button>
+      <button class="btn" id="day-modal-save">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Event modal -->
+<div class="modal-bg" id="event-modal-bg" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="event-modal-title">
+    <h3 id="event-modal-title">Add Event</h3>
+
+    <label class="field-lbl">Title</label>
+    <input type="text" id="event-modal-input-title" placeholder="e.g. Soccer practice" style="width:100%;" />
+
+    <label class="field-lbl" for="event-modal-date">Date</label>
+    <div class="row" style="gap:8px; align-items:center;">
+      <input type="date" id="event-modal-date" style="flex:1;" />
+      <span style="color:var(--ink-soft); font-size:13px;">to</span>
+      <input type="date" id="event-modal-end-date" style="flex:1;" />
+      <button class="btn ghost" type="button" id="event-modal-end-date-clear" style="padding:6px 10px; font-size:12px;">Single day</button>
+    </div>
+
+    <label class="field-lbl" style="display:flex; align-items:center; gap:8px;">
+      <input type="checkbox" id="event-modal-allday" style="width:16px; height:16px; accent-color:var(--accent);" />
+      <span>All day</span>
+    </label>
+
+    <div id="event-modal-time-row">
+      <div class="row" style="gap:10px;">
+        <div style="flex:1;">
+          <label class="field-lbl" style="margin-top:0;">Start time</label>
+          <div class="time-picker" id="event-modal-start">
+            <select class="tp-h" aria-label="Start hour"></select>
+            <span class="tp-sep">:</span>
+            <select class="tp-m" aria-label="Start minute"></select>
+            <select class="tp-ap" aria-label="Start AM/PM"></select>
+          </div>
+        </div>
+        <div style="flex:1;">
+          <label class="field-lbl" style="margin-top:0;">End time</label>
+          <div class="time-picker" id="event-modal-end">
+            <select class="tp-h" aria-label="End hour"></select>
+            <span class="tp-sep">:</span>
+            <select class="tp-m" aria-label="End minute"></select>
+            <select class="tp-ap" aria-label="End AM/PM"></select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <label class="field-lbl">Who's going?</label>
+    <div style="margin-bottom:6px;">
+      <label style="display:inline-flex; align-items:center; gap:6px; font-size:13px; font-weight:600; cursor:pointer;">
+        <input type="checkbox" id="event-modal-everyone" style="width:16px; height:16px; accent-color:var(--accent);" />
+        <span>Everyone (whole family)</span>
+      </label>
+    </div>
+    <div class="assignee-checks" id="event-modal-attendees"></div>
+
+    <label class="field-lbl">Color</label>
+    <div class="event-color-picker" id="event-modal-colors"></div>
+
+    <label class="field-lbl" for="event-modal-location">📍 Location</label>
+    <input type="text" id="event-modal-location" placeholder="e.g. Soccer Field A, 123 Main St" style="width:100%;" />
+
+    <label class="field-lbl" for="event-modal-notes">Notes</label>
+    <textarea id="event-modal-notes" rows="2" placeholder="Optional details…"></textarea>
+
+    <label class="field-lbl" for="event-modal-recur">🔁 Repeat</label>
+    <select id="event-modal-recur" style="width:100%;">
+      <option value="none">— Does not repeat —</option>
+      <option value="daily">Daily</option>
+      <option value="weekly">Weekly</option>
+      <option value="monthly">Monthly</option>
+    </select>
+    <div id="event-modal-recur-extras" class="recurring-extras" style="display:none;">
+      <div id="event-modal-interval-row">
+        <label class="field-lbl" style="margin-top:0;">Every</label>
+        <div class="row">
+          <input type="number" id="event-modal-interval" min="1" value="1" style="width:80px;" />
+          <span id="event-modal-interval-unit" style="color:var(--ink-soft); font-size:13px;">day(s)</span>
+        </div>
+      </div>
+      <div id="event-modal-weekday-row" style="display:none;">
+        <label class="field-lbl">On weekdays</label>
+        <div class="weekday-checks" id="event-modal-weekdays"></div>
+      </div>
+      <label class="field-lbl" for="event-modal-until">Ends on (optional)</label>
+      <div class="row">
+        <input type="date" id="event-modal-until" />
+        <button class="btn ghost" type="button" id="event-modal-until-clear" style="padding:6px 10px; font-size:12px;">Clear</button>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn danger" id="event-modal-delete" style="margin-right:auto; display:none;">Delete</button>
+      <button class="btn ghost" id="event-modal-copy" style="display:none;">📋 Copy to other days</button>
+      <button class="btn ghost" id="event-modal-cancel">Cancel</button>
+      <button class="btn" id="event-modal-save">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   Fishler Household — localStorage data + tabs + meal plan
+   ========================================================= */
+
+const STORAGE_KEY = "fishler-household-v1";
+
+const DEFAULT_DATA = {
+  people: [
+    { id: "michael", name: "Michael",  color: "#3b7dd8" },
+    { id: "julia",   name: "Julia",    color: "#e26ba8" },
+    { id: "milla",   name: "Milla",    color: "#4caf6a" },
+    { id: "braxton", name: "Braxton",  color: "#d94a4a" }
+  ],
+  menus: {
+    breakfast: ["Cereal", "Eggs & Toast", "Pancakes", "Oatmeal", "Yogurt & Fruit", "Bagel"],
+    lunch:     ["Sandwich", "Salad", "Leftovers", "Soup", "Quesadilla", "PB&J"],
+    dinner:    ["Spaghetti", "Tacos", "Chicken & Rice", "Pizza", "Stir Fry", "Burgers", "Salmon"]
+  },
+  // plan[ymd] = {
+  //   breakfast, lunch, dinner,            // family default
+  //   perPerson: { [personId]: { breakfast?, lunch?, dinner? } },
+  //   notes: "string"
+  // }
+  plan: {},
+  // events: [{ id, title, date (YYYY-MM-DD), endDate, startTime, endTime, allDay,
+  //            attendees: [personId,...] (empty = everyone), notes, color, location,
+  //            recurring: {pattern, interval, weekdays, until} | null }]
+  events: [],
+  todos: [],
+  // books: [{ id, personId, title, author, startedAt (YYYY-MM-DD), finishedAt (YYYY-MM-DD|null), createdAt }]
+  books: [],
+  // defaultMeals: per-person meal defaults applied automatically when no explicit override exists.
+  // Shape: { weekday: { [personId]: { breakfast?, lunch?, dinner? } }, weekend: { ... } }
+  defaultMeals: { weekday: {}, weekend: {} }
+};
+
+let data = load();
+
+function load(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return clone(DEFAULT_DATA);
+    const parsed = JSON.parse(raw);
+    const loaded = {
+      ...clone(DEFAULT_DATA),
+      ...parsed,
+      people: (parsed.people && parsed.people.length) ? parsed.people : clone(DEFAULT_DATA.people),
+      menus: { ...DEFAULT_DATA.menus, ...(parsed.menus || {}) },
+      plan: parsed.plan || {},
+      events: parsed.events || [],
+      todos: parsed.todos || [],
+      books: parsed.books || [],
+      defaultMeals: {
+        weekday: (parsed.defaultMeals && parsed.defaultMeals.weekday) || {},
+        weekend: (parsed.defaultMeals && parsed.defaultMeals.weekend) || {}
+      }
+    };
+    // One-time color migration for the four default family members.
+    // Only overwrites the previous default palette so user customizations are preserved.
+    const OLD_DEFAULTS = {
+      michael: "#5b8a72",
+      julia:   "#c98a4b",
+      milla:   "#b86fa6",
+      braxton: "#5e7bb0"
+    };
+    const NEW_DEFAULTS = {
+      michael: "#3b7dd8",
+      julia:   "#e26ba8",
+      milla:   "#4caf6a",
+      braxton: "#d94a4a"
+    };
+    loaded.people.forEach(p=>{
+      if(NEW_DEFAULTS[p.id] && (!p.color || (p.color||"").toLowerCase() === (OLD_DEFAULTS[p.id]||"").toLowerCase())){
+        p.color = NEW_DEFAULTS[p.id];
+      }
+    });
+    return loaded;
+  }catch(e){
+    console.warn("Failed to load data, resetting", e);
+    return clone(DEFAULT_DATA);
+  }
+}
+function save(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+function clone(o){ return JSON.parse(JSON.stringify(o)); }
+function uid(){ return Math.random().toString(36).slice(2,10); }
+function escapeHtml(s){
+  return String(s ?? "").replace(/[&<>"']/g, c => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"
+  }[c]));
+}
+
+/* ---------- Date helpers ---------- */
+function addDays(d, n){ const x = new Date(d); x.setDate(x.getDate()+n); return x; }
+function ymd(d){
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,"0");
+  const day = String(d.getDate()).padStart(2,"0");
+  return `${y}-${m}-${day}`;
+}
+function todayYmd(){ return ymd(new Date()); }
+const DOW_SHORT = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+
+/* ---------- Tabs ---------- */
+document.getElementById("tabs").addEventListener("click", e=>{
+  const btn = e.target.closest("button[data-tab]");
+  if(!btn) return;
+  document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("active", b===btn));
+  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+  document.getElementById("page-"+btn.dataset.tab).classList.add("active");
+  renderAll();
+});
+
+/* ---------- Render: Meal plan calendar ---------- */
+function renderMealCalendar(){
+  // Day-of-week headers
+  document.getElementById("cal-dows").innerHTML =
+    DOW_SHORT.map(d=>`<div class="cal-dow">${d}</div>`).join("");
+
+  const scroll = document.getElementById("cal-scroll");
+  scroll.innerHTML = "";
+  const today = todayYmd();
+  const now = new Date();
+
+  // Render current month + next 2 months
+  for(let mi = 0; mi <= 2; mi++){
+    const monthStart = new Date(now.getFullYear(), now.getMonth() + mi, 1);
+
+    const title = document.createElement("div");
+    title.className = "month-title";
+    title.textContent = monthStart.toLocaleDateString(undefined,{month:"long",year:"numeric"});
+    scroll.appendChild(title);
+
+    const grid = document.createElement("div");
+    grid.className = "cal-grid";
+
+    const startDay = monthStart.getDay();
+    const gridStart = addDays(monthStart, -startDay);
+    const daysInMonth = new Date(monthStart.getFullYear(), monthStart.getMonth()+1, 0).getDate();
+    const totalCells = Math.ceil((startDay + daysInMonth) / 7) * 7;
+
+    for(let i=0;i<totalCells;i++){
+      const d = addDays(gridStart, i);
+      const dy = ymd(d);
+      const cell = document.createElement("div");
+      cell.className = "cal-cell";
+      if(d.getMonth() !== monthStart.getMonth()) cell.classList.add("other");
+      if(dy === today) cell.classList.add("today");
+
+      const day = data.plan[dy] || {};
+      const notes = day.notes || "";
+      const notesHtml = notes
+        ? `<div class="day-notes" data-edit-day="${dy}" title="${escapeHtml(notes)} — click to edit">${escapeHtml(notes)}</div>`
+        : "";
+
+      cell.innerHTML = `
+        <div class="dnum">
+          <span>${d.getDate()}</span>
+          <span class="dow">${DOW_SHORT[d.getDay()]}</span>
+          <button class="day-edit" data-edit-day="${dy}" title="Edit day (per-person meals & notes)" aria-label="Edit day">✏️</button>
+        </div>
+        ${mealSlotHtml(dy, "breakfast", "B")}
+        ${mealSlotHtml(dy, "lunch", "L")}
+        ${mealSlotHtml(dy, "dinner", "D")}
+        ${notesHtml}
+      `;
+      grid.appendChild(cell);
+    }
+    scroll.appendChild(grid);
+  }
+
+  // Wire up selects + edit-day clicks (once)
+  if(!scroll.dataset.bound){
+    scroll.addEventListener("change", onMealSelectChange);
+    scroll.addEventListener("click", e=>{
+      const t = e.target.closest("[data-edit-day]");
+      if(t){ openDayModal(t.dataset.editDay); }
+    });
+    scroll.dataset.bound = "1";
+  }
+}
+
+function mealSlotHtml(dy, mealType, label){
+  const cls = mealType[0]; // b/l/d
+  const opts = data.menus[mealType] || [];
+  const day = data.plan[dy] || {};
+  const current = day[mealType] || "";
+  const isUnset = !current;
+
+  // Per-person overrides: anyone whose effective value differs from the family default.
+  // Effective value = explicit override (incl. "" skip) > weekday/weekend default > family default.
+  const pp = day.perPerson || {};
+  const overrides = [];
+  for(const p of data.people){
+    const explicit = pp[p.id] && Object.prototype.hasOwnProperty.call(pp[p.id], mealType) ? pp[p.id][mealType] : undefined;
+    const def = personDefaultMeal(p.id, mealType, dy);
+    let effective, fromDefault = false;
+    if(explicit !== undefined){
+      effective = explicit;
+    } else if(def){
+      effective = def;
+      fromDefault = true;
+    } else {
+      effective = current; // matches family
+    }
+    if(effective !== current){
+      overrides.push({
+        name: p.name,
+        color: p.color || '#5b8a72',
+        value: effective || "(skip)",
+        fromDefault
+      });
+    }
+  }
+  const overrideCount = overrides.length;
+  const flag = overrideCount
+    ? `<span class="ppl-flag" title="${overrideCount} per-person value${overrideCount===1?'':'s'}">👥 ${overrideCount}</span>`
+    : "";
+  const overrideRows = overrideCount
+    ? `<div class="meal-overrides">` + overrides.map(o => {
+        const tip = o.fromDefault ? `${o.name}: ${o.value} (default)` : `${o.name}: ${o.value}`;
+        const dotStyle = o.fromDefault ? `background:${o.color};opacity:.65;` : `background:${o.color};`;
+        return `<div class="meal-override" title="${escapeHtml(tip)}"><span class="pdot" style="${escapeHtml(dotStyle)}"></span><span class="o-val">${escapeHtml(o.value)}</span></div>`;
+      }).join("") + `</div>`
+    : "";
+
+  return `
+    <div class="meal-slot ${cls}">
+      <div class="lbl"><span class="dot"></span>${label}${flag}</div>
+      <select data-day="${dy}" data-meal="${mealType}" class="${isUnset?'unset':''}" title="${escapeHtml(current || 'No meal selected')}">
+        <option value="">— none —</option>
+        ${opts.map(o=>`<option value="${escapeHtml(o)}" ${o===current?"selected":""}>${escapeHtml(o)}</option>`).join("")}
+      </select>
+      ${overrideRows}
+    </div>
+  `;
+}
+
+// Saturday=6, Sunday=0 → weekend
+function isWeekendYmd(dy){
+  const d = new Date(dy + "T00:00:00");
+  const wd = d.getDay();
+  return wd === 0 || wd === 6;
+}
+function personDefaultMeal(pid, mealType, dy){
+  const bucket = isWeekendYmd(dy) ? "weekend" : "weekday";
+  const dm = (data.defaultMeals && data.defaultMeals[bucket]) || {};
+  return (dm[pid] && dm[pid][mealType]) || "";
+}
+
+function onMealSelectChange(e){
+  const sel = e.target.closest("select[data-day][data-meal]");
+  if(!sel) return;
+  const dy = sel.dataset.day;
+  const meal = sel.dataset.meal;
+  const val = sel.value;
+  if(!data.plan[dy]) data.plan[dy] = {};
+  if(val){
+    data.plan[dy][meal] = val;
+  } else {
+    delete data.plan[dy][meal];
+    if(Object.keys(data.plan[dy]).length === 0) delete data.plan[dy];
+  }
+  save();
+  sel.classList.toggle("unset", !val);
+  sel.title = val || "No meal selected";
+}
+
+/* ---------- Assign dinners ---------- */
+document.getElementById("btn-assign-dinners").addEventListener("click", ()=>{
+  const dinners = data.menus.dinner || [];
+  if(dinners.length === 0){
+    alert("Add some dinner options first!");
+    return;
+  }
+  // Build a shuffled pool, avoiding back-to-back repeats
+  const pool = shuffle([...dinners]);
+  let lastPicked = null;
+  const start = new Date();
+  for(let i=0;i<7;i++){
+    const d = addDays(start, i);
+    const dy = ymd(d);
+    // Pick next from pool that isn't same as lastPicked
+    let pick = pool.shift();
+    if(pick === lastPicked && pool.length > 0){
+      const swap = pool.shift();
+      pool.push(pick);
+      pick = swap;
+    }
+    if(!pick) pick = dinners[i % dinners.length];
+    pool.push(pick); // recycle so we never run out
+    lastPicked = pick;
+
+    if(!data.plan[dy]) data.plan[dy] = {};
+    data.plan[dy].dinner = pick;
+  }
+  save();
+  renderMealCalendar();
+});
+
+function shuffle(arr){
+  for(let i=arr.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]] = [arr[j],arr[i]];
+  }
+  return arr;
+}
+
+/* ---------- Render: Menu options ---------- */
+function renderMenuOptions(){
+  ["breakfast","lunch","dinner"].forEach(type=>{
+    const c = document.getElementById("list-"+type);
+    c.innerHTML = "";
+    (data.menus[type] || []).forEach((name, idx)=>{
+      const chip = document.createElement("span");
+      chip.className = "chip";
+      chip.innerHTML = `<span>${escapeHtml(name)}</span><button title="Remove" aria-label="Remove">✕</button>`;
+      chip.querySelector("button").addEventListener("click",()=>{
+        data.menus[type].splice(idx,1);
+        save();
+        renderMenuOptions();
+        renderMealCalendar();
+        renderDefaultMeals();
+      });
+      c.appendChild(chip);
+    });
+  });
+}
+
+document.querySelectorAll("button[data-add-meal]").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    const type = btn.dataset.addMeal;
+    const inputId = "new-" + type[0];
+    const input = document.getElementById(inputId);
+    const val = (input.value || "").trim();
+    if(!val) return;
+    if(!data.menus[type]) data.menus[type] = [];
+    if(!data.menus[type].includes(val)){
+      data.menus[type].push(val);
+      save();
+    }
+    input.value = "";
+    renderMenuOptions();
+    renderMealCalendar();
+    renderDefaultMeals();
+  });
+});
+// Enter-key in input boxes
+["breakfast","lunch","dinner"].forEach(type=>{
+  const input = document.getElementById("new-" + type[0]);
+  input.addEventListener("keydown", e=>{
+    if(e.key === "Enter"){
+      e.preventDefault();
+      document.querySelector(`button[data-add-meal="${type}"]`).click();
+    }
+  });
+});
+
+/* ---------- Render: Per-person default meals ---------- */
+let defaultMealsBucket = "weekday"; // "weekday" | "weekend"
+
+function renderDefaultMeals(){
+  const table = document.getElementById("default-meals-table");
+  if(!table) return;
+  // Tabs active state
+  document.querySelectorAll('#default-meals-tabs button[data-dm-tab]').forEach(b=>{
+    b.classList.toggle("active", b.dataset.dmTab === defaultMealsBucket);
+  });
+  if(!data.defaultMeals) data.defaultMeals = { weekday:{}, weekend:{} };
+  if(!data.defaultMeals[defaultMealsBucket]) data.defaultMeals[defaultMealsBucket] = {};
+  const bucket = data.defaultMeals[defaultMealsBucket];
+
+  if(!data.people.length){
+    table.innerHTML = `<div class="empty" style="padding:12px;">Add family members first.</div>`;
+    return;
+  }
+  const meals = [
+    { key:"breakfast", label:"Breakfast" },
+    { key:"lunch",     label:"Lunch" },
+    { key:"dinner",    label:"Dinner" }
+  ];
+  table.className = "dm-table";
+  table.innerHTML = data.people.map(p=>{
+    const pdef = bucket[p.id] || {};
+    return `
+      <div class="dm-row" data-person="${p.id}">
+        <div class="dm-person"><span class="pdot" style="background:${escapeHtml(p.color||'#5b8a72')}"></span>${escapeHtml(p.name)}</div>
+        ${meals.map(m=>{
+          const cur = pdef[m.key] || "";
+          const opts = data.menus[m.key] || [];
+          return `
+            <div class="dm-cell">
+              <label>${m.label}</label>
+              <select data-dm-person="${p.id}" data-dm-meal="${m.key}">
+                <option value="">— no default —</option>
+                ${opts.map(o=>`<option value="${escapeHtml(o)}" ${o===cur?"selected":""}>${escapeHtml(o)}</option>`).join("")}
+              </select>
+            </div>
+          `;
+        }).join("")}
+      </div>
+    `;
+  }).join("");
+}
+
+// Tab clicks
+document.getElementById("default-meals-tabs").addEventListener("click", e=>{
+  const btn = e.target.closest("button[data-dm-tab]");
+  if(!btn) return;
+  defaultMealsBucket = btn.dataset.dmTab;
+  renderDefaultMeals();
+});
+
+// Select changes
+document.getElementById("default-meals-table").addEventListener("change", e=>{
+  const sel = e.target.closest("select[data-dm-person][data-dm-meal]");
+  if(!sel) return;
+  const pid = sel.dataset.dmPerson;
+  const meal = sel.dataset.dmMeal;
+  const val = sel.value;
+  if(!data.defaultMeals[defaultMealsBucket]) data.defaultMeals[defaultMealsBucket] = {};
+  if(!data.defaultMeals[defaultMealsBucket][pid]) data.defaultMeals[defaultMealsBucket][pid] = {};
+  if(val){
+    data.defaultMeals[defaultMealsBucket][pid][meal] = val;
+  } else {
+    delete data.defaultMeals[defaultMealsBucket][pid][meal];
+    if(Object.keys(data.defaultMeals[defaultMealsBucket][pid]).length === 0){
+      delete data.defaultMeals[defaultMealsBucket][pid];
+    }
+  }
+  save();
+  renderMealCalendar();
+});
+
+/* ---------- Render: People (admin) ---------- */
+function renderPeopleAdmin(){
+  const c = document.getElementById("list-people");
+  c.innerHTML = "";
+  if(!data.people.length){
+    c.innerHTML = `<div class="empty" style="padding:8px;">No family members yet.</div>`;
+    return;
+  }
+  data.people.forEach((p, idx)=>{
+    const chip = document.createElement("span");
+    chip.className = "chip";
+    chip.innerHTML = `
+      <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${escapeHtml(p.color||'#5b8a72')};"></span>
+      <span>${escapeHtml(p.name)}</span>
+      <button title="Remove" aria-label="Remove ${escapeHtml(p.name)}">✕</button>
+    `;
+    chip.querySelector("button").addEventListener("click",()=>{
+      if(!confirm(`Remove ${p.name}? Their per-person meal overrides will also be removed.`)) return;
+      // Strip per-person entries for this id from all days
+      for(const dy of Object.keys(data.plan)){
+        const pp = data.plan[dy].perPerson;
+        if(pp && pp[p.id]){
+          delete pp[p.id];
+          if(Object.keys(pp).length === 0) delete data.plan[dy].perPerson;
+        }
+      }
+      // Strip per-person default meals
+      if(data.defaultMeals){
+        ["weekday","weekend"].forEach(bk=>{
+          if(data.defaultMeals[bk] && data.defaultMeals[bk][p.id]){
+            delete data.defaultMeals[bk][p.id];
+          }
+        });
+      }
+      data.people.splice(idx,1);
+      save();
+      renderPeopleAdmin();
+      renderMealCalendar();
+      renderDefaultMeals();
+    });
+    c.appendChild(chip);
+  });
+}
+document.getElementById("btn-add-person").addEventListener("click",()=>{
+  const input = document.getElementById("new-person");
+  const colorInput = document.getElementById("new-person-color");
+  const name = (input.value || "").trim();
+  if(!name) return;
+  const id = name.toLowerCase().replace(/[^a-z0-9]+/g, "-") + "-" + uid().slice(0,4);
+  data.people.push({ id, name, color: colorInput.value || "#5b8a72" });
+  input.value = "";
+  save();
+  renderPeopleAdmin();
+  renderMealCalendar();
+  renderDefaultMeals();
+});
+document.getElementById("new-person").addEventListener("keydown", e=>{
+  if(e.key === "Enter"){ e.preventDefault(); document.getElementById("btn-add-person").click(); }
+});
+
+/* ---------- Day-edit modal ---------- */
+let dayModalState = { dy: null, perPerson: {}, notes: "" };
+
+function openDayModal(dy){
+  const day = data.plan[dy] || {};
+  // Deep-clone the per-person object so cancel works
+  dayModalState = {
+    dy,
+    perPerson: clone(day.perPerson || {}),
+    notes: day.notes || ""
+  };
+
+  const d = new Date(dy + "T00:00:00");
+  document.getElementById("day-modal-title").textContent = "Edit Day";
+  document.getElementById("day-modal-sub").textContent =
+    d.toLocaleDateString(undefined, { weekday:"long", month:"long", day:"numeric", year:"numeric" });
+
+  renderDayModalMeals();
+  document.getElementById("day-modal-notes").value = dayModalState.notes;
+
+  const bg = document.getElementById("day-modal-bg");
+  bg.classList.add("open");
+  bg.setAttribute("aria-hidden", "false");
+}
+
+function closeDayModal(){
+  const bg = document.getElementById("day-modal-bg");
+  bg.classList.remove("open");
+  bg.setAttribute("aria-hidden", "true");
+}
+
+function renderDayModalMeals(){
+  const container = document.getElementById("day-modal-meals");
+  const dy = dayModalState.dy;
+  const day = data.plan[dy] || {};
+  const meals = [
+    { key:"breakfast", label:"Breakfast", cls:"b" },
+    { key:"lunch",     label:"Lunch",     cls:"l" },
+    { key:"dinner",    label:"Dinner",    cls:"d" }
+  ];
+  container.innerHTML = meals.map(m=>{
+    const opts = data.menus[m.key] || [];
+    const familyVal = day[m.key] || "";
+    const familySelect = `
+      <select data-modal-meal="${m.key}" data-modal-scope="family">
+        <option value="">— none —</option>
+        ${opts.map(o=>`<option value="${escapeHtml(o)}" ${o===familyVal?"selected":""}>${escapeHtml(o)}</option>`).join("")}
+      </select>
+    `;
+    const ppRows = data.people.map(p=>{
+      const pv = (dayModalState.perPerson[p.id] || {})[m.key];
+      const isSame = pv == null;
+      const effective = isSame ? familyVal : pv;
+      const def = personDefaultMeal(p.id, m.key, dy);
+      const fallback = def || familyVal;
+      const sameLabel = fallback
+        ? `— use default (${fallback}${def ? "" : " — family"}) —`
+        : `— same as family —`;
+      return `
+        <div class="person-row" data-person="${p.id}" data-meal="${m.key}">
+          <div class="pname"><span class="pdot" style="background:${escapeHtml(p.color||'#5b8a72')}"></span>${escapeHtml(p.name)}</div>
+          <select data-modal-meal="${m.key}" data-modal-scope="person" data-person-id="${p.id}" class="${isSame?'same-as-family':''}">
+            <option value="__same__" ${isSame?"selected":""}>${escapeHtml(sameLabel)}</option>
+            <option value="">— none (skip) —</option>
+            ${opts.map(o=>`<option value="${escapeHtml(o)}" ${(!isSame && o===effective)?"selected":""}>${escapeHtml(o)}</option>`).join("")}
+          </select>
+          <span class="same" data-same-flag></span>
+        </div>
+      `;
+    }).join("");
+    return `
+      <div class="meal-section ${m.cls}">
+        <h4><span class="dot"></span>${m.label}</h4>
+        <label class="field-lbl" style="margin-top:0;">Family default</label>
+        ${familySelect}
+        <button type="button" class="toggle-people-btn" data-toggle-people="${m.key}">👥 Per-person overrides ▾</button>
+        <div data-people-rows="${m.key}" style="display:none; margin-top:6px;">
+          ${ppRows}
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  // If any person already has overrides OR a per-person default, expand that section by default
+  meals.forEach(m=>{
+    const hasOverride = data.people.some(p=>{
+      const v = (dayModalState.perPerson[p.id] || {})[m.key];
+      return v !== undefined;
+    });
+    const hasDefault = data.people.some(p=> !!personDefaultMeal(p.id, m.key, dy));
+    if(hasOverride || hasDefault){
+      container.querySelector(`[data-people-rows="${m.key}"]`).style.display = "";
+      const btn = container.querySelector(`[data-toggle-people="${m.key}"]`);
+      btn.textContent = "👥 Per-person overrides ▴";
+    }
+  });
+}
+
+// Modal event delegation
+document.getElementById("day-modal-meals").addEventListener("click", e=>{
+  const tog = e.target.closest("[data-toggle-people]");
+  if(tog){
+    const key = tog.dataset.togglePeople;
+    const rows = document.querySelector(`[data-people-rows="${key}"]`);
+    const open = rows.style.display === "none";
+    rows.style.display = open ? "" : "none";
+    tog.textContent = open ? "👥 Per-person overrides ▴" : "👥 Per-person overrides ▾";
+  }
+});
+document.getElementById("day-modal-meals").addEventListener("change", e=>{
+  const sel = e.target.closest("select[data-modal-meal]");
+  if(!sel) return;
+  const meal = sel.dataset.modalMeal;
+  if(sel.dataset.modalScope === "person"){
+    const pid = sel.dataset.personId;
+    if(!dayModalState.perPerson[pid]) dayModalState.perPerson[pid] = {};
+    if(sel.value === "__same__"){
+      delete dayModalState.perPerson[pid][meal];
+      if(Object.keys(dayModalState.perPerson[pid]).length === 0) delete dayModalState.perPerson[pid];
+      sel.classList.add("same-as-family");
+    } else {
+      dayModalState.perPerson[pid][meal] = sel.value; // "" means explicit skip
+      sel.classList.remove("same-as-family");
+    }
+  }
+  // For family-scope select we don't need to track anything in state;
+  // it's read directly off the DOM on save.
+});
+
+document.getElementById("day-modal-save").addEventListener("click",()=>{
+  const dy = dayModalState.dy;
+  if(!dy) return;
+  if(!data.plan[dy]) data.plan[dy] = {};
+  const day = data.plan[dy];
+
+  // Pull family selects from DOM
+  document.querySelectorAll('select[data-modal-meal][data-modal-scope="family"]').forEach(sel=>{
+    const meal = sel.dataset.modalMeal;
+    const val = sel.value;
+    if(val) day[meal] = val; else delete day[meal];
+  });
+
+  // Per-person from state
+  if(Object.keys(dayModalState.perPerson).length){
+    day.perPerson = dayModalState.perPerson;
+  } else {
+    delete day.perPerson;
+  }
+
+  // Notes
+  const notes = document.getElementById("day-modal-notes").value.trim();
+  if(notes) day.notes = notes; else delete day.notes;
+
+  // Clean up empty day entries
+  if(!day.breakfast && !day.lunch && !day.dinner && !day.perPerson && !day.notes){
+    delete data.plan[dy];
+  }
+
+  save();
+  closeDayModal();
+  renderMealCalendar();
+});
+
+document.getElementById("day-modal-cancel").addEventListener("click", closeDayModal);
+document.getElementById("day-modal-bg").addEventListener("click", e=>{
+  if(e.target.id === "day-modal-bg") closeDayModal();
+});
+document.addEventListener("keydown", e=>{
+  if(e.key === "Escape" && document.getElementById("day-modal-bg").classList.contains("open")){
+    closeDayModal();
+  }
+});
+
+document.getElementById("day-modal-clear").addEventListener("click",()=>{
+  if(!confirm("Clear all meals, per-person overrides, and notes for this day?")) return;
+  const dy = dayModalState.dy;
+  if(dy) delete data.plan[dy];
+  save();
+  closeDayModal();
+  renderMealCalendar();
+});
+
+/* ---------- Calendar tab (month view with events) ---------- */
+function renderPlainCalendar(){
+  document.getElementById("cal2-dows").innerHTML =
+    DOW_SHORT.map(d=>`<div class="cal-dow">${d}</div>`).join("");
+  const scroll = document.getElementById("cal2-scroll");
+  scroll.innerHTML = "";
+  const today = todayYmd();
+  const now = new Date();
+
+  // Build a flat list of all event occurrences in the visible window (6 months from now)
+  const winStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const winEnd   = new Date(now.getFullYear(), now.getMonth() + 6, 0); // last day of 6th month
+  const winStartYmd = ymd(winStart);
+  const winEndYmd   = ymd(winEnd);
+
+  // Index event occurrences by date. Each entry carries its position within the multi-day span.
+  // eventsByDate[dy] = [{ ev, pos: 'single'|'start'|'mid'|'end', dayIndex, dayCount }]
+  const eventsByDate = {};
+  (data.events || []).forEach(ev=>{
+    const span = eventSpanDays(ev);
+    expandEventOccurrences(ev, winStartYmd, winEndYmd).forEach(startDy=>{
+      const startD = new Date(startDy + "T00:00:00");
+      for(let i=0; i<span; i++){
+        const d = addDays(startD, i);
+        const dy = ymd(d);
+        if(dy < winStartYmd || dy > winEndYmd) continue;
+        if(!eventsByDate[dy]) eventsByDate[dy] = [];
+        let pos = "single";
+        if(span > 1){
+          if(i === 0) pos = "start";
+          else if(i === span - 1) pos = "end";
+          else pos = "mid";
+        }
+        eventsByDate[dy].push({ ev, pos, dayIndex: i, dayCount: span });
+      }
+    });
+  });
+  // Sort each day's events: all-day first, then by startTime
+  Object.values(eventsByDate).forEach(list=>{
+    list.sort((a,b)=>{
+      if(a.ev.allDay !== b.ev.allDay) return a.ev.allDay ? -1 : 1;
+      return (a.ev.startTime||"").localeCompare(b.ev.startTime||"");
+    });
+  });
+
+  for(let mi = 0; mi <= 5; mi++){
+    const monthStart = new Date(now.getFullYear(), now.getMonth() + mi, 1);
+    const title = document.createElement("div");
+    title.className = "month-title";
+    title.textContent = monthStart.toLocaleDateString(undefined,{month:"long",year:"numeric"});
+    scroll.appendChild(title);
+
+    const grid = document.createElement("div");
+    grid.className = "cal-grid";
+    const startDay = monthStart.getDay();
+    const gridStart = addDays(monthStart, -startDay);
+    const daysInMonth = new Date(monthStart.getFullYear(), monthStart.getMonth()+1, 0).getDate();
+    const totalCells = Math.ceil((startDay + daysInMonth) / 7) * 7;
+    for(let i=0;i<totalCells;i++){
+      const d = addDays(gridStart, i);
+      const dy = ymd(d);
+      const cell = document.createElement("div");
+      cell.className = "cal-cell";
+      cell.style.minHeight = "84px";
+      if(d.getMonth() !== monthStart.getMonth()) cell.classList.add("other");
+      if(dy === today) cell.classList.add("today");
+
+      const evs = eventsByDate[dy] || [];
+      let evHtml = "";
+      if(evs.length){
+        evHtml = `<div class="cal-events">` + evs.map(entry=>{
+          const ev = entry.ev;
+          const c = ev.color || "#5b8a72";
+          // Show time only on the start day (or on single-day events)
+          const timeTxt = (entry.pos === "single" || entry.pos === "start") && !ev.allDay && ev.startTime
+            ? `<span class="ev-time">${escapeHtml(fmtTime12(ev.startTime))}</span>`
+            : "";
+          // Title: only on start/single; continuation days show » prefix
+          let titleHtml;
+          if(entry.pos === "mid" || entry.pos === "end"){
+            titleHtml = `<span class="ev-title" style="opacity:.85;">» ${escapeHtml(ev.title)}</span>`;
+          } else {
+            const locTxt = ev.location ? ` <span style="opacity:.8;font-weight:500;">📍 ${escapeHtml(ev.location)}</span>` : "";
+            titleHtml = `<span class="ev-title">${ev.recurring ? '🔁 ' : ''}${escapeHtml(ev.title)}${entry.dayCount > 1 ? ` <span style="opacity:.75;font-weight:500;">(${entry.dayCount}d)</span>` : ''}${locTxt}</span>`;
+          }
+          // Attendee dots: empty array = everyone, so omit
+          let attHtml = "";
+          if(ev.attendees && ev.attendees.length && ev.attendees.length < data.people.length && (entry.pos === "single" || entry.pos === "start")){
+            attHtml = `<span class="ev-att">` +
+              ev.attendees.map(pid=>`<span class="pdot" style="background:${escapeHtml(personColor(pid))}" title="${escapeHtml(personName(pid))}"></span>`).join("") +
+              `</span>`;
+          }
+          // Notes preview — only on start/single days, when notes exist
+          let notesHtml = "";
+          if(ev.notes && (entry.pos === "single" || entry.pos === "start")){
+            notesHtml = `<span class="ev-notes">📝 ${escapeHtml(ev.notes)}</span>`;
+          }
+          const posCls = entry.pos === "single" ? "" : `multi-${entry.pos}`;
+          return `<div class="cal-event ${posCls}" style="background:${escapeHtml(c)}" data-event-id="${ev.id}" title="${escapeHtml(eventTooltip(ev))}">${timeTxt}${titleHtml}${attHtml}${notesHtml}</div>`;
+        }).join("") + `</div>`;
+      }
+
+      cell.innerHTML = `<div class="dnum"><span>${d.getDate()}</span></div>${evHtml}`;
+
+      // Click handlers (skip other-month cells for "add new")
+      if(d.getMonth() === monthStart.getMonth()){
+        cell.addEventListener("click", e=>{
+          const evChip = e.target.closest("[data-event-id]");
+          if(evChip){
+            e.stopPropagation();
+            if(pasteTemplate){
+              // Allow pasting on a day that already has events too
+              pasteEventOnDay(dy);
+            } else {
+              openEventModal(evChip.dataset.eventId);
+            }
+          } else if(pasteTemplate){
+            pasteEventOnDay(dy);
+          } else {
+            openEventModal(null, dy);
+          }
+        });
+      } else {
+        // Still allow editing existing events in adjacent-month cells
+        const chips = cell.querySelectorAll("[data-event-id]");
+        chips.forEach(chip=>{
+          chip.style.cursor = "pointer";
+          chip.addEventListener("click", e=>{
+            e.stopPropagation();
+            if(pasteTemplate){
+              pasteEventOnDay(dy);
+            } else {
+              openEventModal(chip.dataset.eventId);
+            }
+          });
+        });
+      }
+
+      grid.appendChild(cell);
+    }
+    scroll.appendChild(grid);
+  }
+}
+
+/* ---------- Events ---------- */
+const EVENT_COLORS = [
+  "#5b8a72", // sage
+  "#c98a4b", // warm orange
+  "#3b7dd8", // blue
+  "#e26ba8", // pink
+  "#4caf6a", // green
+  "#d94a4a", // red
+  "#9b6dc9", // purple
+  "#7a5a3a"  // brown
+];
+
+function fmtTime12(hhmm){
+  if(!hhmm) return "";
+  const [h, m] = hhmm.split(":").map(Number);
+  if(isNaN(h)) return hhmm;
+  const ampm = h >= 12 ? "p" : "a";
+  const hh = ((h + 11) % 12) + 1;
+  return m === 0 ? `${hh}${ampm}` : `${hh}:${String(m).padStart(2,"0")}${ampm}`;
+}
+
+// Round any "HH:MM" to nearest 15-minute mark (00/15/30/45)
+function snapTime15(hhmm){
+  if(!hhmm) return null;
+  const [h, m] = hhmm.split(":").map(Number);
+  if(isNaN(h) || isNaN(m)) return hhmm;
+  const total = h * 60 + m;
+  const snapped = Math.round(total / 15) * 15;
+  const newH = Math.floor(snapped / 60) % 24;
+  const newM = snapped % 60;
+  return `${String(newH).padStart(2,"0")}:${String(newM).padStart(2,"0")}`;
+}
+
+// --- Time picker (hour / minute / AM-PM selects) ---
+function ensureTimeSelectOptions(container){
+  if(container.dataset.populated === "1") return;
+  const hSel  = container.querySelector(".tp-h");
+  const mSel  = container.querySelector(".tp-m");
+  const apSel = container.querySelector(".tp-ap");
+  let hHtml = `<option value="">--</option>`;
+  for(let h=1; h<=12; h++) hHtml += `<option value="${h}">${h}</option>`;
+  hSel.innerHTML = hHtml;
+  mSel.innerHTML = ["00","15","30","45"].map(m=>`<option value="${m}">${m}</option>`).join("");
+  apSel.innerHTML = `<option value="AM">AM</option><option value="PM">PM</option>`;
+  container.dataset.populated = "1";
+}
+function setTimePickerValue(container, hhmm){
+  ensureTimeSelectOptions(container);
+  const hSel  = container.querySelector(".tp-h");
+  const mSel  = container.querySelector(".tp-m");
+  const apSel = container.querySelector(".tp-ap");
+  if(!hhmm){
+    hSel.value = "";
+    mSel.value = "00";
+    apSel.value = "AM";
+    return;
+  }
+  const snapped = snapTime15(hhmm);
+  const [h24, m] = snapped.split(":").map(Number);
+  const ap = h24 >= 12 ? "PM" : "AM";
+  let h12 = h24 % 12; if(h12 === 0) h12 = 12;
+  hSel.value = String(h12);
+  mSel.value = String(m).padStart(2,"0");
+  apSel.value = ap;
+}
+function getTimePickerValue(container){
+  const hSel  = container.querySelector(".tp-h");
+  const mSel  = container.querySelector(".tp-m");
+  const apSel = container.querySelector(".tp-ap");
+  if(!hSel.value) return null; // "--" hour means no time set
+  let h = parseInt(hSel.value, 10);
+  const m = parseInt(mSel.value, 10) || 0;
+  const ap = apSel.value;
+  if(ap === "PM" && h !== 12) h += 12;
+  else if(ap === "AM" && h === 12) h = 0;
+  return `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`;
+}
+function eventTooltip(ev){
+  let s = ev.title;
+  const span = eventSpanDays(ev);
+  if(span > 1){
+    s += ` (${span} days: ${ev.date} → ${ev.endDate})`;
+  }
+  if(!ev.allDay && ev.startTime){
+    s += `\n${fmtTime12(ev.startTime)}`;
+    if(ev.endTime) s += `–${fmtTime12(ev.endTime)}`;
+  }
+  if(ev.recurring){
+    s += `\n🔁 ${describeRecurrence(ev.recurring)}`;
+  }
+  if(ev.attendees && ev.attendees.length){
+    s += `\n` + ev.attendees.map(personName).join(", ");
+  } else {
+    s += `\nEveryone`;
+  }
+  if(ev.location) s += `\n📍 ${ev.location}`;
+  if(ev.notes) s += `\n${ev.notes}`;
+  return s;
+}
+
+// Number of days an event spans (inclusive). 1 if no endDate or invalid.
+function eventSpanDays(ev){
+  if(!ev.endDate || ev.endDate <= ev.date) return 1;
+  const start = new Date(ev.date + "T00:00:00");
+  const end   = new Date(ev.endDate + "T00:00:00");
+  const diff  = Math.round((end - start) / 86400000) + 1;
+  return Math.max(1, Math.min(diff, 60)); // cap at 60 days for safety
+}
+
+function describeRecurrence(r){
+  if(!r) return "";
+  const interval = Math.max(1, r.interval || 1);
+  let s = "";
+  if(r.pattern === "daily")   s = interval === 1 ? "Daily" : `Every ${interval} days`;
+  else if(r.pattern === "weekly"){
+    if(r.weekdays && r.weekdays.length){
+      const names = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+      s = "Weekly on " + r.weekdays.slice().sort().map(d=>names[d]).join(", ");
+    } else {
+      s = interval === 1 ? "Weekly" : `Every ${interval} weeks`;
+    }
+  }
+  else if(r.pattern === "monthly") s = interval === 1 ? "Monthly" : `Every ${interval} months`;
+  if(r.until) s += ` until ${r.until}`;
+  return s;
+}
+
+// Return an array of YYYY-MM-DD strings where this event occurs within [fromYmd, toYmd]
+function expandEventOccurrences(ev, fromYmd, toYmd){
+  const out = [];
+  if(!ev.recurring){
+    if(ev.date >= fromYmd && ev.date <= toYmd) out.push(ev.date);
+    return out;
+  }
+  const r = ev.recurring;
+  const interval = Math.max(1, r.interval || 1);
+  const startD = new Date(ev.date + "T00:00:00");
+  const endLimit = new Date(toYmd + "T00:00:00");
+  const untilLimit = r.until ? new Date(r.until + "T00:00:00") : null;
+  const stopD = untilLimit && untilLimit < endLimit ? untilLimit : endLimit;
+
+  if(r.pattern === "daily"){
+    let d = new Date(startD);
+    let safety = 0;
+    while(d <= stopD && safety++ < 2000){
+      const dy = ymd(d);
+      if(dy >= fromYmd) out.push(dy);
+      d = addDays(d, interval);
+    }
+  } else if(r.pattern === "weekly"){
+    const weekdays = (r.weekdays && r.weekdays.length) ? r.weekdays.slice().sort() : [startD.getDay()];
+    // Step a day at a time within the window for simplicity (still bounded ~92 days)
+    let d = new Date(startD);
+    let safety = 0;
+    while(d <= stopD && safety++ < 2000){
+      if(weekdays.includes(d.getDay())){
+        const dy = ymd(d);
+        if(dy >= fromYmd) out.push(dy);
+      }
+      d = addDays(d, 1);
+      // For interval > 1, skip whole weeks after each occurrence in the original weekday
+      // Simple approach: when crossing into a new week, jump forward (interval-1)*7 days
+      if(interval > 1 && d.getDay() === 0){
+        d = addDays(d, (interval - 1) * 7);
+      }
+    }
+  } else if(r.pattern === "monthly"){
+    let d = new Date(startD);
+    let safety = 0;
+    while(d <= stopD && safety++ < 240){
+      const dy = ymd(d);
+      if(dy >= fromYmd) out.push(dy);
+      d.setMonth(d.getMonth() + interval);
+    }
+  }
+  return out;
+}
+
+let editingEventId = null;
+
+// Copy/paste state — when set, clicking a day cell creates a copy on that day.
+// pasteTemplate is a partial event object (no id/date/endDate/recurring) used as the source.
+let pasteTemplate = null;
+let pasteSpanDays = 1; // preserves multi-day length when pasting
+
+function enterPasteMode(ev){
+  pasteTemplate = {
+    title: ev.title,
+    allDay: !!ev.allDay,
+    startTime: ev.startTime || null,
+    endTime: ev.endTime || null,
+    attendees: Array.isArray(ev.attendees) ? ev.attendees.slice() : [],
+    color: ev.color || EVENT_COLORS[0],
+    notes: ev.notes || "",
+    location: ev.location || ""
+  };
+  pasteSpanDays = eventSpanDays(ev);
+  document.body.classList.add("paste-mode");
+  const banner = document.getElementById("paste-banner");
+  const spanTxt = pasteSpanDays > 1 ? ` <span style="color:var(--ink-soft);">(${pasteSpanDays}-day event)</span>` : "";
+  banner.querySelector(".pb-msg").innerHTML = `📋 Pasting <span class="pb-title">${escapeHtml(pasteTemplate.title)}</span>${spanTxt} — click any day to add a copy.`;
+  banner.style.display = "";
+}
+
+function exitPasteMode(){
+  pasteTemplate = null;
+  pasteSpanDays = 1;
+  document.body.classList.remove("paste-mode");
+  const banner = document.getElementById("paste-banner");
+  if(banner) banner.style.display = "none";
+}
+
+function pasteEventOnDay(dy){
+  if(!pasteTemplate) return;
+  const endDate = pasteSpanDays > 1 ? ymd(addDays(new Date(dy + "T00:00:00"), pasteSpanDays - 1)) : null;
+  data.events.push({
+    id: uid(),
+    title: pasteTemplate.title,
+    date: dy,
+    endDate,
+    allDay: pasteTemplate.allDay,
+    startTime: pasteTemplate.startTime,
+    endTime: pasteTemplate.endTime,
+    attendees: pasteTemplate.attendees.slice(),
+    color: pasteTemplate.color,
+    notes: pasteTemplate.notes,
+    location: pasteTemplate.location,
+    recurring: null,
+    createdAt: todayYmd()
+  });
+  save();
+  renderPlainCalendar();
+}
+
+function openEventModal(id, prefillDate){
+  editingEventId = id;
+  const bg = document.getElementById("event-modal-bg");
+  const titleH = document.getElementById("event-modal-title");
+  const tIn = document.getElementById("event-modal-input-title");
+  const dIn = document.getElementById("event-modal-date");
+  const endDIn = document.getElementById("event-modal-end-date");
+  const allDay = document.getElementById("event-modal-allday");
+  const startIn = document.getElementById("event-modal-start");
+  const endIn = document.getElementById("event-modal-end");
+  const timeRow = document.getElementById("event-modal-time-row");
+  const everyoneChk = document.getElementById("event-modal-everyone");
+  const attCont = document.getElementById("event-modal-attendees");
+  const colorsCont = document.getElementById("event-modal-colors");
+  const notes = document.getElementById("event-modal-notes");
+  const locationIn = document.getElementById("event-modal-location");
+  const delBtn = document.getElementById("event-modal-delete");
+  const copyBtn = document.getElementById("event-modal-copy");
+  const recurSel = document.getElementById("event-modal-recur");
+  const intervalIn = document.getElementById("event-modal-interval");
+  const untilIn = document.getElementById("event-modal-until");
+  const wdayCont = document.getElementById("event-modal-weekdays");
+
+  const ev = id ? data.events.find(e=>e.id===id) : null;
+  titleH.textContent = ev ? "Edit Event" : "Add Event";
+  delBtn.style.display = ev ? "" : "none";
+  copyBtn.style.display = ev ? "" : "none";
+
+  tIn.value = ev ? ev.title : "";
+  dIn.value = ev ? ev.date : (prefillDate || todayYmd());
+  endDIn.value = ev && ev.endDate && ev.endDate > ev.date ? ev.endDate : "";
+  allDay.checked = ev ? !!ev.allDay : false;
+  setTimePickerValue(startIn, ev && ev.startTime ? ev.startTime : null);
+  setTimePickerValue(endIn,   ev && ev.endTime   ? ev.endTime   : null);
+  timeRow.style.display = allDay.checked ? "none" : "";
+  notes.value = ev ? (ev.notes || "") : "";
+  locationIn.value = ev ? (ev.location || "") : "";
+
+  // Attendees
+  const initialAttendees = ev ? (ev.attendees || []) : [];
+  const isEveryone = !initialAttendees.length;
+  everyoneChk.checked = isEveryone;
+  attCont.innerHTML = data.people.map(p=>{
+    const checked = isEveryone ? "" : (initialAttendees.includes(p.id) ? "checked" : "");
+    return `<label><input type="checkbox" data-pid="${p.id}" ${checked} /><span class="pdot" style="background:${escapeHtml(p.color||'#5b8a72')}"></span>${escapeHtml(p.name)}</label>`;
+  }).join("");
+  attCont.style.opacity = isEveryone ? "0.5" : "1";
+  attCont.style.pointerEvents = isEveryone ? "none" : "";
+
+  // Colors
+  const selColor = ev ? (ev.color || EVENT_COLORS[0]) : EVENT_COLORS[0];
+  colorsCont.innerHTML = EVENT_COLORS.map(c=>{
+    const sel = c.toLowerCase() === selColor.toLowerCase() ? "selected" : "";
+    return `<label class="${sel}" style="background:${c}" data-color="${c}"><input type="radio" name="event-color" value="${c}" ${sel?"checked":""} /></label>`;
+  }).join("");
+
+  // Recurrence
+  const r = ev && ev.recurring ? ev.recurring : null;
+  recurSel.value = r ? r.pattern : "none";
+  intervalIn.value = r && r.interval ? r.interval : 1;
+  untilIn.value = r && r.until ? r.until : "";
+  const initialWeekdays = (r && r.weekdays) ? r.weekdays : [];
+  const dayNames = ["S","M","T","W","T","F","S"];
+  wdayCont.innerHTML = dayNames.map((n,i)=>{
+    const on = initialWeekdays.includes(i);
+    return `<label class="${on?"on":""}"><input type="checkbox" data-wd="${i}" ${on?"checked":""} />${n}</label>`;
+  }).join("");
+  updateEventRecurExtras();
+
+  bg.classList.add("open");
+  bg.setAttribute("aria-hidden","false");
+  setTimeout(()=>tIn.focus(), 50);
+}
+
+function closeEventModal(){
+  const bg = document.getElementById("event-modal-bg");
+  bg.classList.remove("open");
+  bg.setAttribute("aria-hidden","true");
+  editingEventId = null;
+}
+
+function updateEventRecurExtras(){
+  const sel = document.getElementById("event-modal-recur").value;
+  const extras = document.getElementById("event-modal-recur-extras");
+  const unit = document.getElementById("event-modal-interval-unit");
+  const wdayRow = document.getElementById("event-modal-weekday-row");
+  if(sel === "none"){
+    extras.style.display = "none";
+    return;
+  }
+  extras.style.display = "";
+  unit.textContent = sel === "daily" ? "day(s)" : sel === "weekly" ? "week(s)" : "month(s)";
+  wdayRow.style.display = sel === "weekly" ? "" : "none";
+}
+
+// Wire up event modal
+(function wireEventModal(){
+  const bg = document.getElementById("event-modal-bg");
+  const allDay = document.getElementById("event-modal-allday");
+  const timeRow = document.getElementById("event-modal-time-row");
+  const everyoneChk = document.getElementById("event-modal-everyone");
+  const attCont = document.getElementById("event-modal-attendees");
+  const colorsCont = document.getElementById("event-modal-colors");
+
+  document.getElementById("btn-add-event").addEventListener("click", ()=>openEventModal(null));
+
+  allDay.addEventListener("change", ()=>{
+    timeRow.style.display = allDay.checked ? "none" : "";
+  });
+
+  everyoneChk.addEventListener("change", ()=>{
+    const isEv = everyoneChk.checked;
+    attCont.style.opacity = isEv ? "0.5" : "1";
+    attCont.style.pointerEvents = isEv ? "none" : "";
+    if(isEv){
+      attCont.querySelectorAll("input[type=checkbox]").forEach(cb=>cb.checked = false);
+    }
+  });
+
+  // Uncheck "Everyone" if user selects an individual
+  attCont.addEventListener("change", e=>{
+    if(e.target.matches("input[type=checkbox]") && e.target.checked){
+      everyoneChk.checked = false;
+    }
+  });
+
+  colorsCont.addEventListener("click", e=>{
+    const lbl = e.target.closest("label[data-color]");
+    if(!lbl) return;
+    colorsCont.querySelectorAll("label").forEach(l=>l.classList.remove("selected"));
+    lbl.classList.add("selected");
+    const radio = lbl.querySelector("input");
+    if(radio) radio.checked = true;
+  });
+
+  // Recurrence wiring
+  document.getElementById("event-modal-recur").addEventListener("change", updateEventRecurExtras);
+  document.getElementById("event-modal-until-clear").addEventListener("click", ()=>{
+    document.getElementById("event-modal-until").value = "";
+  });
+  document.getElementById("event-modal-weekdays").addEventListener("change", e=>{
+    const lbl = e.target.closest("label");
+    if(lbl) lbl.classList.toggle("on", e.target.checked);
+  });
+
+  document.getElementById("event-modal-cancel").addEventListener("click", closeEventModal);
+  bg.addEventListener("click", e=>{ if(e.target === bg) closeEventModal(); });
+  document.getElementById("event-modal-end-date-clear").addEventListener("click", ()=>{
+    document.getElementById("event-modal-end-date").value = "";
+  });
+
+  document.getElementById("event-modal-delete").addEventListener("click", ()=>{
+    if(!editingEventId) return;
+    const ev = data.events.find(e=>e.id===editingEventId);
+    const label = ev && ev.recurring ? `Delete the entire "${ev.title}" series?` : `Delete event "${ev ? ev.title : ''}"?`;
+    if(!confirm(label)) return;
+    data.events = data.events.filter(e=>e.id !== editingEventId);
+    save();
+    closeEventModal();
+    renderPlainCalendar();
+  });
+
+  document.getElementById("event-modal-copy").addEventListener("click", ()=>{
+    if(!editingEventId) return;
+    const ev = data.events.find(e=>e.id===editingEventId);
+    if(!ev) return;
+    closeEventModal();
+    enterPasteMode(ev);
+  });
+
+  document.getElementById("paste-banner-done").addEventListener("click", exitPasteMode);
+
+  document.getElementById("event-modal-save").addEventListener("click", ()=>{
+    const title = document.getElementById("event-modal-input-title").value.trim();
+    if(!title){ alert("Please enter a title."); return; }
+    const date = document.getElementById("event-modal-date").value;
+    if(!date){ alert("Please pick a date."); return; }
+    let endDate = document.getElementById("event-modal-end-date").value || null;
+    if(endDate && endDate < date){
+      alert("End date must be on or after the start date.");
+      return;
+    }
+    if(endDate === date) endDate = null; // single day
+    const isAllDay = allDay.checked;
+    const startTime = isAllDay ? null : getTimePickerValue(document.getElementById("event-modal-start"));
+    const endTime   = isAllDay ? null : getTimePickerValue(document.getElementById("event-modal-end"));
+    const attendees = everyoneChk.checked
+      ? []
+      : Array.from(attCont.querySelectorAll("input[type=checkbox]:checked")).map(cb=>cb.dataset.pid);
+    const colorChecked = colorsCont.querySelector("input[type=radio]:checked");
+    const color = colorChecked ? colorChecked.value : EVENT_COLORS[0];
+    const notes = document.getElementById("event-modal-notes").value.trim();
+    const location = document.getElementById("event-modal-location").value.trim();
+
+    // Recurrence
+    const recurPattern = document.getElementById("event-modal-recur").value;
+    let recurring = null;
+    if(recurPattern !== "none"){
+      const interval = Math.max(1, parseInt(document.getElementById("event-modal-interval").value, 10) || 1);
+      const until = document.getElementById("event-modal-until").value || null;
+      let weekdays = [];
+      if(recurPattern === "weekly"){
+        weekdays = Array.from(document.querySelectorAll("#event-modal-weekdays input[type=checkbox]:checked"))
+          .map(cb => parseInt(cb.dataset.wd, 10));
+      }
+      recurring = { pattern: recurPattern, interval, weekdays, until };
+    }
+
+    if(editingEventId){
+      const ev = data.events.find(e=>e.id===editingEventId);
+      if(ev){
+        ev.title = title;
+        ev.date = date;
+        ev.endDate = endDate;
+        ev.allDay = isAllDay;
+        ev.startTime = startTime;
+        ev.endTime = endTime;
+        ev.attendees = attendees;
+        ev.color = color;
+        ev.notes = notes;
+        ev.location = location;
+        ev.recurring = recurring;
+      }
+    } else {
+      data.events.push({
+        id: uid(),
+        title, date,
+        endDate,
+        allDay: isAllDay,
+        startTime, endTime,
+        attendees,
+        color,
+        notes,
+        location,
+        recurring,
+        createdAt: todayYmd()
+      });
+    }
+    save();
+    closeEventModal();
+    renderPlainCalendar();
+  });
+
+  // ESC closes
+  document.addEventListener("keydown", e=>{
+    if(e.key === "Escape"){
+      if(bg.classList.contains("open")) closeEventModal();
+      else if(pasteTemplate) exitPasteMode();
+    }
+  });
+})();
+
+/* ---------- Todos ---------- */
+
+// Migrate / normalize a single todo object so older shape still works
+function normalizeTodo(t){
+  return {
+    id: t.id || uid(),
+    title: t.title || "",
+    assignees: Array.isArray(t.assignees) ? t.assignees : [],
+    due: t.due || null,                 // "YYYY-MM-DD" or null
+    createdAt: t.createdAt || todayYmd(),
+    done: !!t.done,
+    completedAt: t.completedAt || null,
+    recurring: t.recurring && t.recurring.pattern ? {
+      pattern: t.recurring.pattern,                       // "daily" | "weekly" | "monthly"
+      interval: Math.max(1, parseInt(t.recurring.interval, 10) || 1),
+      weekdays: Array.isArray(t.recurring.weekdays) ? t.recurring.weekdays : []
+    } : null
+  };
+}
+// Run normalization on initial load
+data.todos = data.todos.map(normalizeTodo);
+
+let todoGroupBy = "person";
+let todoModalState = { editingId: null };
+
+function fmtDateShort(s){
+  if(!s) return "";
+  const d = new Date(s + "T00:00:00");
+  return d.toLocaleDateString(undefined, { month:"short", day:"numeric" });
+}
+function fmtDateLong(s){
+  if(!s) return "";
+  const d = new Date(s + "T00:00:00");
+  return d.toLocaleDateString(undefined, { weekday:"short", month:"short", day:"numeric", year:"numeric" });
+}
+function daysDiffYmd(a, b){
+  const da = new Date(a + "T00:00:00");
+  const db = new Date(b + "T00:00:00");
+  return Math.round((db - da) / 86400000);
+}
+function personName(id){
+  const p = data.people.find(p=>p.id===id);
+  return p ? p.name : "?";
+}
+function personColor(id){
+  const p = data.people.find(p=>p.id===id);
+  return p ? (p.color || "#5b8a72") : "#999";
+}
+
+// Drop-target wiring for person sections
+function attachDropTarget(sec, targetPid){
+  sec.addEventListener("dragover", e=>{
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    sec.classList.add("drop-target");
+  });
+  sec.addEventListener("dragleave", e=>{
+    // Only clear if pointer truly left the section
+    if(!sec.contains(e.relatedTarget)) sec.classList.remove("drop-target");
+  });
+  sec.addEventListener("drop", e=>{
+    e.preventDefault();
+    sec.classList.remove("drop-target");
+    let payload;
+    try { payload = JSON.parse(e.dataTransfer.getData("text/plain") || "{}"); } catch { return; }
+    const { tid, sourcePid } = payload;
+    if(!tid) return;
+    if(sourcePid === targetPid) return; // no-op
+    const todo = data.todos.find(t=>t.id === tid);
+    if(!todo) return;
+    moveTodoAssignee(todo, sourcePid, targetPid);
+    save();
+    renderTodos();
+  });
+}
+
+// Replace the source assignee with the target (or add/remove for unassigned)
+function moveTodoAssignee(todo, sourcePid, targetPid){
+  let a = (todo.assignees || []).slice();
+  if(sourcePid && sourcePid !== "__unassigned__"){
+    a = a.filter(pid => pid !== sourcePid);
+  }
+  if(targetPid && targetPid !== "__unassigned__"){
+    if(!a.includes(targetPid)) a.push(targetPid);
+  }
+  todo.assignees = a;
+}
+
+// Sort: due first (overdue → soonest), then no-due, with done at bottom; secondary by createdAt desc
+function todoSort(a, b){
+  if(a.done !== b.done) return a.done ? 1 : -1;
+  if(a.due && b.due) return a.due.localeCompare(b.due);
+  if(a.due && !b.due) return -1;
+  if(!a.due && b.due) return 1;
+  return b.createdAt.localeCompare(a.createdAt);
+}
+
+function renderTodos(){
+  const c = document.getElementById("todo-list");
+  c.innerHTML = "";
+  if(!data.todos.length){
+    c.innerHTML = `<div class="empty">No todos yet. Add one above!</div>`;
+    return;
+  }
+
+  const today = todayYmd();
+  // Recurring todos with a future due date are "snoozed" — hide from the active list
+  // until their next due date arrives. They'll automatically reappear.
+  const isSnoozed = (t)=> !t.done && t.recurring && t.due && t.due > today;
+
+  const active   = data.todos.filter(t=>!t.done && !isSnoozed(t)).slice().sort(todoSort);
+  const snoozed  = data.todos.filter(isSnoozed).slice().sort(todoSort);
+  const done     = data.todos.filter(t=>t.done).slice().sort((a,b)=>{
+    return (b.completedAt || "").localeCompare(a.completedAt || "");
+  });
+
+  if(todoGroupBy === "none"){
+    if(active.length){
+      const sec = document.createElement("div");
+      sec.className = "group-section";
+      active.forEach(t=>sec.appendChild(todoRow(t)));
+      c.appendChild(sec);
+    } else {
+      c.innerHTML += `<div class="empty">All caught up! 🎉</div>`;
+    }
+  } else if(todoGroupBy === "person"){
+    // Group by assignee (a todo with multiple appears in each); plus an "Unassigned" group
+    const buckets = {};
+    data.people.forEach(p=>{ buckets[p.id] = []; });
+    buckets["__unassigned__"] = [];
+    active.forEach(t=>{
+      if(!t.assignees.length){ buckets["__unassigned__"].push(t); }
+      else{
+        t.assignees.forEach(pid=>{
+          if(!buckets[pid]) buckets[pid] = [];
+          buckets[pid].push(t);
+        });
+      }
+    });
+    data.people.forEach(p=>{
+      const list = buckets[p.id];
+      if(!list.length) return;
+      const sec = document.createElement("div");
+      sec.className = "group-section person-section";
+      sec.dataset.pid = p.id;
+      const pc = p.color || '#5b8a72';
+      sec.innerHTML = `<h3 style="background:${escapeHtml(pc)}22; border-left-color:${escapeHtml(pc)};"><span class="pdot" style="background:${escapeHtml(pc)}"></span>${escapeHtml(p.name)}</h3>`;
+      list.forEach(t=>sec.appendChild(todoRow(t, p.id)));
+      attachDropTarget(sec, p.id);
+      c.appendChild(sec);
+    });
+    // Always show the Unassigned section as a drop target (even when empty)
+    {
+      const sec = document.createElement("div");
+      sec.className = "group-section unassigned-section";
+      sec.dataset.pid = "__unassigned__";
+      sec.innerHTML = `<h3>🤷 Unassigned</h3>`;
+      buckets["__unassigned__"].forEach(t=>sec.appendChild(todoRow(t, null)));
+      attachDropTarget(sec, "__unassigned__");
+      c.appendChild(sec);
+    }
+  } else if(todoGroupBy === "due"){
+    const today = todayYmd();
+    const buckets = {
+      "overdue":   { label:"⚠️ Overdue", items:[] },
+      "today":     { label:"📅 Today",   items:[] },
+      "thisweek":  { label:"This Week",  items:[] },
+      "later":     { label:"Later",      items:[] },
+      "nodate":    { label:"No due date", items:[] }
+    };
+    active.forEach(t=>{
+      if(!t.due){ buckets.nodate.items.push(t); return; }
+      const d = daysDiffYmd(today, t.due);
+      if(d < 0) buckets.overdue.items.push(t);
+      else if(d === 0) buckets.today.items.push(t);
+      else if(d <= 7) buckets.thisweek.items.push(t);
+      else buckets.later.items.push(t);
+    });
+    Object.keys(buckets).forEach(k=>{
+      const b = buckets[k];
+      if(!b.items.length) return;
+      const sec = document.createElement("div");
+      sec.className = "group-section";
+      sec.innerHTML = `<h3>${escapeHtml(b.label)}</h3>`;
+      b.items.forEach(t=>sec.appendChild(todoRow(t)));
+      c.appendChild(sec);
+    });
+  }
+
+  // Snoozed recurring section (collapsed) — recurring tasks not yet due again
+  if(snoozed.length){
+    const det = document.createElement("details");
+    det.className = "completed-section";
+    det.innerHTML = `<summary>🔁 Coming up (${snoozed.length})</summary>`;
+    snoozed.forEach(t=>det.appendChild(todoRow(t)));
+    c.appendChild(det);
+  }
+
+  // Completed section (always at bottom, collapsed)
+  if(done.length){
+    const det = document.createElement("details");
+    det.className = "completed-section";
+    det.innerHTML = `<summary>Completed (${done.length})</summary>`;
+    done.forEach(t=>det.appendChild(todoRow(t)));
+    c.appendChild(det);
+  }
+}
+
+function todoRow(t, sourcePid){
+  const row = document.createElement("div");
+  row.className = "todo-row" + (t.done ? " done" : "");
+  row.dataset.tid = t.id;
+  // Enable dragging only in person grouping mode
+  if(todoGroupBy === "person" && !t.done){
+    row.draggable = true;
+    row.dataset.sourcePid = sourcePid || "__unassigned__";
+    row.addEventListener("dragstart", e=>{
+      row.classList.add("dragging");
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData("text/plain", JSON.stringify({
+        tid: t.id,
+        sourcePid: row.dataset.sourcePid
+      }));
+    });
+    row.addEventListener("dragend", ()=> row.classList.remove("dragging"));
+  }
+
+  // Colored left border based on first assignee (or gradient when multiple)
+  if(t.assignees.length === 1){
+    row.style.borderLeftColor = personColor(t.assignees[0]);
+  } else if(t.assignees.length > 1){
+    // Gradient stripe of all assignee colors
+    const stops = t.assignees.map(personColor).join(",");
+    row.style.borderLeft = "0";
+    row.style.boxShadow = `inset 4px 0 0 0 ${personColor(t.assignees[0])}`;
+    row.style.backgroundImage = `linear-gradient(to bottom, ${stops})`;
+    row.style.backgroundSize = "4px 100%";
+    row.style.backgroundRepeat = "no-repeat";
+    row.style.backgroundPosition = "left center";
+  }
+
+  // Build meta pills
+  const today = todayYmd();
+  let duePill = "";
+  if(t.due){
+    const diff = daysDiffYmd(today, t.due);
+    let cls = "";
+    let text = fmtDateShort(t.due);
+    if(!t.done){
+      if(diff < 0){ cls = "overdue"; text = `${text} · ${Math.abs(diff)}d late`; }
+      else if(diff === 0){ cls = "today"; text = "Today"; }
+      else if(diff === 1){ text = "Tomorrow"; }
+      else if(diff <= 6){ text = `${text} · in ${diff}d`; }
+    }
+    duePill = `<span class="pill due ${cls}">📅 ${escapeHtml(text)}</span>`;
+  }
+
+  const assigneePills = t.assignees.map(pid=>{
+    const pc = personColor(pid);
+    return `<span class="pill assignee" style="background:${escapeHtml(pc)}22; border-color:${escapeHtml(pc)}66; color:var(--ink);"><span class="dot" style="background:${escapeHtml(pc)}"></span>${escapeHtml(personName(pid))}</span>`;
+  }).join("");
+
+  let recurPill = "";
+  if(t.recurring){
+    const r = t.recurring;
+    let txt = "";
+    if(r.pattern === "daily")   txt = r.interval === 1 ? "Daily" : `Every ${r.interval} days`;
+    if(r.pattern === "weekly"){
+      if(r.weekdays && r.weekdays.length){
+        const names = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+        txt = r.weekdays.slice().sort().map(d=>names[d]).join(", ");
+      } else {
+        txt = r.interval === 1 ? "Weekly" : `Every ${r.interval} weeks`;
+      }
+    }
+    if(r.pattern === "monthly") txt = r.interval === 1 ? "Monthly" : `Every ${r.interval} months`;
+    recurPill = `<span class="pill recurring" title="Recurring">🔁 ${escapeHtml(txt)}</span>`;
+  }
+
+  const addedTxt = t.done && t.completedAt
+    ? `Completed ${fmtDateShort(t.completedAt)}`
+    : `Added ${fmtDateShort(t.createdAt)}`;
+
+  row.innerHTML = `
+    <input type="checkbox" ${t.done?"checked":""} aria-label="Mark done" />
+    <div class="info">
+      <div class="title">${escapeHtml(t.title)}</div>
+      <div class="meta">
+        ${assigneePills}
+        ${duePill}
+        ${recurPill}
+        <span class="added" title="${t.done && t.completedAt ? 'Completed '+fmtDateLong(t.completedAt) : 'Added '+fmtDateLong(t.createdAt)}">${escapeHtml(addedTxt)}</span>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="icon" data-act="edit" title="Edit" aria-label="Edit">✏️</button>
+      <button class="icon" data-act="delete" title="Delete" aria-label="Delete">✕</button>
+    </div>
+  `;
+
+  row.querySelector("input").addEventListener("change", e=>{
+    handleTodoCheck(t.id, e.target.checked);
+  });
+  row.querySelector('[data-act="edit"]').addEventListener("click",()=> openTodoModal(t.id));
+  row.querySelector('[data-act="delete"]').addEventListener("click",()=>{
+    if(!confirm(`Delete todo "${t.title}"?`)) return;
+    data.todos = data.todos.filter(x=>x.id !== t.id);
+    save();
+    renderTodos();
+  });
+  return row;
+}
+
+function handleTodoCheck(id, checked){
+  const t = data.todos.find(x=>x.id===id);
+  if(!t) return;
+  if(checked && t.recurring){
+    // Advance the due date to the next occurrence (or from today if no due)
+    const base = t.due || todayYmd();
+    t.due = nextRecurrence(base, t.recurring);
+    t.done = false;       // re-open with new due date
+    t.completedAt = null;
+  } else {
+    t.done = checked;
+    t.completedAt = checked ? todayYmd() : null;
+  }
+  save();
+  renderTodos();
+}
+
+function nextRecurrence(fromYmd, r){
+  const d = new Date(fromYmd + "T00:00:00");
+  const interval = Math.max(1, r.interval || 1);
+  if(r.pattern === "daily"){
+    d.setDate(d.getDate() + interval);
+  } else if(r.pattern === "weekly"){
+    if(r.weekdays && r.weekdays.length){
+      // Find the next weekday in the set after current date
+      for(let i=1; i<=14; i++){
+        const cand = new Date(d); cand.setDate(d.getDate() + i);
+        if(r.weekdays.includes(cand.getDay())){
+          return ymd(cand);
+        }
+      }
+      d.setDate(d.getDate() + 7 * interval);
+    } else {
+      d.setDate(d.getDate() + 7 * interval);
+    }
+  } else if(r.pattern === "monthly"){
+    d.setMonth(d.getMonth() + interval);
+  }
+  return ymd(d);
+}
+
+/* ---- Todo modal ---- */
+function openTodoModal(id){
+  todoModalState.editingId = id || null;
+  const t = id ? data.todos.find(x=>x.id===id) : null;
+  document.getElementById("todo-modal-title").textContent = id ? "Edit Todo" : "Add Todo";
+  document.getElementById("todo-modal-sub").textContent = t
+    ? `Added ${fmtDateLong(t.createdAt)}${t.completedAt ? ' · Completed '+fmtDateLong(t.completedAt) : ''}`
+    : "Fill in the details below.";
+  document.getElementById("todo-modal-input-title").value = t ? t.title : "";
+  document.getElementById("todo-modal-due").value = t ? (t.due || "") : "";
+
+  // Assignees
+  const ac = document.getElementById("todo-modal-assignees");
+  ac.innerHTML = data.people.map(p=>{
+    const checked = t && t.assignees.includes(p.id);
+    return `
+      <label>
+        <input type="checkbox" data-pid="${escapeHtml(p.id)}" ${checked?"checked":""} />
+        <span class="pdot" style="background:${escapeHtml(p.color||'#5b8a72')}"></span>
+        ${escapeHtml(p.name)}
+      </label>
+    `;
+  }).join("");
+  if(!data.people.length){
+    ac.innerHTML = `<div class="empty" style="padding:6px;">No family members defined yet.</div>`;
+  }
+
+  // Recurring
+  const recurSel = document.getElementById("todo-modal-recur");
+  const intervalInput = document.getElementById("todo-modal-interval");
+  if(t && t.recurring){
+    recurSel.value = t.recurring.pattern;
+    intervalInput.value = t.recurring.interval || 1;
+  } else {
+    recurSel.value = "none";
+    intervalInput.value = 1;
+  }
+  // Weekdays
+  const wkContainer = document.getElementById("todo-modal-weekdays");
+  const dayNames = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  const activeWkdays = (t && t.recurring && t.recurring.weekdays) || [];
+  wkContainer.innerHTML = dayNames.map((n,i)=>{
+    const on = activeWkdays.includes(i);
+    return `<label class="${on?'on':''}"><input type="checkbox" data-wkday="${i}" ${on?"checked":""} />${n}</label>`;
+  }).join("");
+  updateRecurExtras();
+
+  // Show delete only when editing
+  document.getElementById("todo-modal-delete").style.display = id ? "" : "none";
+
+  const bg = document.getElementById("todo-modal-bg");
+  bg.classList.add("open");
+  bg.setAttribute("aria-hidden", "false");
+  setTimeout(()=> document.getElementById("todo-modal-input-title").focus(), 30);
+}
+
+function closeTodoModal(){
+  const bg = document.getElementById("todo-modal-bg");
+  bg.classList.remove("open");
+  bg.setAttribute("aria-hidden", "true");
+}
+
+function updateRecurExtras(){
+  const sel = document.getElementById("todo-modal-recur").value;
+  const extras = document.getElementById("todo-modal-recur-extras");
+  const wkRow = document.getElementById("todo-modal-weekday-row");
+  const intRow = document.getElementById("todo-modal-interval-row");
+  const unit = document.getElementById("todo-modal-interval-unit");
+  if(sel === "none"){ extras.style.display = "none"; return; }
+  extras.style.display = "";
+  if(sel === "daily")  { unit.textContent = "day(s)"; intRow.style.display = ""; wkRow.style.display = "none"; }
+  if(sel === "weekly") { unit.textContent = "week(s)"; intRow.style.display = ""; wkRow.style.display = ""; }
+  if(sel === "monthly"){ unit.textContent = "month(s)"; intRow.style.display = ""; wkRow.style.display = "none"; }
+}
+
+document.getElementById("todo-modal-recur").addEventListener("change", updateRecurExtras);
+
+// Weekday toggle visuals
+document.getElementById("todo-modal-weekdays").addEventListener("change", e=>{
+  const cb = e.target.closest("input[data-wkday]");
+  if(!cb) return;
+  cb.parentElement.classList.toggle("on", cb.checked);
+});
+
+document.getElementById("todo-modal-due-clear").addEventListener("click",()=>{
+  document.getElementById("todo-modal-due").value = "";
+});
+
+document.getElementById("todo-modal-cancel").addEventListener("click", closeTodoModal);
+document.getElementById("todo-modal-bg").addEventListener("click", e=>{
+  if(e.target.id === "todo-modal-bg") closeTodoModal();
+});
+document.addEventListener("keydown", e=>{
+  if(e.key === "Escape" && document.getElementById("todo-modal-bg").classList.contains("open")){
+    closeTodoModal();
+  }
+});
+
+document.getElementById("todo-modal-save").addEventListener("click",()=>{
+  const title = document.getElementById("todo-modal-input-title").value.trim();
+  if(!title){ alert("Please enter a title."); return; }
+  const assignees = [...document.querySelectorAll('#todo-modal-assignees input[type=checkbox]:checked')]
+    .map(cb=>cb.dataset.pid);
+  const due = document.getElementById("todo-modal-due").value || null;
+  const recurPattern = document.getElementById("todo-modal-recur").value;
+  let recurring = null;
+  if(recurPattern !== "none"){
+    const interval = Math.max(1, parseInt(document.getElementById("todo-modal-interval").value, 10) || 1);
+    const weekdays = recurPattern === "weekly"
+      ? [...document.querySelectorAll('#todo-modal-weekdays input[type=checkbox]:checked')].map(cb=>parseInt(cb.dataset.wkday,10))
+      : [];
+    recurring = { pattern: recurPattern, interval, weekdays };
+  }
+
+  if(todoModalState.editingId){
+    const t = data.todos.find(x=>x.id===todoModalState.editingId);
+    if(t){
+      t.title = title;
+      t.assignees = assignees;
+      t.due = due;
+      t.recurring = recurring;
+    }
+  } else {
+    data.todos.push(normalizeTodo({
+      title, assignees, due, recurring,
+      createdAt: todayYmd(),
+      done: false
+    }));
+  }
+  save();
+  closeTodoModal();
+  renderTodos();
+});
+
+document.getElementById("todo-modal-delete").addEventListener("click",()=>{
+  const id = todoModalState.editingId;
+  if(!id) return;
+  const t = data.todos.find(x=>x.id===id);
+  if(!confirm(`Delete todo "${t ? t.title : ''}"?`)) return;
+  data.todos = data.todos.filter(x=>x.id!==id);
+  save();
+  closeTodoModal();
+  renderTodos();
+});
+
+document.getElementById("btn-add-todo").addEventListener("click",()=> openTodoModal(null));
+
+// Quick-add input
+document.getElementById("quick-todo").addEventListener("keydown", e=>{
+  if(e.key !== "Enter") return;
+  e.preventDefault();
+  const v = e.target.value.trim();
+  if(!v) return;
+  data.todos.push(normalizeTodo({ title: v, createdAt: todayYmd() }));
+  e.target.value = "";
+  save();
+  renderTodos();
+});
+
+// Group-by selector
+document.getElementById("todo-group-by").addEventListener("change", e=>{
+  todoGroupBy = e.target.value;
+  renderTodos();
+});
+
+/* ---------- Meals Admin toggle ---------- */
+function setMealsAdminVisible(show){
+  const card = document.getElementById("meals-admin-card");
+  card.style.display = show ? "" : "none";
+  if(show){
+    card.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+}
+document.getElementById("btn-toggle-meals-admin").addEventListener("click",()=>{
+  const card = document.getElementById("meals-admin-card");
+  setMealsAdminVisible(card.style.display === "none");
+});
+document.getElementById("btn-close-meals-admin").addEventListener("click",()=>{
+  setMealsAdminVisible(false);
+});
+
+/* ---------- Reading ---------- */
+
+let bookModalEditingId = null;
+
+function readerMedal(count){
+  if(count >= 25) return { emoji: "👑", label: "Royal Reader" };
+  if(count >= 15) return { emoji: "🏆", label: "Reading Champion" };
+  if(count >= 10) return { emoji: "🥇", label: "Gold Reader" };
+  if(count >= 5)  return { emoji: "🥈", label: "Silver Reader" };
+  if(count >= 1)  return { emoji: "🥉", label: "Bookworm" };
+  return { emoji: "📖", label: "Ready to read!" };
+}
+
+function daysReading(startedAt){
+  if(!startedAt) return 0;
+  const diff = daysDiffYmd(startedAt, todayYmd());
+  return Math.max(0, diff);
+}
+
+function showReadingToast(msg){
+  const t = document.createElement("div");
+  t.className = "reading-toast";
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(()=>{
+    t.style.transition = "opacity .4s, transform .4s";
+    t.style.opacity = "0";
+    t.style.transform = "translateX(-50%) translateY(20px)";
+    setTimeout(()=>t.remove(), 400);
+  }, 2200);
+}
+
+function renderReading(){
+  const books = data.books || [];
+  const finished = books.filter(b=>b.finishedAt);
+  const inProgress = books.filter(b=>!b.finishedAt);
+  const yearStart = `${new Date().getFullYear()}-01-01`;
+  const finishedThisYear = finished.filter(b=>b.finishedAt >= yearStart);
+
+  // Hero stats
+  const heroStats = document.getElementById("reading-hero-stats");
+  const tagline = document.getElementById("reading-tagline");
+  if(heroStats){
+    heroStats.innerHTML = `
+      <div class="reading-stat"><span class="rs-num">${finished.length}</span><span class="rs-lbl">Total Read</span></div>
+      <div class="reading-stat"><span class="rs-num">${finishedThisYear.length}</span><span class="rs-lbl">${new Date().getFullYear()}</span></div>
+      <div class="reading-stat"><span class="rs-num">${inProgress.length}</span><span class="rs-lbl">In Progress</span></div>
+    `;
+  }
+  if(tagline){
+    if(finished.length === 0 && inProgress.length === 0){
+      tagline.textContent = "Log your books and celebrate every page!";
+    } else if(finishedThisYear.length > 0){
+      const last = [...finishedThisYear].sort((a,b)=>b.finishedAt.localeCompare(a.finishedAt))[0];
+      tagline.innerHTML = `🎉 Most recent finish: <strong>${escapeHtml(last.title)}</strong> by ${escapeHtml(personName(last.personId))}!`;
+    } else {
+      tagline.textContent = "Keep going — every page counts! 📖";
+    }
+  }
+
+  // Scoreboard
+  const board = document.getElementById("reader-board");
+  if(board){
+    board.innerHTML = data.people.map(p=>{
+      const pBooks = finished.filter(b=>b.personId === p.id);
+      const pCurrent = inProgress.filter(b=>b.personId === p.id);
+      const medal = readerMedal(pBooks.length);
+      const initial = (p.name || "?").charAt(0).toUpperCase();
+      const zero = pBooks.length === 0 && pCurrent.length === 0 ? "zero" : "";
+      const currentTxt = pCurrent.length
+        ? `📖 Reading: <strong>${escapeHtml(pCurrent[0].title)}</strong>${pCurrent.length > 1 ? ` <span style="opacity:.7;">+${pCurrent.length-1} more</span>` : ''}`
+        : (pBooks.length ? "Ready for the next one!" : "No books logged yet");
+      return `
+        <div class="reader-card ${zero}" style="border-color:${escapeHtml(p.color)};">
+          <div class="rc-header">
+            <div class="rc-avatar" style="background:${escapeHtml(p.color)};">${escapeHtml(initial)}</div>
+            <div class="rc-name">${escapeHtml(p.name)}</div>
+            <div class="rc-medal" title="${escapeHtml(medal.label)}">${medal.emoji}</div>
+          </div>
+          <div class="rc-count" style="color:${escapeHtml(p.color)};">${pBooks.length}</div>
+          <div class="rc-count-lbl">${pBooks.length === 1 ? "book finished" : "books finished"}</div>
+          <div class="rc-current">${currentTxt}</div>
+        </div>
+      `;
+    }).join("");
+  }
+
+  // Currently reading list
+  const curr = document.getElementById("currently-reading");
+  if(curr){
+    if(inProgress.length === 0){
+      curr.innerHTML = `<div class="reading-empty"><span class="re-emoji">📚</span>Nobody's reading anything right now. Time to crack open a new book!</div>`;
+    } else {
+      const sorted = [...inProgress].sort((a,b)=>(b.startedAt||"").localeCompare(a.startedAt||""));
+      curr.innerHTML = `<div class="currently-reading-list">` + sorted.map(b=>{
+        const days = daysReading(b.startedAt);
+        const daysLabel = days === 0 ? "Started today" : days === 1 ? "1 day in" : `${days} days in`;
+        const color = personColor(b.personId);
+        const authorTxt = b.author ? ` <span style="color:var(--ink-soft);">by ${escapeHtml(b.author)}</span>` : "";
+        const coverStyle = b.cover ? `background-image:url('${b.cover}');` : "";
+        const coverInner = b.cover ? "" : "📖";
+        return `
+          <div class="current-book" style="border-left-color:${escapeHtml(color)};" data-book-id="${b.id}">
+            <div class="cb-cover" style="${coverStyle}">${coverInner}</div>
+            <div class="cb-info">
+              <div class="cb-title">${escapeHtml(b.title)}${authorTxt}</div>
+              <div class="cb-meta">
+                <span class="cb-person"><span class="pdot" style="background:${escapeHtml(color)};"></span>${escapeHtml(personName(b.personId))}</span>
+                · Started ${escapeHtml(fmtDateShort(b.startedAt))}
+              </div>
+            </div>
+            <span class="cb-days">${daysLabel}</span>
+            <div class="cb-actions">
+              <button class="cb-finish" data-finish-id="${b.id}">✓ Finished!</button>
+              <button class="cb-edit" data-edit-book-id="${b.id}">Edit</button>
+            </div>
+          </div>
+        `;
+      }).join("") + `</div>`;
+    }
+  }
+
+  // Person filter for finished bookshelf
+  const filterSel = document.getElementById("reading-filter-person");
+  if(filterSel){
+    const prevVal = filterSel.value;
+    filterSel.innerHTML = `<option value="">Everyone</option>` +
+      data.people.map(p=>`<option value="${escapeHtml(p.id)}">${escapeHtml(p.name)}</option>`).join("");
+    if(prevVal && data.people.some(p=>p.id===prevVal)) filterSel.value = prevVal;
+  }
+
+  // Finished shelf
+  const shelf = document.getElementById("finished-bookshelf");
+  if(shelf){
+    const filterPid = filterSel ? filterSel.value : "";
+    let toShow = finished.slice();
+    if(filterPid) toShow = toShow.filter(b=>b.personId === filterPid);
+    toShow.sort((a,b)=>(b.finishedAt||"").localeCompare(a.finishedAt||""));
+    if(toShow.length === 0){
+      shelf.innerHTML = `<div class="reading-empty"><span class="re-emoji">📚</span>${filterPid ? "No finished books for this reader yet." : "No finished books yet — log your first one above!"}</div>`;
+    } else {
+      shelf.innerHTML = toShow.map((b,idx)=>{
+        const color = personColor(b.personId);
+        const authorTxt = b.author ? escapeHtml(b.author) : "—";
+        // Show celebration medal for first few or every 10th
+        const personFinished = finished.filter(x=>x.personId===b.personId)
+          .sort((a,b)=>(a.finishedAt||"").localeCompare(b.finishedAt||""));
+        const rank = personFinished.findIndex(x=>x.id===b.id) + 1;
+        let badge = "";
+        if(rank === 1) badge = "🎉";
+        else if(rank % 10 === 0) badge = "🏆";
+        else if(rank % 5 === 0)  badge = "⭐";
+        const coverStyle = b.cover ? `background-image:url('${b.cover}');` : "";
+        const coverInner = b.cover ? "" : "📖";
+        return `
+          <div class="book-spine" style="border-left-color:${escapeHtml(color)};" data-edit-book-id="${b.id}">
+            ${badge ? `<span class="bs-medal" title="Book #${rank} for ${escapeHtml(personName(b.personId))}!">${badge}</span>` : ""}
+            <div class="bs-cover" style="${coverStyle}">${coverInner}</div>
+            <div class="bs-title">${escapeHtml(b.title)}</div>
+            <div class="bs-author">${authorTxt}</div>
+            <div class="bs-foot">
+              <span class="pdot" style="background:${escapeHtml(color)};"></span>
+              <span class="bs-person">${escapeHtml(personName(b.personId))}</span>
+              · ${escapeHtml(fmtDateShort(b.finishedAt))}
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+  }
+}
+
+function openBookModal(id){
+  bookModalEditingId = id || null;
+  const bg = document.getElementById("book-modal-bg");
+  const titleH = document.getElementById("book-modal-title");
+  const tIn = document.getElementById("book-modal-input-title");
+  const aIn = document.getElementById("book-modal-author");
+  const readerCont = document.getElementById("book-modal-reader");
+  const startIn = document.getElementById("book-modal-started");
+  const finishIn = document.getElementById("book-modal-finished");
+  const delBtn = document.getElementById("book-modal-delete");
+
+  const book = id ? (data.books || []).find(b=>b.id===id) : null;
+  titleH.textContent = book ? "Edit Book" : "Log a Book";
+  delBtn.style.display = book ? "" : "none";
+
+  tIn.value = book ? book.title : "";
+  aIn.value = book && book.author ? book.author : "";
+  startIn.value = book ? book.startedAt : todayYmd();
+  finishIn.value = book && book.finishedAt ? book.finishedAt : "";
+
+  // Cover preview
+  setBookModalCover(book && book.cover ? book.cover : "");
+
+  // Reader radio chips (single-select via name=reader)
+  const selectedPid = book ? book.personId : (data.people[0] && data.people[0].id);
+  readerCont.innerHTML = data.people.map(p=>{
+    const checked = p.id === selectedPid ? "checked" : "";
+    return `<label><input type="radio" name="book-reader" value="${escapeHtml(p.id)}" ${checked} /><span class="pdot" style="background:${escapeHtml(p.color)};"></span>${escapeHtml(p.name)}</label>`;
+  }).join("");
+
+  bg.classList.add("open");
+  bg.setAttribute("aria-hidden","false");
+  setTimeout(()=>tIn.focus(), 50);
+}
+
+function closeBookModal(){
+  const bg = document.getElementById("book-modal-bg");
+  bg.classList.remove("open");
+  bg.setAttribute("aria-hidden","true");
+  bookModalEditingId = null;
+}
+
+// In-memory cover staging for the open modal session.
+let bookModalCover = "";
+function setBookModalCover(dataUrl){
+  bookModalCover = dataUrl || "";
+  const prev = document.getElementById("book-modal-cover-preview");
+  const removeBtn = document.getElementById("book-modal-cover-remove");
+  if(bookModalCover){
+    prev.style.backgroundImage = `url("${bookModalCover}")`;
+    prev.textContent = "";
+    if(removeBtn) removeBtn.style.display = "";
+  } else {
+    prev.style.backgroundImage = "";
+    prev.textContent = "📖";
+    if(removeBtn) removeBtn.style.display = "none";
+  }
+  // Reset file input so the same file can be re-picked
+  const fileIn = document.getElementById("book-modal-cover-input");
+  if(fileIn) fileIn.value = "";
+}
+
+// Resize an image File to a max dimension and return a base64 data URL (JPEG).
+function resizeImageFile(file, maxDim, quality){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onerror = ()=>reject(reader.error);
+    reader.onload = ()=>{
+      const img = new Image();
+      img.onerror = ()=>reject(new Error("Could not load image"));
+      img.onload = ()=>{
+        let w = img.naturalWidth, h = img.naturalHeight;
+        if(w > maxDim || h > maxDim){
+          const scale = Math.min(maxDim / w, maxDim / h);
+          w = Math.round(w * scale);
+          h = Math.round(h * scale);
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, w, h);
+        try{
+          resolve(canvas.toDataURL("image/jpeg", quality));
+        } catch(e){ reject(e); }
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+(function wireBookModal(){
+  const bg = document.getElementById("book-modal-bg");
+
+  document.getElementById("btn-add-book").addEventListener("click", ()=>openBookModal(null));
+  document.getElementById("book-modal-cancel").addEventListener("click", closeBookModal);
+  bg.addEventListener("click", e=>{ if(e.target === bg) closeBookModal(); });
+  document.addEventListener("keydown", e=>{
+    if(e.key === "Escape" && bg.classList.contains("open")) closeBookModal();
+  });
+
+  // Cover uploader
+  const fileIn = document.getElementById("book-modal-cover-input");
+  document.getElementById("book-modal-cover-pick").addEventListener("click", ()=>fileIn.click());
+  document.getElementById("book-modal-cover-remove").addEventListener("click", ()=>setBookModalCover(""));
+  fileIn.addEventListener("change", async ()=>{
+    const f = fileIn.files && fileIn.files[0];
+    if(!f) return;
+    if(!f.type.startsWith("image/")){
+      alert("Please pick an image file.");
+      fileIn.value = "";
+      return;
+    }
+    try{
+      const dataUrl = await resizeImageFile(f, 600, 0.82);
+      // Rough localStorage safety: warn if the data URL exceeds ~500KB
+      if(dataUrl.length > 500000){
+        if(!confirm("That image is pretty large and may slow things down. Use it anyway?")){
+          fileIn.value = "";
+          return;
+        }
+      }
+      setBookModalCover(dataUrl);
+    } catch(err){
+      console.error(err);
+      alert("Sorry, couldn't read that image.");
+      fileIn.value = "";
+    }
+  });
+
+  document.getElementById("book-modal-save").addEventListener("click", ()=>{
+    const title = document.getElementById("book-modal-input-title").value.trim();
+    if(!title){ alert("Please enter a book title."); return; }
+    const author = document.getElementById("book-modal-author").value.trim();
+    const startedAt = document.getElementById("book-modal-started").value || todayYmd();
+    const finishedAt = document.getElementById("book-modal-finished").value || null;
+    if(finishedAt && finishedAt < startedAt){
+      alert("Finished date must be on or after the started date.");
+      return;
+    }
+    const readerEl = document.querySelector('input[name="book-reader"]:checked');
+    if(!readerEl){ alert("Pick who's reading this book."); return; }
+    const personId = readerEl.value;
+
+    if(!data.books) data.books = [];
+    if(bookModalEditingId){
+      const b = data.books.find(x=>x.id===bookModalEditingId);
+      if(b){
+        const wasFinished = !!b.finishedAt;
+        b.title = title;
+        b.author = author;
+        b.personId = personId;
+        b.startedAt = startedAt;
+        b.finishedAt = finishedAt;
+        b.cover = bookModalCover || "";
+        if(!wasFinished && finishedAt){
+          showReadingToast(`🎉 ${personName(personId)} finished "${title}"!`);
+        }
+      }
+    } else {
+      data.books.push({
+        id: uid(),
+        personId,
+        title,
+        author,
+        startedAt,
+        finishedAt,
+        cover: bookModalCover || "",
+        createdAt: todayYmd()
+      });
+      if(finishedAt){
+        showReadingToast(`🎉 ${personName(personId)} finished "${title}"!`);
+      }
+    }
+    save();
+    closeBookModal();
+    renderReading();
+  });
+
+  document.getElementById("book-modal-delete").addEventListener("click", ()=>{
+    if(!bookModalEditingId) return;
+    const b = (data.books || []).find(x=>x.id===bookModalEditingId);
+    if(!confirm(`Delete the book "${b ? b.title : ''}"?`)) return;
+    data.books = (data.books || []).filter(x=>x.id !== bookModalEditingId);
+    save();
+    closeBookModal();
+    renderReading();
+  });
+
+  // Page-level click handlers (event delegation)
+  document.getElementById("page-reading").addEventListener("click", e=>{
+    const finishBtn = e.target.closest("[data-finish-id]");
+    if(finishBtn){
+      e.stopPropagation();
+      const id = finishBtn.dataset.finishId;
+      const b = (data.books || []).find(x=>x.id===id);
+      if(b){
+        b.finishedAt = todayYmd();
+        save();
+        showReadingToast(`🎉 ${personName(b.personId)} finished "${b.title}"!`);
+        renderReading();
+      }
+      return;
+    }
+    const editBtn = e.target.closest("[data-edit-book-id]");
+    if(editBtn){
+      e.stopPropagation();
+      openBookModal(editBtn.dataset.editBookId);
+    }
+  });
+
+  document.getElementById("reading-filter-person").addEventListener("change", renderReading);
+})();
+
+/* ---------- Render all ---------- */
+function renderAll(){
+  renderMealCalendar();
+  renderMenuOptions();
+  renderPeopleAdmin();
+  renderDefaultMeals();
+  renderPlainCalendar();
+  renderTodos();
+  renderReading();
+}
+
+renderAll();
+</script>
+</body>
+</html>
