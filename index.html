@@ -2,9 +2,24 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>Fishler Household</title>
 <meta name="theme-color" content="#5b8a72" />
+<meta name="description" content="Family calendar, todos, meals, and reading for the Fishler household." />
+
+<!-- PWA / install -->
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png" />
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png" />
+
+<!-- iOS home screen icon (iOS ignores the manifest icons) -->
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="Fishler" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="application-name" content="Fishler" />
 <style>
   :root{
     --bg:#f6f3ec;
@@ -413,6 +428,32 @@
     justify-content:space-between; flex-wrap:wrap;
     margin-bottom:10px;
   }
+  .cal-people-filter{
+    display:flex; gap:4px; flex-wrap:wrap; align-items:center;
+    background:var(--panel-2); border:1px solid var(--line);
+    border-radius:999px; padding:4px 6px;
+  }
+  .cal-people-filter .cpf-lbl{
+    font-size:12px; color:var(--ink-soft);
+    padding:0 4px 0 6px;
+  }
+  .cal-people-filter button{
+    appearance:none; background:var(--panel); border:1px solid var(--line);
+    border-radius:999px; padding:3px 10px;
+    font-family:inherit; font-size:12px; cursor:pointer;
+    display:inline-flex; align-items:center; gap:5px;
+    color:var(--ink-soft); font-weight:600;
+    transition:background .12s, color .12s, border-color .12s;
+  }
+  .cal-people-filter button .pdot{
+    width:9px; height:9px; border-radius:50%;
+  }
+  .cal-people-filter button.on{
+    background:var(--accent-soft); color:var(--ink);
+    border-color:var(--accent);
+  }
+  .cal-people-filter button.all{ border-style:dashed; }
+  .cal-people-filter button:hover{ filter:brightness(.97); }
   .event-color-picker{
     display:flex; gap:6px; flex-wrap:wrap; margin-top:4px;
   }
@@ -966,7 +1007,10 @@
     <div class="card">
       <div class="cal-toolbar">
         <h2 style="margin:0;">Calendar</h2>
-        <button class="btn" id="btn-add-event">+ Add Event</button>
+        <div class="right" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+          <div class="cal-people-filter" id="cal-people-filter" title="Show only events for selected people"></div>
+          <button class="btn" id="btn-add-event">+ Add Event</button>
+        </div>
       </div>
       <div id="paste-banner" class="paste-banner" style="display:none;">
         <span class="pb-msg"></span>
@@ -1719,11 +1763,15 @@ function renderPeopleAdmin(){
           }
         });
       }
+      // Drop from calendar people filter if present
+      if(calendarPeopleFilter.has(p.id)) calendarPeopleFilter.delete(p.id);
       data.people.splice(idx,1);
       save();
       renderPeopleAdmin();
       renderMealCalendar();
       renderDefaultMeals();
+      renderCalendarPeopleFilter();
+      renderPlainCalendar();
     });
     c.appendChild(chip);
   });
@@ -1740,6 +1788,7 @@ document.getElementById("btn-add-person").addEventListener("click",()=>{
   renderPeopleAdmin();
   renderMealCalendar();
   renderDefaultMeals();
+  renderCalendarPeopleFilter();
 });
 document.getElementById("new-person").addEventListener("keydown", e=>{
   if(e.key === "Enter"){ e.preventDefault(); document.getElementById("btn-add-person").click(); }
@@ -1946,6 +1995,7 @@ function renderPlainCalendar(){
   // eventsByDate[dy] = [{ ev, pos: 'single'|'start'|'mid'|'end', dayIndex, dayCount }]
   const eventsByDate = {};
   (data.events || []).forEach(ev=>{
+    if(!eventMatchesPeopleFilter(ev)) return;
     const span = eventSpanDays(ev);
     expandEventOccurrences(ev, winStartYmd, winEndYmd).forEach(startDy=>{
       const startD = new Date(startDy + "T00:00:00");
@@ -2255,6 +2305,44 @@ let editingEventId = null;
 // pasteTemplate is a partial event object (no id/date/endDate/recurring) used as the source.
 let pasteTemplate = null;
 let pasteSpanDays = 1; // preserves multi-day length when pasting
+
+// Calendar people filter: empty Set = show everyone.
+// Events with no attendees (= everyone) always show. Events with attendees show
+// if at least one of their attendees is in the active filter set.
+let calendarPeopleFilter = new Set();
+function eventMatchesPeopleFilter(ev){
+  if(calendarPeopleFilter.size === 0) return true;
+  if(!ev.attendees || ev.attendees.length === 0) return true; // "everyone" events
+  return ev.attendees.some(pid => calendarPeopleFilter.has(pid));
+}
+function renderCalendarPeopleFilter(){
+  const c = document.getElementById("cal-people-filter");
+  if(!c) return;
+  if(!data.people.length){ c.innerHTML = ""; return; }
+  const allOn = calendarPeopleFilter.size === 0;
+  c.innerHTML =
+    `<span class="cpf-lbl">Show:</span>` +
+    `<button type="button" class="all ${allOn?'on':''}" data-cpf="__all__" title="Show all events">Everyone</button>` +
+    data.people.map(p=>{
+      const on = calendarPeopleFilter.has(p.id);
+      return `<button type="button" class="${on?'on':''}" data-cpf="${escapeHtml(p.id)}" style="${on?`border-color:${escapeHtml(p.color||'#5b8a72')};`:''}"><span class="pdot" style="background:${escapeHtml(p.color||'#5b8a72')}"></span>${escapeHtml(p.name)}</button>`;
+    }).join("");
+}
+// Toggle handler (wired once)
+document.getElementById("cal-people-filter").addEventListener("click", e=>{
+  const btn = e.target.closest("button[data-cpf]");
+  if(!btn) return;
+  const id = btn.dataset.cpf;
+  if(id === "__all__"){
+    calendarPeopleFilter.clear();
+  } else {
+    if(calendarPeopleFilter.has(id)) calendarPeopleFilter.delete(id);
+    else calendarPeopleFilter.add(id);
+  }
+  renderCalendarPeopleFilter();
+  renderPlainCalendar();
+});
+
 
 function enterPasteMode(ev){
   pasteTemplate = {
@@ -3484,6 +3572,7 @@ function renderAll(){
   renderMenuOptions();
   renderPeopleAdmin();
   renderDefaultMeals();
+  renderCalendarPeopleFilter();
   renderPlainCalendar();
   renderTodos();
   renderReading();
