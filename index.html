@@ -410,6 +410,7 @@
     border-left:3px solid rgba(0,0,0,.18);
     display:flex; align-items:flex-start; flex-wrap:wrap; gap:3px 4px;
     word-break:break-word; overflow-wrap:anywhere;
+    position:relative;
   }
   .cal-event .ev-title{
     flex:1 1 auto; min-width:0;
@@ -422,12 +423,64 @@
     margin-top:1px;
     line-height:1.25;
   }
-  .cal-event.multi-mid,
-  .cal-event.multi-end{ border-top-left-radius:0; border-bottom-left-radius:0; border-left:0; }
-  .cal-event.multi-start,
-  .cal-event.multi-mid{ border-top-right-radius:0; border-bottom-right-radius:0; margin-right:-1px; }
-  .cal-event.multi-mid .ev-time,
-  .cal-event.multi-end .ev-time{ display:none; }
+  /* ----- Multi-day event bars (overlay layer) -----
+     Multi-day events are rendered as single elements spanning grid columns
+     in an absolutely-positioned overlay on top of each week. Single-day
+     events still render as .cal-event chips inside their day cell. */
+  .cal-month{
+    display:flex; flex-direction:column; gap:6px;
+  }
+  .cal-week{
+    position:relative;
+    display:grid;
+    grid-template-columns:repeat(7,1fr);
+    gap:6px;
+    /* Per-breakpoint tunables */
+    --cal-lane-h:18px;
+    --cal-bar-h:16px;
+    --cal-bar-fs:11px;
+    --cal-row-top:30px; /* offset from week top to start of lane area (border + cell-pad + dnum) */
+  }
+  .cal-week-bars{
+    position:absolute; inset:0;
+    display:grid;
+    grid-template-columns:repeat(7,1fr);
+    gap:6px;
+    pointer-events:none;
+    padding-top:var(--cal-row-top);
+  }
+  .cal-bar{
+    grid-row:1;
+    align-self:start;
+    margin-top:calc(var(--lane, 0) * var(--cal-lane-h));
+    height:var(--cal-bar-h);
+    line-height:var(--cal-bar-h);
+    background:#5b8a72;
+    color:#fff;
+    font-size:var(--cal-bar-fs);
+    font-weight:600;
+    padding:0 6px;
+    border-radius:4px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    pointer-events:auto;
+    cursor:pointer;
+    border-left:3px solid rgba(0,0,0,.18);
+  }
+  .cal-bar.continued-left{
+    border-top-left-radius:0; border-bottom-left-radius:0;
+    border-left:0;
+  }
+  .cal-bar.continued-right{
+    border-top-right-radius:0; border-bottom-right-radius:0;
+  }
+  .cal-bar .ev-time{ font-weight:700; opacity:.95; margin-right:4px; }
+  /* Reserve room at the top of each cell for the multi-day lane stack */
+  .multi-spacer{
+    height:calc(var(--multi-lanes, 0) * var(--cal-lane-h));
+    flex-shrink:0;
+  }
   .cal-event .ev-time{
     font-weight:700; opacity:.95;
     font-size:9px;
@@ -589,6 +642,7 @@
   }
   .group-section.person-section h3{
     color:var(--ink);
+    margin-top:0;
   }
   .group-section h3 .pdot{
     width:10px; height:10px; border-radius:50%; display:inline-block;
@@ -984,12 +1038,311 @@
     animation: book-pop .4s ease-out;
   }
 
-  @media (max-width:700px){
-    .cal-cell{ min-height:130px; }
-    .meal-slot .lbl{ font-size:8px; }
-    .meal-slot select{ font-size:11px; }
-    header.topbar{ flex-direction:column; align-items:flex-start; }
-    .reading-hero-stats{ width:100%; margin-left:0; }
+  /* ===================== Mobile / phone layout ===================== */
+  @media (max-width:780px){
+    html,body{ overflow-x:hidden; }
+    .app{
+      padding:10px;
+      padding-left:max(10px, env(safe-area-inset-left));
+      padding-right:max(10px, env(safe-area-inset-right));
+      padding-bottom:max(10px, env(safe-area-inset-bottom));
+    }
+
+    /* Topbar: compact, allow wrapping */
+    header.topbar{
+      padding:10px 12px; gap:10px;
+      flex-wrap:wrap;
+      margin-bottom:10px;
+    }
+    header.topbar .crest{ width:42px; height:42px; border-radius:10px; }
+    header.topbar .crest svg{ width:28px; height:28px; }
+    header.topbar h1{ font-size:1.15rem; }
+    header.topbar > div[style*="margin-left:auto"]{
+      margin-left:auto;
+    }
+    #sync-status{ display:none; }       /* dot is enough on phone */
+    #btn-lock{ font-size:16px; padding:4px 8px; }
+
+    /* Tabs: single row, compact */
+    nav.tabs{
+      padding:4px; gap:3px; margin-bottom:10px;
+      flex-wrap:nowrap;
+    }
+    nav.tabs button{
+      flex:1 1 0; min-width:0;
+      padding:9px 6px; font-size:12px;
+      white-space:nowrap;
+      overflow:hidden; text-overflow:ellipsis;
+    }
+
+    .card{ padding:12px; border-radius:12px; margin-bottom:10px; }
+    .card h2{ font-size:16px; margin-bottom:10px; }
+
+    /* Toolbars: stack, full-width buttons */
+    .meals-toolbar, .cal-toolbar, .todos-toolbar{
+      flex-direction:column; align-items:stretch; gap:8px;
+    }
+    .meals-toolbar .left, .meals-toolbar .right,
+    .cal-toolbar .right, .todos-toolbar .right{
+      width:100%; display:flex; gap:6px;
+    }
+    .todos-toolbar .right{ flex-wrap:wrap; }
+    .meals-toolbar .right .btn,
+    .cal-toolbar .right .btn{ flex:1 1 auto; }
+    .todos-toolbar #todo-group-by{ flex:1 1 auto; }
+
+    /* Calendar / meal-plan grid — much tighter cells */
+    .cal-grid{ gap:3px; }
+    .cal-cell{
+      min-height:96px; padding:3px;
+      border-radius:7px; font-size:10px; gap:2px;
+    }
+    /* Multi-day bars: tighter lanes on phone, smaller header offset */
+    .cal-week{
+      gap:3px;
+      --cal-lane-h:14px;
+      --cal-bar-h:13px;
+      --cal-bar-fs:9px;
+      --cal-row-top:22px;
+    }
+    .cal-week-bars{ gap:3px; }
+    .cal-bar{ padding:0 4px; }
+    .cal-cell .dnum{ font-size:11px; padding-bottom:0; gap:2px; }
+    .cal-cell .dnum .dow{ display:none; }
+    .cal-cell .dnum .day-edit{ font-size:12px; padding:0 2px; }
+    .cal-cell .day-notes{
+      font-size:9px; padding:2px 4px; line-height:1.2;
+      -webkit-line-clamp:1; line-clamp:1;
+    }
+    .cal-dow{ font-size:10px; padding:3px 0; }
+
+    /* ---- Meal plan goes VERTICAL on phones (one day per row) ---- */
+    /* Hide the day-of-week header strip for meal plan */
+    #cal-dows{ display:none !important; }
+    /* Stack day cards vertically */
+    #cal-scroll .cal-grid{
+      display:flex; flex-direction:column; gap:8px;
+    }
+    /* Hide leading/trailing "other-month" padding cells */
+    #cal-scroll .cal-cell.other{ display:none; }
+    /* Each day becomes a roomy card: date header on top, meals row below */
+    #cal-scroll .cal-cell{
+      min-height:0;
+      padding:8px 10px 10px;
+      border-radius:10px;
+      font-size:13px;
+      gap:6px;
+      flex-direction:column;
+      align-items:stretch;
+    }
+    /* Date header row: number + DOW on the left, pencil on the right */
+    #cal-scroll .cal-cell .dnum{
+      flex:0 0 auto;
+      flex-direction:row; align-items:baseline;
+      gap:8px; padding:0 2px 4px;
+      font-size:13px; font-weight:600;
+      line-height:1;
+      border-bottom:1px dashed var(--line);
+      margin-bottom:2px;
+    }
+    #cal-scroll .cal-cell .dnum > span:first-child{
+      font-size:20px; font-weight:800;
+    }
+    #cal-scroll .cal-cell .dnum .dow{
+      display:inline-block; font-size:12px; font-weight:600;
+      color:var(--ink-soft); margin-top:0;
+    }
+    #cal-scroll .cal-cell .dnum .day-edit{
+      font-size:16px; margin-left:auto; margin-top:0;
+      padding:0 4px;
+    }
+    #cal-scroll .cal-cell.today{
+      box-shadow:0 0 0 2px var(--accent) inset;
+    }
+    /* Meal slots: three columns side-by-side filling the full width */
+    #cal-scroll .cal-cell .meal-slot{
+      flex:1 1 0; min-width:0;
+    }
+    /* Wrap the three meal slots in a flex row */
+    #cal-scroll .cal-cell{ /* dummy override block kept clean */ }
+    #cal-scroll .meal-slot{
+      flex:1 1 0; min-width:0;
+      padding:6px 8px;
+      border-radius:8px;
+      border-left-width:3px;
+    }
+    /* Use grid via wrapper trick: each cell's three meal-slots become a 3-col grid */
+    #cal-scroll .cal-cell{
+      display:grid;
+      grid-template-columns:1fr 1fr 1fr;
+      grid-auto-rows:auto;
+      gap:6px;
+    }
+    #cal-scroll .cal-cell .dnum{ grid-column:1 / -1; }
+    #cal-scroll .cal-cell .day-notes{ grid-column:1 / -1; }
+    #cal-scroll .meal-slot .lbl{
+      font-size:10px; gap:4px;
+    }
+    #cal-scroll .meal-slot .lbl .dot{ display:inline-block; width:6px; height:6px; }
+    #cal-scroll .meal-slot .lbl .ppl-flag{ font-size:10px; }
+    #cal-scroll .meal-slot select{
+      font-size:13px; padding:2px 0;
+    }
+    #cal-scroll .meal-override{ font-size:11px; gap:4px; }
+    /* Notes span full width below the meal slots */
+    #cal-scroll .cal-cell .day-notes{
+      font-size:12px; padding:6px 8px;
+      -webkit-line-clamp:unset; line-clamp:unset;
+      display:block; overflow:visible;
+    }
+
+    /* Meal slots inside calendar cells */
+    .meal-slot{
+      padding:2px 3px; border-radius:4px;
+      border-left-width:2px;
+    }
+    .meal-slot.b, .meal-slot.l, .meal-slot.d{ border-left-width:2px; }
+    .meal-slot .lbl{ font-size:8px; gap:2px; }
+    .meal-slot .lbl .dot{ display:none; }
+    .meal-slot .lbl .ppl-flag{ font-size:9px; }
+    .meal-slot select{ font-size:10px; padding:0; }
+    .meal-override{ font-size:9px; gap:3px; }
+
+    /* Calendar events */
+    .cal-event{ font-size:9px; padding:1px 4px; gap:2px 3px; }
+    .cal-event .ev-time{ font-size:8px; }
+    .cal-event .ev-notes{ font-size:8px; }
+    /* Strip non-essential bits from event chips on phones — tap to see them */
+    #cal2-scroll .cal-event .ev-att,
+    #cal2-scroll .cal-event .ev-notes,
+    #cal2-scroll .cal-event .ev-recur,
+    #cal2-scroll .cal-event .ev-loc,
+    #cal2-scroll .cal-event .ev-daycount{ display:none !important; }
+
+    /* Calendar people filter compact */
+    .cal-people-filter{ padding:3px 4px; gap:3px; }
+    .cal-people-filter .cpf-lbl{ display:none; }
+    .cal-people-filter button{ padding:3px 8px; font-size:11px; }
+
+    /* Modals fill the screen better */
+    .modal-bg{ padding:10px; }
+    .modal{
+      padding:14px; border-radius:14px;
+      max-width:none;
+    }
+    .modal h3{ font-size:17px; }
+    .modal .modal-sub{ font-size:12px; margin-bottom:10px; }
+    .modal label.field-lbl{ margin:8px 0 4px; font-size:11px; }
+    .modal-actions{ gap:6px; }
+    .modal-actions .btn{ flex:1 1 auto; padding:10px 12px; font-size:14px; }
+    .modal-actions .btn.danger[style*="margin-right:auto"]{ flex:1 1 100%; order:99; }
+
+    /* Day modal per-person rows stack */
+    .meal-section{ padding:10px; }
+    .person-row{
+      grid-template-columns:1fr auto;
+      gap:6px 8px;
+    }
+    .person-row .pname{ font-size:12px; }
+    .person-row select{ grid-column:1 / -1; font-size:13px; }
+    .person-row .same{ text-align:left; grid-column:1 / -1; }
+
+    /* Time pickers — bigger touch targets */
+    .time-picker select{ padding:9px 4px; font-size:14px; }
+
+    /* Inputs get bigger touch targets on mobile */
+    input[type=text], input[type=date], select, textarea{
+      font-size:16px; /* prevents iOS zoom on focus */
+      padding:9px 10px;
+    }
+    button.btn{ padding:10px 14px; font-size:14px; }
+
+    /* Todos */
+    .todo-row{ padding:8px; gap:8px; }
+    .todo-row .title{ font-size:13px; }
+    .todo-row .meta{ gap:4px; font-size:11px; }
+    .pill{ font-size:10px; padding:2px 7px; }
+
+    /* Reading scoreboard */
+    .reading-hero-content{ flex-direction:column; align-items:stretch; gap:10px; }
+    .reading-hero-stats{ width:100%; margin-left:0; justify-content:space-around; gap:8px; }
+    .reader-board{
+      grid-template-columns:repeat(2, minmax(0,1fr));
+      gap:8px;
+    }
+    .reader-card{ padding:10px; }
+    .reader-card .rc-header{ gap:8px; margin-bottom:6px; }
+    .reader-card .rc-avatar{ width:30px; height:30px; font-size:13px; }
+    .reader-card .rc-name{ font-size:13px; }
+    .reader-card .rc-medal{ font-size:18px; }
+    .reader-card .rc-count{ font-size:24px; }
+    .reader-card .rc-count-lbl{ font-size:11px; }
+
+    .currently-reading-list .current-book{ flex-wrap:wrap; gap:8px; padding:10px 0; }
+    .current-book .cb-cover{ width:40px; height:56px; }
+    .current-book .cb-title{ font-size:13px; }
+    .current-book .cb-meta{ font-size:11px; }
+    .current-book .cb-actions{ width:100%; }
+    .current-book .cb-actions .cb-finish,
+    .current-book .cb-actions .cb-edit{ flex:1; }
+
+    .bookshelf{
+      grid-template-columns:repeat(auto-fill, minmax(120px, 1fr));
+      gap:10px;
+    }
+    .book-spine .bs-title{ font-size:12px; }
+    .book-spine .bs-author{ font-size:10px; }
+    .book-spine .bs-foot{ font-size:10px; }
+
+    .person-section{ padding:10px 12px; }
+    .person-section .ps-avatar{ width:28px; height:28px; font-size:12px; }
+    .person-section .ps-name{ font-size:14px; }
+
+    /* Menu admin columns get a bit tighter */
+    .menu-cols{ gap:10px; }
+    .menu-col h3{ font-size:14px; }
+
+    /* Assignee checks stack nicely on phone */
+    .assignee-checks{
+      grid-template-columns:repeat(2, minmax(0,1fr));
+    }
+  }
+
+  /* Extra-narrow phones (≤430px) */
+  @media (max-width:430px){
+    .app{ padding:8px; }
+    header.topbar{ padding:8px 10px; gap:8px; }
+    header.topbar h1{ font-size:1rem; }
+    header.topbar .crest{ width:38px; height:38px; }
+    header.topbar .crest svg{ width:24px; height:24px; }
+
+    nav.tabs button{ padding:8px 4px; font-size:11px; }
+
+    .card{ padding:10px; }
+
+    /* Tighten only the EVENT calendar (meal plan is vertical on mobile) */
+    #cal2-scroll .cal-cell{ min-height:84px; padding:2px; gap:1px; }
+    #cal2-scroll .cal-cell .dnum{ font-size:10px; }
+    #cal2-scroll .cal-week{
+      gap:2px;
+      --cal-lane-h:13px;
+      --cal-bar-h:12px;
+      --cal-bar-fs:8px;
+      --cal-row-top:19px;
+    }
+    #cal2-scroll .cal-week-bars{ gap:2px; }
+    #cal2-scroll .cal-bar{ padding:0 3px; border-left-width:2px; }
+    #cal2-scroll .meal-slot{ padding:1px 2px; }
+    #cal2-scroll .meal-slot .lbl{ display:none; }
+    #cal2-scroll .meal-slot select{ font-size:9px; }
+    #cal2-scroll .meal-override{ font-size:8px; }
+
+    .bookshelf{
+      grid-template-columns:repeat(2, minmax(0,1fr));
+    }
+    .reader-board{
+      grid-template-columns:repeat(2, minmax(0,1fr));
+    }
   }
 </style>
 </head>
@@ -1293,7 +1646,7 @@
     <div id="day-modal-meals"></div>
 
     <label class="field-lbl" for="day-modal-notes">📝 Notes for this day</label>
-    <textarea id="day-modal-notes" rows="2" placeholder="e.g. Late dinner after volleyball"></textarea>
+    <textarea id="day-modal-notes" rows="2" placeholder="e.g. Late dinner after volleyball" style="width:100%; display:block; resize:vertical;"></textarea>
 
     <div class="modal-actions">
       <button class="btn danger" id="day-modal-clear" title="Clear all meal plans and notes for this day">Clear Day</button>
@@ -1363,7 +1716,7 @@
     <input type="text" id="event-modal-location" placeholder="e.g. Soccer Field A, 123 Main St" style="width:100%;" />
 
     <label class="field-lbl" for="event-modal-notes">Notes</label>
-    <textarea id="event-modal-notes" rows="2" placeholder="Optional details…"></textarea>
+    <textarea id="event-modal-notes" rows="2" placeholder="Optional details…" style="width:100%; display:block; resize:vertical;"></textarea>
 
     <label class="field-lbl" for="event-modal-recur">🔁 Repeat</label>
     <select id="event-modal-recur" style="width:100%;">
@@ -1682,7 +2035,21 @@ document.getElementById("tabs").addEventListener("click", e=>{
   document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
   document.getElementById("page-"+btn.dataset.tab).classList.add("active");
   renderAll();
+  // When switching TO the meals tab, jump to today's row
+  if(btn.dataset.tab === "meals"){
+    scrollMealCalToToday();
+  }
 });
+
+function scrollMealCalToToday(){
+  // Defer to next frame so the layout (esp. mobile vertical) settles first
+  requestAnimationFrame(()=>{
+    const todayCell = document.querySelector("#cal-scroll .cal-cell.today");
+    if(todayCell && typeof todayCell.scrollIntoView === "function"){
+      todayCell.scrollIntoView({ block: "start", behavior: "auto" });
+    }
+  });
+}
 
 /* ---------- Render: Meal plan calendar ---------- */
 function renderMealCalendar(){
@@ -1695,9 +2062,20 @@ function renderMealCalendar(){
   const today = todayYmd();
   const now = new Date();
 
-  // Render current month + next 2 months
-  for(let mi = 0; mi <= 2; mi++){
+  // Cap how far back the user can scroll. Anything before this date is hidden.
+  const PAST_DAYS = 10;
+  const minDate = addDays(now, -PAST_DAYS);
+  const minYmd = ymd(minDate);
+
+  // Render 1 prior month (clipped to PAST_DAYS) + current + 3 future months.
+  const PAST_MONTHS = 1;
+  const FUTURE_MONTHS = 3;
+  for(let mi = -PAST_MONTHS; mi <= FUTURE_MONTHS; mi++){
     const monthStart = new Date(now.getFullYear(), now.getMonth() + mi, 1);
+    const monthEnd = new Date(monthStart.getFullYear(), monthStart.getMonth()+1, 0);
+
+    // Skip months that are entirely before the cutoff
+    if(ymd(monthEnd) < minYmd) continue;
 
     const title = document.createElement("div");
     title.className = "month-title";
@@ -1715,6 +2093,8 @@ function renderMealCalendar(){
     for(let i=0;i<totalCells;i++){
       const d = addDays(gridStart, i);
       const dy = ymd(d);
+      // Hide anything older than the 10-day cutoff
+      if(dy < minYmd) continue;
       const cell = document.createElement("div");
       cell.className = "cal-cell";
       if(d.getMonth() !== monthStart.getMonth()) cell.classList.add("other");
@@ -1750,6 +2130,8 @@ function renderMealCalendar(){
       if(t){ openDayModal(t.dataset.editDay); }
     });
     scroll.dataset.bound = "1";
+    // First render: jump straight to today so past months are scrolled above
+    scrollMealCalToToday();
   }
 }
 
@@ -2267,31 +2649,37 @@ function renderPlainCalendar(){
   const winStartYmd = ymd(winStart);
   const winEndYmd   = ymd(winEnd);
 
-  // Index event occurrences by date. Each entry carries its position within the multi-day span.
-  // eventsByDate[dy] = [{ ev, pos: 'single'|'start'|'mid'|'end', dayIndex, dayCount }]
-  const eventsByDate = {};
+  // Collect each event occurrence as an "instance" with its full days[] list.
+  const instances = []; // { ev, span, days:[dy,...] }
   (data.events || []).forEach(ev=>{
     if(!eventMatchesPeopleFilter(ev)) return;
     const span = eventSpanDays(ev);
     expandEventOccurrences(ev, winStartYmd, winEndYmd).forEach(startDy=>{
       const startD = new Date(startDy + "T00:00:00");
+      const days = [];
       for(let i=0; i<span; i++){
         const d = addDays(startD, i);
         const dy = ymd(d);
         if(dy < winStartYmd || dy > winEndYmd) continue;
-        if(!eventsByDate[dy]) eventsByDate[dy] = [];
-        let pos = "single";
-        if(span > 1){
-          if(i === 0) pos = "start";
-          else if(i === span - 1) pos = "end";
-          else pos = "mid";
-        }
-        eventsByDate[dy].push({ ev, pos, dayIndex: i, dayCount: span });
+        days.push(dy);
       }
+      if(days.length) instances.push({ ev, span, days });
     });
   });
-  // Sort each day's events: all-day first, then by startTime
-  Object.values(eventsByDate).forEach(list=>{
+
+  // Split into single-day (rendered as chips inside cells) and multi-day
+  // (rendered as bars in a per-week overlay layer).
+  const singleByDate = {};
+  const multiInstances = [];
+  instances.forEach(inst=>{
+    if(inst.span === 1 && inst.days.length === 1){
+      const dy = inst.days[0];
+      (singleByDate[dy] = singleByDate[dy] || []).push(inst);
+    } else {
+      multiInstances.push(inst);
+    }
+  });
+  Object.values(singleByDate).forEach(list=>{
     list.sort((a,b)=>{
       if(a.ev.allDay !== b.ev.allDay) return a.ev.allDay ? -1 : 1;
       return (a.ev.startTime||"").localeCompare(b.ev.startTime||"");
@@ -2305,95 +2693,184 @@ function renderPlainCalendar(){
     title.textContent = monthStart.toLocaleDateString(undefined,{month:"long",year:"numeric"});
     scroll.appendChild(title);
 
-    const grid = document.createElement("div");
-    grid.className = "cal-grid";
+    const monthEl = document.createElement("div");
+    monthEl.className = "cal-month";
     const startDay = monthStart.getDay();
     const gridStart = addDays(monthStart, -startDay);
     const daysInMonth = new Date(monthStart.getFullYear(), monthStart.getMonth()+1, 0).getDate();
     const totalCells = Math.ceil((startDay + daysInMonth) / 7) * 7;
-    for(let i=0;i<totalCells;i++){
-      const d = addDays(gridStart, i);
-      const dy = ymd(d);
-      const cell = document.createElement("div");
-      cell.className = "cal-cell";
-      cell.style.minHeight = "84px";
-      if(d.getMonth() !== monthStart.getMonth()) cell.classList.add("other");
-      if(dy === today) cell.classList.add("today");
+    const numWeeks = totalCells / 7;
 
-      const evs = eventsByDate[dy] || [];
-      let evHtml = "";
-      if(evs.length){
-        evHtml = `<div class="cal-events">` + evs.map(entry=>{
-          const ev = entry.ev;
-          const c = ev.color || "#5b8a72";
-          // Show time only on the start day (or on single-day events)
-          const timeTxt = (entry.pos === "single" || entry.pos === "start") && !ev.allDay && ev.startTime
-            ? `<span class="ev-time">${escapeHtml(fmtTime12(ev.startTime))}</span>`
-            : "";
-          // Title: only on start/single; continuation days show » prefix
-          let titleHtml;
-          if(entry.pos === "mid" || entry.pos === "end"){
-            titleHtml = `<span class="ev-title" style="opacity:.85;">» ${escapeHtml(ev.title)}</span>`;
-          } else {
-            const locTxt = ev.location ? ` <span style="opacity:.8;font-weight:500;">📍 ${escapeHtml(ev.location)}</span>` : "";
-            titleHtml = `<span class="ev-title">${ev.recurring ? '🔁 ' : ''}${escapeHtml(ev.title)}${entry.dayCount > 1 ? ` <span style="opacity:.75;font-weight:500;">(${entry.dayCount}d)</span>` : ''}${locTxt}</span>`;
-          }
-          // Attendee dots: empty array = everyone, so omit
-          let attHtml = "";
-          if(ev.attendees && ev.attendees.length && ev.attendees.length < data.people.length && (entry.pos === "single" || entry.pos === "start")){
-            attHtml = `<span class="ev-att">` +
-              ev.attendees.map(pid=>`<span class="pdot" style="background:${escapeHtml(personColor(pid))}" title="${escapeHtml(personName(pid))}"></span>`).join("") +
-              `</span>`;
-          }
-          // Notes preview — only on start/single days, when notes exist
-          let notesHtml = "";
-          if(ev.notes && (entry.pos === "single" || entry.pos === "start")){
-            notesHtml = `<span class="ev-notes">📝 ${escapeHtml(ev.notes)}</span>`;
-          }
-          const posCls = entry.pos === "single" ? "" : `multi-${entry.pos}`;
-          return `<div class="cal-event ${posCls}" style="background:${escapeHtml(c)}" data-event-id="${ev.id}" title="${escapeHtml(eventTooltip(ev))}">${timeTxt}${titleHtml}${attHtml}${notesHtml}</div>`;
-        }).join("") + `</div>`;
+    for(let wi = 0; wi < numWeeks; wi++){
+      const weekEl = document.createElement("div");
+      weekEl.className = "cal-week";
+
+      // Build the 7 day Dates for this week + their ymd lookup
+      const weekDays = [];
+      for(let dci = 0; dci < 7; dci++){
+        weekDays.push(addDays(gridStart, wi*7 + dci));
       }
+      const weekStartYmd = ymd(weekDays[0]);
+      const weekEndYmd   = ymd(weekDays[6]);
 
-      cell.innerHTML = `<div class="dnum"><span>${d.getDate()}</span></div>${evHtml}`;
-
-      // Click handlers (skip other-month cells for "add new")
-      if(d.getMonth() === monthStart.getMonth()){
-        cell.addEventListener("click", e=>{
-          const evChip = e.target.closest("[data-event-id]");
-          if(evChip){
-            e.stopPropagation();
-            if(pasteTemplate){
-              // Allow pasting on a day that already has events too
-              pasteEventOnDay(dy);
-            } else {
-              openEventModal(evChip.dataset.eventId);
-            }
-          } else if(pasteTemplate){
-            pasteEventOnDay(dy);
-          } else {
-            openEventModal(null, dy);
-          }
+      // Find multi-day instances that intersect this week and compute their
+      // column span within this week (clipping at week boundaries).
+      const weekBars = [];
+      multiInstances.forEach(inst=>{
+        const first = inst.days[0];
+        const last  = inst.days[inst.days.length-1];
+        if(last < weekStartYmd || first > weekEndYmd) return;
+        const firstInWeek = first < weekStartYmd ? weekStartYmd : first;
+        const lastInWeek  = last  > weekEndYmd   ? weekEndYmd   : last;
+        const startCol = weekDays.findIndex(d => ymd(d) === firstInWeek);
+        const endCol   = weekDays.findIndex(d => ymd(d) === lastInWeek);
+        weekBars.push({
+          inst, startCol, endCol,
+          continuedLeft:  first < weekStartYmd,
+          continuedRight: last  > weekEndYmd
         });
-      } else {
-        // Still allow editing existing events in adjacent-month cells
-        const chips = cell.querySelectorAll("[data-event-id]");
-        chips.forEach(chip=>{
-          chip.style.cursor = "pointer";
-          chip.addEventListener("click", e=>{
-            e.stopPropagation();
-            if(pasteTemplate){
+      });
+
+      // Greedy lane packing within the week.
+      weekBars.sort((a,b)=>{
+        if(a.startCol !== b.startCol) return a.startCol - b.startCol;
+        return (b.endCol - b.startCol) - (a.endCol - a.startCol);
+      });
+      const lanes = []; // lanes[k] = [bar, bar, ...]
+      let maxLane = -1;
+      weekBars.forEach(bar=>{
+        let lane = 0;
+        while(true){
+          const conflict = (lanes[lane] || []).some(o =>
+            !(o.endCol < bar.startCol || o.startCol > bar.endCol)
+          );
+          if(!conflict) break;
+          lane++;
+        }
+        bar.lane = lane;
+        (lanes[lane] = lanes[lane] || []).push(bar);
+        if(lane > maxLane) maxLane = lane;
+      });
+      const numLanes = maxLane + 1;
+      if(numLanes > 0) weekEl.style.setProperty("--multi-lanes", numLanes);
+
+      // Render the 7 day cells (single-day chips only)
+      for(let dci = 0; dci < 7; dci++){
+        const d = weekDays[dci];
+        const dy = ymd(d);
+        const cell = document.createElement("div");
+        cell.className = "cal-cell";
+        cell.style.minHeight = "84px";
+        if(d.getMonth() !== monthStart.getMonth()) cell.classList.add("other");
+        if(dy === today) cell.classList.add("today");
+
+        const singles = singleByDate[dy] || [];
+        let chipsHtml = "";
+        if(singles.length){
+          chipsHtml = `<div class="cal-events">` + singles.map(inst=>{
+            const ev = inst.ev;
+            const c = ev.color || "#5b8a72";
+            const timeTxt = !ev.allDay && ev.startTime
+              ? `<span class="ev-time">${escapeHtml(fmtTime12(ev.startTime))}</span>`
+              : "";
+            const locTxt = ev.location ? ` <span class="ev-loc" style="opacity:.8;font-weight:500;">📍 ${escapeHtml(ev.location)}</span>` : "";
+            const titleHtml = `<span class="ev-title">${ev.recurring ? '<span class="ev-recur">🔁 </span>' : ''}${escapeHtml(ev.title)}${locTxt}</span>`;
+            let attHtml = "";
+            if(ev.attendees && ev.attendees.length && ev.attendees.length < data.people.length){
+              attHtml = `<span class="ev-att">` +
+                ev.attendees.map(pid=>`<span class="pdot" style="background:${escapeHtml(personColor(pid))}" title="${escapeHtml(personName(pid))}"></span>`).join("") +
+                `</span>`;
+            }
+            let notesHtml = "";
+            if(ev.notes){
+              notesHtml = `<span class="ev-notes">📝 ${escapeHtml(ev.notes)}</span>`;
+            }
+            return `<div class="cal-event" style="background:${escapeHtml(c)}" data-event-id="${ev.id}" title="${escapeHtml(eventTooltip(ev))}">${timeTxt}${titleHtml}${attHtml}${notesHtml}</div>`;
+          }).join("") + `</div>`;
+        }
+
+        // Reserve top space for multi-day lanes via a spacer between dnum and chips
+        const spacer = numLanes > 0 ? `<div class="multi-spacer"></div>` : "";
+        cell.innerHTML = `<div class="dnum"><span>${d.getDate()}</span></div>${spacer}${chipsHtml}`;
+
+        // Click handlers (same as before)
+        if(d.getMonth() === monthStart.getMonth()){
+          cell.addEventListener("click", e=>{
+            const evChip = e.target.closest("[data-event-id]");
+            if(evChip){
+              e.stopPropagation();
+              if(pasteTemplate){
+                pasteEventOnDay(dy);
+              } else {
+                openEventModal(evChip.dataset.eventId);
+              }
+            } else if(pasteTemplate){
               pasteEventOnDay(dy);
             } else {
-              openEventModal(chip.dataset.eventId);
+              openEventModal(null, dy);
             }
           });
-        });
+        } else {
+          const chips = cell.querySelectorAll("[data-event-id]");
+          chips.forEach(chip=>{
+            chip.style.cursor = "pointer";
+            chip.addEventListener("click", e=>{
+              e.stopPropagation();
+              if(pasteTemplate){
+                pasteEventOnDay(dy);
+              } else {
+                openEventModal(chip.dataset.eventId);
+              }
+            });
+          });
+        }
+
+        weekEl.appendChild(cell);
       }
 
-      grid.appendChild(cell);
+      // Render multi-day bars overlay (after cells)
+      if(weekBars.length){
+        const overlay = document.createElement("div");
+        overlay.className = "cal-week-bars";
+        weekBars.forEach(bar=>{
+          const ev = bar.inst.ev;
+          const c = ev.color || "#5b8a72";
+          const barEl = document.createElement("div");
+          barEl.className = "cal-bar";
+          if(bar.continuedLeft)  barEl.classList.add("continued-left");
+          if(bar.continuedRight) barEl.classList.add("continued-right");
+          barEl.style.gridColumn = `${bar.startCol + 1} / span ${bar.endCol - bar.startCol + 1}`;
+          barEl.style.setProperty("--lane", bar.lane);
+          barEl.style.background = c;
+          barEl.dataset.eventId = ev.id;
+          barEl.title = eventTooltip(ev);
+          // Build label: time + title on the starting segment; just title (with leading …) on continuation weeks.
+          const timeTxt = !ev.allDay && ev.startTime && !bar.continuedLeft
+            ? `<span class="ev-time">${escapeHtml(fmtTime12(ev.startTime))}</span>`
+            : "";
+          const recurTxt = ev.recurring ? "🔁 " : "";
+          const dayTxt = (!bar.continuedLeft && !bar.continuedRight && bar.inst.span > 1)
+            ? ` <span style="opacity:.75;font-weight:500;">(${bar.inst.span}d)</span>` : "";
+          const prefix = bar.continuedLeft ? "… " : "";
+          barEl.innerHTML = `${timeTxt}<span class="ev-title">${prefix}${recurTxt}${escapeHtml(ev.title)}${dayTxt}</span>`;
+          // Click handler: open event modal (or paste on the first visible day in paste mode)
+          barEl.addEventListener("click", e=>{
+            e.stopPropagation();
+            if(pasteTemplate){
+              const firstVisibleDy = ymd(weekDays[bar.startCol]);
+              pasteEventOnDay(firstVisibleDy);
+            } else {
+              openEventModal(ev.id);
+            }
+          });
+          overlay.appendChild(barEl);
+        });
+        weekEl.appendChild(overlay);
+      }
+
+      monthEl.appendChild(weekEl);
     }
-    scroll.appendChild(grid);
+    scroll.appendChild(monthEl);
   }
 }
 
@@ -3067,7 +3544,15 @@ function renderTodos(){
       sec.className = "group-section person-section";
       sec.dataset.pid = p.id;
       const pc = p.color || '#5b8a72';
-      sec.innerHTML = `<h3 style="background:${escapeHtml(pc)}22; border-left-color:${escapeHtml(pc)};"><span class="pdot" style="background:${escapeHtml(pc)}"></span>${escapeHtml(p.name)}</h3>`;
+      // Tint the whole section in the person's color.
+      // Use white base so the translucent color reads TRUE (a translucent blue
+      // over the page's warm beige looks muddy/olive).
+      // Also set border-left LAST so the shorthand doesn't get clobbered by
+      // a later borderColor write.
+      sec.style.background = `linear-gradient(0deg, ${pc}26, ${pc}26), #ffffff`;
+      sec.style.borderColor = `${pc}80`;
+      sec.style.borderLeft = `8px solid ${pc}`;
+      sec.innerHTML = `<h3 style="background:transparent; color:var(--ink); border-left:0; padding-left:0;">${escapeHtml(p.name)}</h3>`;
       list.forEach(t=>sec.appendChild(todoRow(t, p.id)));
       attachDropTarget(sec, p.id);
       c.appendChild(sec);
@@ -3148,8 +3633,14 @@ function todoRow(t, sourcePid){
     row.addEventListener("dragend", ()=> row.classList.remove("dragging"));
   }
 
-  // Colored left border based on first assignee (or gradient when multiple)
-  if(t.assignees.length === 1){
+  // Colored left border:
+  // - In person-grouping mode, the section itself already shows the person's
+  //   color on its left edge, so we skip the per-row stripe to avoid a
+  //   redundant double bar.
+  // - Otherwise use the first assignee (or a gradient when there are multiple).
+  if(todoGroupBy === "person"){
+    row.style.borderLeftColor = "transparent";
+  } else if(t.assignees.length === 1){
     row.style.borderLeftColor = personColor(t.assignees[0]);
   } else if(t.assignees.length > 1){
     // Gradient stripe of all assignee colors
@@ -3554,10 +4045,9 @@ function renderReading(){
           `;
         }).join("");
         return `
-          <div class="person-section" style="border-left-color:${escapeHtml(p.color)}; background:${hexToRgba(p.color, 0.07)};">
+          <div class="person-section" style="border-left:8px solid ${escapeHtml(p.color)}; border-color:${escapeHtml(p.color)}80; border-left-color:${escapeHtml(p.color)}; background:linear-gradient(0deg, ${escapeHtml(p.color)}26, ${escapeHtml(p.color)}26), #ffffff;">
             <div class="ps-header">
-              <div class="ps-avatar" style="background:${escapeHtml(p.color)};">${escapeHtml(initial)}</div>
-              <div class="ps-name" style="color:${escapeHtml(p.color)};">${escapeHtml(p.name)}</div>
+              <div class="ps-name" style="color:var(--ink);">${escapeHtml(p.name)}</div>
               <div class="ps-count">${pBooks.length} ${pBooks.length === 1 ? "book" : "books"}</div>
             </div>
             <div class="currently-reading-list">${bookHtml}</div>
@@ -3610,10 +4100,9 @@ function renderReading(){
         `;
       }).join("");
       return `
-        <div class="person-section" style="border-left-color:${escapeHtml(p.color)}; background:${hexToRgba(p.color, 0.07)};">
+        <div class="person-section" style="border-left:8px solid ${escapeHtml(p.color)}; border-color:${escapeHtml(p.color)}80; border-left-color:${escapeHtml(p.color)}; background:linear-gradient(0deg, ${escapeHtml(p.color)}26, ${escapeHtml(p.color)}26), #ffffff;">
           <div class="ps-header">
-            <div class="ps-avatar" style="background:${escapeHtml(p.color)};">${escapeHtml(initial)}</div>
-            <div class="ps-name" style="color:${escapeHtml(p.color)};">${escapeHtml(p.name)}</div>
+            <div class="ps-name" style="color:var(--ink);">${escapeHtml(p.name)}</div>
             <div class="ps-count">${pBooks.length} ${pBooks.length === 1 ? "book finished" : "books finished"}</div>
           </div>
           <div class="bookshelf">${bookHtml}</div>
