@@ -89,6 +89,44 @@
     50%    { opacity:.55; transform:scale(.85); }
   }
 
+  /* ---------- Lock screen ---------- */
+  #lock-screen{
+    position:fixed; inset:0; z-index:99999;
+    background:linear-gradient(135deg,#f6f3ec 0%,#dbe8df 100%);
+    display:flex; align-items:center; justify-content:center; padding:20px;
+  }
+  #lock-screen .lock-card{
+    width:100%; max-width:380px;
+    background:#fff; border:1px solid var(--line); border-radius:18px;
+    padding:32px 28px; box-shadow:0 20px 60px rgba(0,0,0,.18);
+    text-align:center;
+  }
+  #lock-screen .lock-crest{
+    width:64px; height:64px; margin:0 auto 14px;
+    background:linear-gradient(135deg,var(--accent),var(--accent-2));
+    color:#fff; border-radius:18px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:32px;
+  }
+
+  /* ---------- Read-only mode ---------- */
+  body.ro-mode #btn-lock{ pointer-events:auto; opacity:1; }
+  body.ro-mode .app input:not([type=checkbox]):not([type=radio]),
+  body.ro-mode .app select,
+  body.ro-mode .app textarea,
+  body.ro-mode .app button:not([data-tab]):not(#btn-lock):not([data-cpf]):not(.modal button.modal-close){
+    pointer-events:none !important;
+    opacity:.55 !important;
+    cursor:not-allowed !important;
+  }
+  body.ro-mode .app input[type=checkbox],
+  body.ro-mode .app input[type=radio]{
+    pointer-events:none !important;
+    opacity:.6 !important;
+  }
+  body.ro-mode .modal-bg .btn:not(.ghost){ display:none !important; }
+  body.ro-mode .modal-bg .btn.ghost{ pointer-events:auto !important; opacity:1 !important; }
+
   nav.tabs{
     display:flex; gap:6px; flex-wrap:wrap;
     background:var(--panel); border:1px solid var(--line);
@@ -771,9 +809,12 @@
   }
   .current-book{
     display:flex; align-items:center; gap:12px;
-    background:var(--panel-2); border:1px solid var(--line);
-    border-radius:10px; padding:10px 14px;
-    border-left:5px solid var(--accent);
+    background:transparent; border:0;
+    border-top:1px dashed var(--line);
+    border-radius:0; padding:10px 0;
+  }
+  .currently-reading-list .current-book:first-child{
+    border-top:0; padding-top:2px;
   }
   .current-book .cb-cover{
     flex-shrink:0; width:46px; height:64px;
@@ -821,13 +862,12 @@
   }
   .book-spine{
     position:relative;
-    background:var(--panel-2); border:1px solid var(--line);
-    border-radius:8px; padding:12px 14px;
-    border-left:6px solid var(--accent);
+    background:transparent; border:0;
+    border-radius:8px; padding:0;
     cursor:pointer;
-    transition:transform .12s, box-shadow .12s;
+    transition:transform .12s;
   }
-  .book-spine:hover{ transform:translateY(-2px); box-shadow:0 4px 10px rgba(0,0,0,.08); }
+  .book-spine:hover{ transform:translateY(-2px); }
   .book-spine .bs-cover{
     width:100%; aspect-ratio:2/3;
     background:var(--panel);
@@ -864,6 +904,43 @@
     color:var(--ink-soft); font-size:14px;
   }
   .reading-empty .re-emoji{ font-size:40px; display:block; margin-bottom:6px; opacity:.6; }
+
+  /* Per-person grouped sections under Currently Reading / Finished Bookshelf */
+  .person-section{
+    margin-top:16px;
+    border:1px solid var(--line);
+    border-left:6px solid var(--accent);
+    border-radius:12px;
+    padding:14px 16px;
+    background:var(--panel-2);
+  }
+  .person-section:first-child{ margin-top:0; }
+  .person-section .ps-header{
+    display:flex; align-items:center; gap:10px;
+    margin-bottom:12px; padding-bottom:10px;
+    border-bottom:1px dashed var(--line);
+  }
+  .person-section .ps-avatar{
+    width:32px; height:32px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    color:#fff; font-weight:700; font-size:14px;
+    box-shadow:0 2px 4px rgba(0,0,0,.15);
+    flex-shrink:0;
+  }
+  .person-section .ps-name{ font-weight:700; font-size:16px; }
+  .person-section .ps-count{
+    margin-left:auto;
+    font-size:12px; font-weight:600;
+    color:var(--ink-soft);
+    background:rgba(255,255,255,.65);
+    border:1px solid var(--line);
+    padding:3px 10px; border-radius:10px;
+  }
+  .person-section.empty{ opacity:.55; }
+  .person-section.empty .ps-empty{
+    font-size:13px; color:var(--ink-soft); font-style:italic;
+    padding:4px 2px;
+  }
 
   /* Book modal cover uploader */
   .cover-uploader{
@@ -917,6 +994,22 @@
 </style>
 </head>
 <body>
+
+<!-- Password lock screen -->
+<div id="lock-screen" style="display:none;">
+  <div class="lock-card">
+    <div class="lock-crest" aria-hidden="true">🐟</div>
+    <h2 style="margin:0 0 4px;">Fishler Household</h2>
+    <p style="margin:0 0 18px; color:var(--ink-soft); font-size:14px;">Enter the family password to continue.</p>
+    <form id="lock-form" autocomplete="on">
+      <input id="lock-password" type="password" placeholder="Password" autocomplete="current-password"
+             style="width:100%; padding:12px 14px; font-size:16px; border:1px solid var(--line); border-radius:10px; background:#fff;" />
+      <div id="lock-error" style="display:none; color:#d94a4a; font-size:13px; margin-top:8px;">Wrong password — try again.</div>
+      <button type="submit" class="btn" style="width:100%; margin-top:14px; padding:12px; font-size:15px;">Unlock</button>
+    </form>
+  </div>
+</div>
+
 <div class="app">
   <header class="topbar">
     <div class="crest" aria-label="Fish logo">
@@ -936,8 +1029,12 @@
     <div style="margin-left:auto; display:flex; align-items:center; gap:8px;">
       <span id="sync-status-dot" class="sync-dot off" aria-hidden="true"></span>
       <span id="sync-status" style="font-size:13px; color:var(--ink-soft);">Sync: starting…</span>
+      <button id="btn-lock" class="btn ghost" title="Lock / sign out" style="padding:4px 10px; font-size:18px; line-height:1;">🔒</button>
     </div>
   </header>
+  <div id="readonly-banner" style="display:none; background:#fff4dc; border:1px solid #f0d08a; color:#7a5b1e; border-radius:10px; padding:8px 12px; margin-bottom:10px; font-size:13px;">
+    👀 <strong>Read-only mode.</strong> Your changes won't be saved or synced.
+  </div>
 
   <nav class="tabs" id="tabs">
     <button data-tab="calendar" class="active">🗓️ Calendar</button>
@@ -1065,22 +1162,12 @@
 
   <!-- Reading Page -->
   <section id="page-reading" class="page">
-    <!-- Hero stats banner -->
-    <div class="card reading-hero">
-      <div class="reading-hero-bg">📖📚✨🌟📖📚✨🌟📖📚</div>
-      <div class="reading-hero-content">
-        <div>
-          <h2 style="margin:0 0 4px;">📚 Reading Adventures</h2>
-          <p style="margin:0; color:var(--ink-soft); font-size:14px;" id="reading-tagline">Log your books and celebrate every page!</p>
-        </div>
-        <div class="reading-hero-stats" id="reading-hero-stats"></div>
-        <button class="btn" id="btn-add-book">+ Log a Book</button>
-      </div>
-    </div>
-
     <!-- Per-person scoreboard -->
     <div class="card">
-      <h3 style="margin:0 0 12px;">🏆 Reader Scoreboard</h3>
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; gap:10px; flex-wrap:wrap;">
+        <h3 style="margin:0;">🏆 Reader Scoreboard</h3>
+        <button class="btn" id="btn-add-book">+ Log a Book</button>
+      </div>
       <div class="reader-board" id="reader-board"></div>
     </div>
 
@@ -1099,7 +1186,7 @@
           <select id="reading-filter-person" style="font-size:13px; padding:5px 8px;"></select>
         </div>
       </div>
-      <div class="bookshelf" id="finished-bookshelf"></div>
+      <div id="finished-bookshelf"></div>
     </div>
   </section>
 </div>
@@ -1436,6 +1523,17 @@ function escapeHtml(s){
   return String(s ?? "").replace(/[&<>"']/g, c => ({
     "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"
   }[c]));
+}
+function hexToRgba(hex, alpha){
+  if(!hex || typeof hex !== "string") return `rgba(91,138,114,${alpha})`;
+  let h = hex.trim().replace(/^#/, "");
+  if(h.length === 3) h = h.split("").map(c=>c+c).join("");
+  if(h.length !== 6) return `rgba(91,138,114,${alpha})`;
+  const r = parseInt(h.slice(0,2), 16);
+  const g = parseInt(h.slice(2,4), 16);
+  const b = parseInt(h.slice(4,6), 16);
+  if(Number.isNaN(r) || Number.isNaN(g) || Number.isNaN(b)) return `rgba(91,138,114,${alpha})`;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
 /* =========================================================
@@ -3394,29 +3492,6 @@ function renderReading(){
   const books = data.books || [];
   const finished = books.filter(b=>b.finishedAt);
   const inProgress = books.filter(b=>!b.finishedAt);
-  const yearStart = `${new Date().getFullYear()}-01-01`;
-  const finishedThisYear = finished.filter(b=>b.finishedAt >= yearStart);
-
-  // Hero stats
-  const heroStats = document.getElementById("reading-hero-stats");
-  const tagline = document.getElementById("reading-tagline");
-  if(heroStats){
-    heroStats.innerHTML = `
-      <div class="reading-stat"><span class="rs-num">${finished.length}</span><span class="rs-lbl">Total Read</span></div>
-      <div class="reading-stat"><span class="rs-num">${finishedThisYear.length}</span><span class="rs-lbl">${new Date().getFullYear()}</span></div>
-      <div class="reading-stat"><span class="rs-num">${inProgress.length}</span><span class="rs-lbl">In Progress</span></div>
-    `;
-  }
-  if(tagline){
-    if(finished.length === 0 && inProgress.length === 0){
-      tagline.textContent = "Log your books and celebrate every page!";
-    } else if(finishedThisYear.length > 0){
-      const last = [...finishedThisYear].sort((a,b)=>b.finishedAt.localeCompare(a.finishedAt))[0];
-      tagline.innerHTML = `🎉 Most recent finish: <strong>${escapeHtml(last.title)}</strong> by ${escapeHtml(personName(last.personId))}!`;
-    } else {
-      tagline.textContent = "Keep going — every page counts! 📖";
-    }
-  }
 
   // Scoreboard
   const board = document.getElementById("reader-board");
@@ -3445,38 +3520,51 @@ function renderReading(){
     }).join("");
   }
 
-  // Currently reading list
+  // Currently reading — grouped by person, colour-coded
   const curr = document.getElementById("currently-reading");
   if(curr){
     if(inProgress.length === 0){
       curr.innerHTML = `<div class="reading-empty"><span class="re-emoji">📚</span>Nobody's reading anything right now. Time to crack open a new book!</div>`;
     } else {
-      const sorted = [...inProgress].sort((a,b)=>(b.startedAt||"").localeCompare(a.startedAt||""));
-      curr.innerHTML = `<div class="currently-reading-list">` + sorted.map(b=>{
-        const days = daysReading(b.startedAt);
-        const daysLabel = days === 0 ? "Started today" : days === 1 ? "1 day in" : `${days} days in`;
-        const color = personColor(b.personId);
-        const authorTxt = b.author ? ` <span style="color:var(--ink-soft);">by ${escapeHtml(b.author)}</span>` : "";
-        const coverStyle = b.cover ? `background-image:url('${b.cover}');` : "";
-        const coverInner = b.cover ? "" : "📖";
-        return `
-          <div class="current-book" style="border-left-color:${escapeHtml(color)};" data-book-id="${b.id}">
-            <div class="cb-cover" style="${coverStyle}">${coverInner}</div>
-            <div class="cb-info">
-              <div class="cb-title">${escapeHtml(b.title)}${authorTxt}</div>
-              <div class="cb-meta">
-                <span class="cb-person"><span class="pdot" style="background:${escapeHtml(color)};"></span>${escapeHtml(personName(b.personId))}</span>
-                · Started ${escapeHtml(fmtDateShort(b.startedAt))}
+      const sections = data.people.map(p=>{
+        const pBooks = inProgress
+          .filter(b=>b.personId === p.id)
+          .sort((a,b)=>(b.startedAt||"").localeCompare(a.startedAt||""));
+        if(pBooks.length === 0) return "";
+        const initial = (p.name || "?").charAt(0).toUpperCase();
+        const bookHtml = pBooks.map(b=>{
+          const days = daysReading(b.startedAt);
+          const daysLabel = days === 0 ? "Started today" : days === 1 ? "1 day in" : `${days} days in`;
+          const authorTxt = b.author ? ` <span style="color:var(--ink-soft);">by ${escapeHtml(b.author)}</span>` : "";
+          const coverStyle = b.cover ? `background-image:url('${b.cover}');` : "";
+          const coverInner = b.cover ? "" : "📖";
+          return `
+            <div class="current-book" data-book-id="${b.id}">
+              <div class="cb-cover" style="${coverStyle}">${coverInner}</div>
+              <div class="cb-info">
+                <div class="cb-title">${escapeHtml(b.title)}${authorTxt}</div>
+                <div class="cb-meta">Started ${escapeHtml(fmtDateShort(b.startedAt))}</div>
+              </div>
+              <span class="cb-days">${daysLabel}</span>
+              <div class="cb-actions">
+                <button class="cb-finish" data-finish-id="${b.id}">✓ Finished!</button>
+                <button class="cb-edit" data-edit-book-id="${b.id}">Edit</button>
               </div>
             </div>
-            <span class="cb-days">${daysLabel}</span>
-            <div class="cb-actions">
-              <button class="cb-finish" data-finish-id="${b.id}">✓ Finished!</button>
-              <button class="cb-edit" data-edit-book-id="${b.id}">Edit</button>
+          `;
+        }).join("");
+        return `
+          <div class="person-section" style="border-left-color:${escapeHtml(p.color)}; background:${hexToRgba(p.color, 0.07)};">
+            <div class="ps-header">
+              <div class="ps-avatar" style="background:${escapeHtml(p.color)};">${escapeHtml(initial)}</div>
+              <div class="ps-name" style="color:${escapeHtml(p.color)};">${escapeHtml(p.name)}</div>
+              <div class="ps-count">${pBooks.length} ${pBooks.length === 1 ? "book" : "books"}</div>
             </div>
+            <div class="currently-reading-list">${bookHtml}</div>
           </div>
         `;
-      }).join("") + `</div>`;
+      }).filter(Boolean).join("");
+      curr.innerHTML = sections;
     }
   }
 
@@ -3489,23 +3577,22 @@ function renderReading(){
     if(prevVal && data.people.some(p=>p.id===prevVal)) filterSel.value = prevVal;
   }
 
-  // Finished shelf
+  // Finished shelf — grouped by person, colour-coded
   const shelf = document.getElementById("finished-bookshelf");
   if(shelf){
     const filterPid = filterSel ? filterSel.value : "";
-    let toShow = finished.slice();
-    if(filterPid) toShow = toShow.filter(b=>b.personId === filterPid);
-    toShow.sort((a,b)=>(b.finishedAt||"").localeCompare(a.finishedAt||""));
-    if(toShow.length === 0){
-      shelf.innerHTML = `<div class="reading-empty"><span class="re-emoji">📚</span>${filterPid ? "No finished books for this reader yet." : "No finished books yet — log your first one above!"}</div>`;
-    } else {
-      shelf.innerHTML = toShow.map((b,idx)=>{
-        const color = personColor(b.personId);
+    const peopleToShow = data.people.filter(p => !filterPid || p.id === filterPid);
+
+    const sections = peopleToShow.map(p=>{
+      const pBooks = finished
+        .filter(b=>b.personId === p.id)
+        .sort((a,b)=>(b.finishedAt||"").localeCompare(a.finishedAt||""));
+      if(pBooks.length === 0) return "";
+      const initial = (p.name || "?").charAt(0).toUpperCase();
+      const sortedAsc = [...pBooks].sort((a,b)=>(a.finishedAt||"").localeCompare(b.finishedAt||""));
+      const bookHtml = pBooks.map(b=>{
         const authorTxt = b.author ? escapeHtml(b.author) : "—";
-        // Show celebration medal for first few or every 10th
-        const personFinished = finished.filter(x=>x.personId===b.personId)
-          .sort((a,b)=>(a.finishedAt||"").localeCompare(b.finishedAt||""));
-        const rank = personFinished.findIndex(x=>x.id===b.id) + 1;
+        const rank = sortedAsc.findIndex(x=>x.id===b.id) + 1;
         let badge = "";
         if(rank === 1) badge = "🎉";
         else if(rank % 10 === 0) badge = "🏆";
@@ -3513,19 +3600,31 @@ function renderReading(){
         const coverStyle = b.cover ? `background-image:url('${b.cover}');` : "";
         const coverInner = b.cover ? "" : "📖";
         return `
-          <div class="book-spine" style="border-left-color:${escapeHtml(color)};" data-edit-book-id="${b.id}">
-            ${badge ? `<span class="bs-medal" title="Book #${rank} for ${escapeHtml(personName(b.personId))}!">${badge}</span>` : ""}
+          <div class="book-spine" data-edit-book-id="${b.id}">
+            ${badge ? `<span class="bs-medal" title="Book #${rank} for ${escapeHtml(p.name)}!">${badge}</span>` : ""}
             <div class="bs-cover" style="${coverStyle}">${coverInner}</div>
             <div class="bs-title">${escapeHtml(b.title)}</div>
             <div class="bs-author">${authorTxt}</div>
-            <div class="bs-foot">
-              <span class="pdot" style="background:${escapeHtml(color)};"></span>
-              <span class="bs-person">${escapeHtml(personName(b.personId))}</span>
-              · ${escapeHtml(fmtDateShort(b.finishedAt))}
-            </div>
+            <div class="bs-foot">${escapeHtml(fmtDateShort(b.finishedAt))}</div>
           </div>
         `;
       }).join("");
+      return `
+        <div class="person-section" style="border-left-color:${escapeHtml(p.color)}; background:${hexToRgba(p.color, 0.07)};">
+          <div class="ps-header">
+            <div class="ps-avatar" style="background:${escapeHtml(p.color)};">${escapeHtml(initial)}</div>
+            <div class="ps-name" style="color:${escapeHtml(p.color)};">${escapeHtml(p.name)}</div>
+            <div class="ps-count">${pBooks.length} ${pBooks.length === 1 ? "book finished" : "books finished"}</div>
+          </div>
+          <div class="bookshelf">${bookHtml}</div>
+        </div>
+      `;
+    }).filter(Boolean).join("");
+
+    if(!sections){
+      shelf.innerHTML = `<div class="reading-empty"><span class="re-emoji">📚</span>${filterPid ? "No finished books for this reader yet." : "No finished books yet — log your first one above!"}</div>`;
+    } else {
+      shelf.innerHTML = sections;
     }
   }
 }
@@ -3758,6 +3857,87 @@ function renderAll(){
 
 renderAll();
 connectCloudSync();
+
+/* =========================================================
+   Password gate (read/write vs read-only)
+   Hashes are SHA-256 of the family passwords. This protects
+   against casual access only; anyone with dev tools can
+   bypass it. For real security, switch to Firebase Auth.
+   ========================================================= */
+const PW_HASH_RW = "44e77572a7c45be1d07ce223021c6b504245e51708451b6269a4098060b711f7";
+const PW_HASH_RO = "e14f48515facf4b10295e17c696d6e0db3114eabdabae5a71fcc9e4418e4880f";
+const AUTH_KEY = "fishler-household-auth";
+
+async function sha256(str){
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,"0")).join("");
+}
+
+function currentRole(){ return localStorage.getItem(AUTH_KEY); }   // "rw" | "ro" | null
+function setRole(role){
+  if(role) localStorage.setItem(AUTH_KEY, role);
+  else localStorage.removeItem(AUTH_KEY);
+  applyRoleUi();
+}
+
+let _originalSave = save;
+function applyRoleUi(){
+  const role = currentRole();
+  const banner = document.getElementById("readonly-banner");
+  if(role === "ro"){
+    document.body.classList.add("ro-mode");
+    if(banner) banner.style.display = "";
+    // Neutralize save() — local + cloud writes become no-ops.
+    save = function(){ /* read-only */ };
+  }else{
+    document.body.classList.remove("ro-mode");
+    if(banner) banner.style.display = "none";
+    save = _originalSave;
+  }
+}
+
+function showLockScreen(){
+  document.getElementById("lock-screen").style.display = "flex";
+  document.querySelector(".app").style.visibility = "hidden";
+  setTimeout(() => document.getElementById("lock-password")?.focus(), 50);
+}
+function hideLockScreen(){
+  document.getElementById("lock-screen").style.display = "none";
+  document.querySelector(".app").style.visibility = "";
+}
+
+document.getElementById("lock-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const input = document.getElementById("lock-password");
+  const err = document.getElementById("lock-error");
+  const h = await sha256(input.value);
+  if(h === PW_HASH_RW){
+    setRole("rw");
+    input.value = "";
+    err.style.display = "none";
+    hideLockScreen();
+  } else if(h === PW_HASH_RO){
+    setRole("ro");
+    input.value = "";
+    err.style.display = "none";
+    hideLockScreen();
+  } else {
+    err.style.display = "";
+    input.select();
+  }
+});
+
+document.getElementById("btn-lock").addEventListener("click", () => {
+  setRole(null);
+  showLockScreen();
+});
+
+// Boot
+if(currentRole()){
+  applyRoleUi();
+} else {
+  showLockScreen();
+}
 </script>
 </body>
 </html>
