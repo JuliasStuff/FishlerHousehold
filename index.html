@@ -536,6 +536,184 @@
     background:#eef7f1;
     outline-color:var(--accent);
   }
+  /* ---- This Week view ---- */
+  .week-day{
+    border:1px solid var(--line);
+    border-radius:10px;
+    background:var(--panel);
+    margin-bottom:10px;
+    overflow:hidden;
+  }
+  .week-day.today{
+    border-color:var(--accent);
+    box-shadow:0 0 0 2px var(--accent-soft);
+  }
+  .week-day-hd{
+    display:flex; align-items:baseline; justify-content:space-between;
+    gap:8px; padding:8px 12px;
+    background:var(--panel-2);
+    border-bottom:1px solid var(--line);
+    cursor:pointer;
+  }
+  .week-day-hd:hover{ background:var(--accent-soft); }
+  .week-day-hd .wd-name{
+    font-weight:700; font-size:14px; color:var(--ink);
+  }
+  .week-day-hd .wd-name .wd-today-pill{
+    display:inline-block; margin-left:8px;
+    background:var(--accent); color:#fff;
+    border-radius:999px; padding:1px 8px;
+    font-size:10px; font-weight:700; vertical-align:1px;
+  }
+  .week-day-hd .wd-add{
+    appearance:none; background:transparent;
+    border:1px solid var(--line); border-radius:999px;
+    padding:2px 10px; font-family:inherit; font-size:12px;
+    color:var(--ink-soft); cursor:pointer;
+  }
+  .week-day-hd .wd-add:hover{ background:var(--panel); color:var(--ink); }
+  .week-day-body{ padding:6px 8px 8px; }
+  .week-day-body .empty{
+    color:var(--ink-soft); font-size:13px; font-style:italic;
+    padding:6px 6px 4px;
+  }
+  .week-ev{
+    display:flex; align-items:flex-start; gap:8px;
+    padding:6px 8px; border-radius:8px;
+    border-left:4px solid var(--accent);
+    background:var(--panel-2);
+    margin:4px 0; cursor:pointer;
+    transition:background .12s;
+  }
+  .week-ev:hover{ background:var(--accent-soft); }
+  .week-ev .we-time{
+    flex:0 0 auto; min-width:64px;
+    font-size:12px; font-weight:600; color:var(--ink-soft);
+    line-height:1.4;
+  }
+  .week-ev .we-body{ flex:1 1 auto; min-width:0; }
+  .week-ev .we-title{ font-weight:600; color:var(--ink); }
+  .week-ev .we-meta{
+    font-size:12px; color:var(--ink-soft);
+    margin-top:2px; display:flex; flex-wrap:wrap; gap:6px 10px;
+  }
+  .week-ev .we-meta .pdot{
+    display:inline-block; width:8px; height:8px; border-radius:50%;
+    vertical-align:1px; margin-right:3px;
+  }
+  /* ---- This Week: agenda / timeline view ---- */
+  .agenda-allday{
+    display:flex; flex-wrap:wrap; gap:6px;
+    padding:6px 8px 8px;
+    border-bottom:1px dashed var(--line);
+  }
+  .agenda-allday .ad-chip{
+    display:inline-flex; align-items:center; gap:6px;
+    background:var(--panel-2); border:1px solid var(--line);
+    border-left:4px solid var(--accent);
+    border-radius:6px; padding:3px 8px;
+    font-size:12px; cursor:pointer;
+    transition:background .12s;
+  }
+  .agenda-allday .ad-chip:hover{ background:var(--accent-soft); }
+  .agenda-allday .ad-chip .ad-lbl{ color:var(--ink-soft); font-weight:600; font-size:11px; }
+  .agenda-allday .ad-chip .ad-title{ color:var(--ink); font-weight:600; }
+  .agenda-allday .ad-chip .pdot{
+    display:inline-block; width:7px; height:7px; border-radius:50%;
+    vertical-align:1px;
+  }
+
+  .agenda-grid{
+    display:grid;
+    grid-template-columns: 56px 1fr;
+    padding:6px 4px 8px;
+  }
+  .agenda-hours{
+    position:relative;
+    border-right:1px solid var(--line);
+  }
+  .agenda-hours .ag-hr{
+    position:absolute; left:0; right:6px;
+    text-align:right;
+    font-size:11px; color:var(--ink-soft);
+    transform:translateY(-50%);
+    line-height:1;
+    background:var(--panel);
+    padding:1px 2px;
+  }
+  .agenda-lanes{
+    position:relative;
+    background:
+      repeating-linear-gradient(
+        to bottom,
+        transparent 0,
+        transparent calc(var(--hour-h) - 1px),
+        var(--line) calc(var(--hour-h) - 1px),
+        var(--line) var(--hour-h)
+      );
+  }
+  .agenda-lanes::before{
+    /* Half-hour dotted lines */
+    content:"";
+    position:absolute; inset:0; pointer-events:none;
+    background:
+      repeating-linear-gradient(
+        to bottom,
+        transparent 0,
+        transparent calc(var(--hour-h)/2 - 1px),
+        rgba(0,0,0,0.04) calc(var(--hour-h)/2 - 1px),
+        rgba(0,0,0,0.04) calc(var(--hour-h)/2)
+      );
+  }
+  .agenda-ev{
+    position:absolute;
+    border-radius:6px;
+    background:var(--accent-soft);
+    border:1px solid var(--accent);
+    border-left:4px solid var(--accent);
+    padding:3px 6px;
+    font-size:12px; line-height:1.25;
+    color:var(--ink);
+    cursor:pointer;
+    overflow:hidden;
+    transition:filter .12s;
+    box-sizing:border-box;
+    display:flex; flex-direction:row; align-items:flex-start;
+    gap:6px; flex-wrap:wrap;
+  }
+  .agenda-ev:hover{ filter:brightness(0.97); z-index:5; box-shadow:0 1px 4px rgba(0,0,0,.12); }
+  .agenda-ev .ae-body{
+    flex:1 1 140px; min-width:0;
+  }
+  .agenda-ev .ae-title{ font-weight:700; }
+  .agenda-ev .ae-time{
+    font-size:11px; opacity:.8;
+    margin-top:1px;
+  }
+  .agenda-ev .ae-meta{
+    font-size:11px; opacity:.85;
+    flex:0 1 auto;
+    margin-left:auto;
+    display:flex; flex-direction:row; flex-wrap:wrap; align-items:center;
+    gap:2px 10px;
+    min-width:0;
+  }
+  .agenda-ev .ae-meta .ae-meta-item{ white-space:nowrap; }
+  .agenda-ev .ae-meta .pdot{
+    display:inline-block; width:7px; height:7px; border-radius:50%;
+    vertical-align:1px; margin-right:3px;
+  }
+  .agenda-now-line{
+    position:absolute; left:0; right:0;
+    height:0; border-top:2px solid #d94a4a;
+    z-index:4; pointer-events:none;
+  }
+  .agenda-now-line::before{
+    content:"";
+    position:absolute; left:-5px; top:-5px;
+    width:8px; height:8px; border-radius:50%;
+    background:#d94a4a;
+  }
   .cal-toolbar{
     display:flex; gap:8px; align-items:center;
     justify-content:space-between; flex-wrap:wrap;
@@ -1421,6 +1599,7 @@
 
   <nav class="tabs" id="tabs">
     <button data-tab="calendar" class="active">🗓️ Calendar</button>
+    <button data-tab="week">📅 This Week</button>
     <button data-tab="todos">✅ Todos</button>
     <button data-tab="meals">🍽️ Meals</button>
     <button data-tab="reading">📚 Reading</button>
@@ -1518,6 +1697,21 @@
       </div>
       <div class="cal-grid" id="cal2-dows" style="margin-bottom:6px;"></div>
       <div id="cal2-scroll"></div>
+    </div>
+  </section>
+
+  <!-- This Week Page -->
+  <section id="page-week" class="page">
+    <div class="card">
+      <div class="cal-toolbar">
+        <h2 style="margin:0;" id="week-view-title">This Week</h2>
+        <div class="right" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+          <button class="btn ghost" id="btn-week-less" title="Show one fewer week">− Week</button>
+          <button class="btn ghost" id="btn-week-more" title="Show one more week">+ Week</button>
+          <button class="btn" id="btn-week-add-event">+ Add Event</button>
+        </div>
+      </div>
+      <div id="week-view-list"></div>
     </div>
   </section>
 
@@ -1629,6 +1823,9 @@
 
     <label class="field-lbl">Title</label>
     <input type="text" id="todo-modal-input-title" placeholder="What needs to be done?" style="width:100%;" />
+
+    <label class="field-lbl" for="todo-modal-notes">Details</label>
+    <textarea id="todo-modal-notes" rows="3" placeholder="Optional notes, links, or extra context" style="width:100%; display:block; resize:vertical;"></textarea>
 
     <label class="field-lbl">Assign to</label>
     <div class="assignee-checks" id="todo-modal-assignees"></div>
@@ -2929,6 +3126,340 @@ function renderPlainCalendar(){
   }
 }
 
+/* ---------- Render: This Week list view ---------- */
+// How many days the "This Week" tab covers, starting today. Defaults to 7;
+// the user can extend or shrink by 7-day chunks.
+let weekViewDays = 7;
+
+function renderWeekView(){
+  const listEl = document.getElementById("week-view-list");
+  if(!listEl) return;
+  const titleEl = document.getElementById("week-view-title");
+  const totalDays = Math.max(7, weekViewDays);
+  const numWeeks = Math.round(totalDays / 7);
+  if(titleEl){
+    titleEl.textContent = numWeeks === 1
+      ? "This Week"
+      : `Next ${numWeeks} Weeks`;
+  }
+
+  const today = todayYmd();
+  const startD = new Date(today + "T00:00:00");
+  const endD = addDays(startD, totalDays - 1);
+  const startYmd = ymd(startD);
+  const endYmd = ymd(endD);
+
+  // Collect every event occurrence that intersects the window
+  // (handles single- and multi-day, plus recurring events).
+  // dayEvents[dy] = [{ ev, occurStartDy, spanDay, totalSpan }, ...]
+  const dayEvents = {};
+  (data.events || []).forEach(ev=>{
+    if(!eventMatchesPeopleFilter(ev)) return;
+    const span = eventSpanDays(ev);
+    // Expand a bit before startYmd so multi-day events that started earlier
+    // but still overlap the window are picked up.
+    const expandFrom = ymd(addDays(startD, -(span - 1)));
+    expandEventOccurrences(ev, expandFrom, endYmd).forEach(occurStartDy=>{
+      const occurStartD = new Date(occurStartDy + "T00:00:00");
+      for(let i = 0; i < span; i++){
+        const d = addDays(occurStartD, i);
+        const dy = ymd(d);
+        if(dy < startYmd || dy > endYmd) continue;
+        (dayEvents[dy] = dayEvents[dy] || []).push({
+          ev,
+          occurStartDy,
+          spanDay: i + 1,   // 1-based day within this occurrence
+          totalSpan: span
+        });
+      }
+    });
+  });
+
+  // Sort each day's events: all-day first, then by start time, then title.
+  Object.values(dayEvents).forEach(list=>{
+    list.sort((a,b)=>{
+      if(a.ev.allDay !== b.ev.allDay) return a.ev.allDay ? -1 : 1;
+      const at = a.ev.startTime || "";
+      const bt = b.ev.startTime || "";
+      if(at !== bt) return at.localeCompare(bt);
+      return (a.ev.title || "").localeCompare(b.ev.title || "");
+    });
+  });
+
+  // Build the day-by-day list
+  listEl.innerHTML = "";
+  for(let i = 0; i < totalDays; i++){
+    const d = addDays(startD, i);
+    const dy = ymd(d);
+    const dayCard = document.createElement("div");
+    dayCard.className = "week-day" + (dy === today ? " today" : "");
+
+    const dayName = d.toLocaleDateString(undefined, { weekday:"long", month:"short", day:"numeric" });
+    const todayPill = (dy === today) ? `<span class="wd-today-pill">Today</span>` : "";
+
+    const events = dayEvents[dy] || [];
+    let bodyHtml = "";
+    if(events.length === 0){
+      bodyHtml = `<div class="empty">No events</div>`;
+    } else {
+      bodyHtml = renderAgendaDayBody(events, dy);
+    }
+
+    dayCard.innerHTML = `
+      <div class="week-day-hd" data-day="${dy}">
+        <div class="wd-name">${escapeHtml(dayName)}${todayPill}</div>
+        <button type="button" class="wd-add" data-add-day="${dy}" title="Add event on this day">+ Add</button>
+      </div>
+      <div class="week-day-body">${bodyHtml}</div>
+    `;
+    listEl.appendChild(dayCard);
+  }
+}
+
+// Pixels per hour in the agenda timeline.
+const AGENDA_HOUR_PX = 48;
+
+// Parse "HH:MM" → minutes since midnight (0..1440). Returns null if invalid.
+function parseTimeMinutes(hhmm){
+  if(!hhmm) return null;
+  const m = /^(\d{1,2}):(\d{2})$/.exec(hhmm);
+  if(!m) return null;
+  const h = parseInt(m[1], 10);
+  const mm = parseInt(m[2], 10);
+  if(isNaN(h) || isNaN(mm)) return null;
+  return Math.max(0, Math.min(1440, h * 60 + mm));
+}
+
+// Build the body of a single day card in agenda view. `items` is the list of
+// dayEvents entries already collected by renderWeekView; `dy` is the day's ymd.
+function renderAgendaDayBody(items, dy){
+  // Split into all-day (incl. timeless multi-day) and timed.
+  const allDay = [];
+  const timed = [];
+  items.forEach(item=>{
+    const ev = item.ev;
+    // Continuation days of any multi-day occurrence are shown as chips,
+    // not plotted on the timeline (the start time only applies to day 1).
+    if(item.totalSpan > 1 && item.spanDay > 1){
+      allDay.push(item);
+      return;
+    }
+    if(ev.allDay){
+      allDay.push(item);
+      return;
+    }
+    const startMin = parseTimeMinutes(ev.startTime);
+    if(startMin == null){
+      allDay.push(item);
+      return;
+    }
+    let endMin = parseTimeMinutes(ev.endTime);
+    if(endMin == null || endMin <= startMin) endMin = Math.min(1440, startMin + 60);
+    timed.push({ item, startMin, endMin });
+  });
+
+  // All-day chip strip
+  let allDayHtml = "";
+  if(allDay.length){
+    allDayHtml = `<div class="agenda-allday">` + allDay.map(item=>{
+      const ev = item.ev;
+      const color = ev.color || "#5b8a72";
+      const lbl = ev.allDay
+        ? (item.totalSpan > 1 ? `All day · Day ${item.spanDay}/${item.totalSpan}` : `All day`)
+        : (item.totalSpan > 1 ? `Day ${item.spanDay}/${item.totalSpan}` : "");
+      const recurMark = ev.recurring ? `🔁 ` : "";
+      const attHtml = (ev.attendees && ev.attendees.length && ev.attendees.length < data.people.length)
+        ? ev.attendees.map(pid=>`<span class="pdot" style="background:${escapeHtml(personColor(pid))}"></span>`).join("")
+        : "";
+      return `
+        <span class="ad-chip" style="border-left-color:${escapeHtml(color)};"
+              data-event-id="${escapeHtml(ev.id)}" data-event-date="${escapeHtml(item.occurStartDy)}"
+              title="${escapeHtml(eventTooltip(ev))}">
+          ${attHtml}
+          <span class="ad-title">${recurMark}${escapeHtml(ev.title)}</span>
+          ${lbl ? `<span class="ad-lbl">${escapeHtml(lbl)}</span>` : ""}
+        </span>
+      `;
+    }).join("") + `</div>`;
+  }
+
+  if(!timed.length) return allDayHtml;
+
+  // Determine the timeline window: floor first start and ceil last end to the hour.
+  const earliestMin = Math.min(...timed.map(t=>t.startMin));
+  const latestMin   = Math.max(...timed.map(t=>t.endMin));
+  const startHour = Math.floor(earliestMin / 60);
+  const endHour   = Math.ceil(latestMin / 60);
+  const windowStartMin = startHour * 60;
+  const windowEndMin   = endHour * 60;
+  const totalHours = Math.max(1, endHour - startHour);
+  const totalPx = totalHours * AGENDA_HOUR_PX;
+
+  // Greedy column packing for overlap. Within each connected cluster of
+  // overlapping events, assign the lowest column index that does not collide.
+  // Then each event in the cluster gets width = 1/clusterCols.
+  const sorted = timed.slice().sort((a,b)=>{
+    if(a.startMin !== b.startMin) return a.startMin - b.startMin;
+    return a.endMin - b.endMin;
+  });
+  // Build clusters
+  const clusters = [];
+  let current = [];
+  let currentMaxEnd = -1;
+  sorted.forEach(t=>{
+    if(current.length && t.startMin < currentMaxEnd){
+      current.push(t);
+      currentMaxEnd = Math.max(currentMaxEnd, t.endMin);
+    } else {
+      if(current.length) clusters.push(current);
+      current = [t];
+      currentMaxEnd = t.endMin;
+    }
+  });
+  if(current.length) clusters.push(current);
+
+  clusters.forEach(cluster=>{
+    const cols = []; // cols[k] = endMin of last event placed in column k
+    cluster.forEach(t=>{
+      let col = 0;
+      while(col < cols.length && cols[col] > t.startMin) col++;
+      cols[col] = t.endMin;
+      t._col = col;
+    });
+    const totalCols = cols.length;
+    cluster.forEach(t=>{ t._totalCols = totalCols; });
+  });
+
+  // Hour labels (only at actual hour marks, not the very top edge for readability)
+  let hoursHtml = "";
+  for(let h = startHour; h <= endHour; h++){
+    const topPx = (h - startHour) * AGENDA_HOUR_PX;
+    const label = fmtTime12(`${String(h % 24).padStart(2,"0")}:00`);
+    hoursHtml += `<div class="ag-hr" style="top:${topPx}px;">${escapeHtml(label)}</div>`;
+  }
+
+  // Event blocks
+  const lanesHtml = sorted.map(t=>{
+    const item = t.item;
+    const ev = item.ev;
+    const color = ev.color || "#5b8a72";
+    const topPx = ((t.startMin - windowStartMin) / 60) * AGENDA_HOUR_PX;
+    const heightPx = Math.max(18, ((t.endMin - t.startMin) / 60) * AGENDA_HOUR_PX - 2);
+    const leftPct = (t._col / t._totalCols) * 100;
+    const widthPct = (1 / t._totalCols) * 100;
+
+    const startLbl = fmtTime12(ev.startTime);
+    const endLbl   = ev.endTime ? fmtTime12(ev.endTime) : "";
+    const timeLbl  = endLbl ? `${startLbl} – ${endLbl}` : startLbl;
+
+    const metaParts = [];
+    if(ev.attendees && ev.attendees.length && ev.attendees.length < data.people.length){
+      metaParts.push(`<span class="ae-meta-item">` + ev.attendees.map(pid =>
+        `<span class="pdot" style="background:${escapeHtml(personColor(pid))}"></span>${escapeHtml(personName(pid))}`
+      ).join(" ") + `</span>`);
+    }
+    if(ev.location) metaParts.push(`<span class="ae-meta-item">📍 ${escapeHtml(ev.location)}</span>`);
+    if(ev.recurring) metaParts.push(`<span class="ae-meta-item">🔁 ${escapeHtml(describeRecurrence(ev.recurring))}</span>`);
+    if(ev.notes) metaParts.push(`<span class="ae-meta-item">📝 ${escapeHtml(ev.notes)}</span>`);
+    const dayLbl = item.totalSpan > 1 ? ` (day ${item.spanDay}/${item.totalSpan})` : "";
+
+    // Tint background using event color at ~22% alpha (hex8). Fallback if color
+    // isn't recognized: just keep the accent-soft default.
+    const bg = colorWithAlpha(color, 0.22);
+    return `
+      <div class="agenda-ev"
+           style="top:${topPx}px; height:${heightPx}px;
+                  left:calc(${leftPct}% + 2px);
+                  width:calc(${widthPct}% - 4px);
+                  background:${escapeHtml(bg)};
+                  border-color:${escapeHtml(color)};
+                  border-left-color:${escapeHtml(color)};"
+           data-event-id="${escapeHtml(ev.id)}" data-event-date="${escapeHtml(item.occurStartDy)}"
+           title="${escapeHtml(eventTooltip(ev))}">
+        <div class="ae-body">
+          <div class="ae-title">${escapeHtml(ev.title)}${dayLbl}</div>
+          <div class="ae-time">${escapeHtml(timeLbl)}</div>
+        </div>
+        ${metaParts.length ? `<div class="ae-meta">${metaParts.join("")}</div>` : ""}
+      </div>
+    `;
+  }).join("");
+
+  // "Now" indicator (only on today, within the visible window)
+  let nowHtml = "";
+  if(dy === todayYmd()){
+    const now = new Date();
+    const nowMin = now.getHours() * 60 + now.getMinutes();
+    if(nowMin >= windowStartMin && nowMin <= windowEndMin){
+      const topPx = ((nowMin - windowStartMin) / 60) * AGENDA_HOUR_PX;
+      nowHtml = `<div class="agenda-now-line" style="top:${topPx}px;"></div>`;
+    }
+  }
+
+  return `
+    ${allDayHtml}
+    <div class="agenda-grid" style="--hour-h:${AGENDA_HOUR_PX}px;">
+      <div class="agenda-hours" style="height:${totalPx}px;">${hoursHtml}</div>
+      <div class="agenda-lanes" style="height:${totalPx}px;">${nowHtml}${lanesHtml}</div>
+    </div>
+  `;
+}
+
+// Apply an alpha to a hex color (#rgb / #rrggbb). Returns rgba() string.
+function colorWithAlpha(hex, alpha){
+  if(!hex) return `rgba(91,138,114,${alpha})`;
+  let h = hex.trim().replace("#","");
+  if(h.length === 3) h = h.split("").map(c=>c+c).join("");
+  if(h.length !== 6) return `rgba(91,138,114,${alpha})`;
+  const r = parseInt(h.slice(0,2), 16);
+  const g = parseInt(h.slice(2,4), 16);
+  const b = parseInt(h.slice(4,6), 16);
+  if([r,g,b].some(v=>isNaN(v))) return `rgba(91,138,114,${alpha})`;
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+// Click handling for the week-view list (event chips, +Add buttons, day headers)
+(function wireWeekViewClicks(){
+  const listEl = document.getElementById("week-view-list");
+  if(!listEl) return;
+  listEl.addEventListener("click", e=>{
+    const evChip = e.target.closest("[data-event-id]");
+    if(evChip){
+      e.stopPropagation();
+      openEventModal(evChip.dataset.eventId, null, evChip.dataset.eventDate || null);
+      return;
+    }
+    const addBtn = e.target.closest("[data-add-day]");
+    if(addBtn){
+      e.stopPropagation();
+      openEventModal(null, addBtn.dataset.addDay);
+      return;
+    }
+    const hd = e.target.closest(".week-day-hd[data-day]");
+    if(hd){
+      openEventModal(null, hd.dataset.day);
+    }
+  });
+})();
+
+// Toolbar buttons for the This Week tab
+(function wireWeekViewToolbar(){
+  const addBtn = document.getElementById("btn-week-add-event");
+  if(addBtn) addBtn.addEventListener("click", ()=> openEventModal(null, todayYmd()));
+  const moreBtn = document.getElementById("btn-week-more");
+  if(moreBtn) moreBtn.addEventListener("click", ()=>{
+    weekViewDays += 7;
+    renderWeekView();
+  });
+  const lessBtn = document.getElementById("btn-week-less");
+  if(lessBtn) lessBtn.addEventListener("click", ()=>{
+    if(weekViewDays > 7){
+      weekViewDays -= 7;
+      renderWeekView();
+    }
+  });
+})();
+
 /* ---------- Events ---------- */
 const EVENT_COLORS = [
   "#5b8a72", // sage
@@ -3506,6 +4037,7 @@ function normalizeTodo(t){
   return {
     id: t.id || uid(),
     title: t.title || "",
+    notes: t.notes || "",              // freeform details / extra context
     assignees: Array.isArray(t.assignees) ? t.assignees : [],
     listId: t.listId || null,           // user-defined list (e.g. "Lake House")
     order: typeof t.order === "number" ? t.order : null,
@@ -4153,6 +4685,7 @@ function openTodoModal(id){
     ? `Added ${fmtDateLong(t.createdAt)}${t.completedAt ? ' · Completed '+fmtDateLong(t.completedAt) : ''}`
     : "Fill in the details below.";
   document.getElementById("todo-modal-input-title").value = t ? t.title : "";
+  document.getElementById("todo-modal-notes").value = t ? (t.notes || "") : "";
   document.getElementById("todo-modal-due").value = t ? (t.due || "") : "";
 
   // Assignees
@@ -4251,6 +4784,7 @@ document.addEventListener("keydown", e=>{
 document.getElementById("todo-modal-save").addEventListener("click",()=>{
   const title = document.getElementById("todo-modal-input-title").value.trim();
   if(!title){ alert("Please enter a title."); return; }
+  const notes = document.getElementById("todo-modal-notes").value.trim();
   const assignees = [...document.querySelectorAll('#todo-modal-assignees input[type=checkbox]:checked')]
     .map(cb=>cb.dataset.pid);
   const listId = document.getElementById("todo-modal-list").value || null;
@@ -4269,6 +4803,7 @@ document.getElementById("todo-modal-save").addEventListener("click",()=>{
     const t = data.todos.find(x=>x.id===todoModalState.editingId);
     if(t){
       t.title = title;
+      t.notes = notes;
       t.assignees = assignees;
       t.listId = listId;
       t.due = due;
@@ -4276,7 +4811,7 @@ document.getElementById("todo-modal-save").addEventListener("click",()=>{
     }
   } else {
     data.todos.push(normalizeTodo({
-      title, assignees, listId, due, recurring,
+      title, notes, assignees, listId, due, recurring,
       createdAt: todayYmd(),
       done: false
     }));
@@ -4766,6 +5301,7 @@ function renderAll(){
   renderDefaultMeals();
   renderCalendarPeopleFilter();
   renderPlainCalendar();
+  renderWeekView();
   renderTodos();
   renderReading();
 }
