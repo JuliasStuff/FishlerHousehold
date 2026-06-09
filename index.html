@@ -244,6 +244,13 @@
     display:flex; flex-direction:column; gap:4px;
   }
   .cal-cell.other{ opacity:.4; }
+  /* Reserves a grid column for past days that are hidden by the
+     “Show previous week” cutoff so the remaining cells still line up
+     under the correct day-of-week heading. */
+  .cal-cell.past-spacer{
+    background:transparent; border:none; min-height:0; padding:0;
+    visibility:hidden; pointer-events:none;
+  }
   .cal-cell.today{
     border-color:var(--accent);
     border-width:2px;
@@ -252,19 +259,16 @@
   .cal-cell .dnum{
     font-weight:700; font-size:13px;
     display:flex; justify-content:space-between; align-items:center;
-    padding-bottom:2px; gap:4px;
+    padding:2px 4px; gap:4px;
+    cursor:pointer; border-radius:6px;
+    transition:background .15s;
+  }
+  .cal-cell .dnum:hover{
+    background:var(--accent-soft);
   }
   .cal-cell .dnum .dow{
     font-size:10px; color:var(--ink-soft); font-weight:500;
     text-transform:uppercase;
-  }
-  .cal-cell .dnum .day-edit{
-    background:transparent; border:0; cursor:pointer;
-    color:var(--ink-soft); font-size:13px; padding:0 4px;
-    border-radius:6px; line-height:1; margin-left:auto;
-  }
-  .cal-cell .dnum .day-edit:hover{
-    background:var(--accent-soft); color:var(--accent-2);
   }
   .cal-cell .day-notes{
     font-size:11px; color:var(--ink-soft); font-style:italic;
@@ -278,15 +282,17 @@
     display:flex; flex-direction:column; gap:2px;
     background:#fff; border:1px solid var(--line);
     border-radius:6px; padding:3px 4px;
+    cursor:pointer;
+  }
+  .meal-slot:hover{ border-color:var(--accent); }
+  .meal-prev-week-btn{
+    display:block; margin:0 auto 10px; padding:6px 14px;
+    font-size:12px; cursor:pointer;
   }
   .meal-slot .lbl{
     font-size:9px; font-weight:700; letter-spacing:.06em;
     text-transform:uppercase; color:var(--ink-soft);
     display:flex; align-items:center; gap:4px;
-  }
-  .meal-slot .lbl .ppl-flag{
-    margin-left:auto; font-size:10px; color:var(--accent-2);
-    cursor:help;
   }
   .meal-slot .dot{
     display:inline-block; width:7px; height:7px; border-radius:50%;
@@ -578,30 +584,30 @@
 
   /* Todos */
   .todo-row{
-    display:flex; align-items:flex-start; gap:10px;
-    padding:10px 8px 10px 10px;
+    display:flex; align-items:center; gap:8px;
+    padding:4px 8px 4px 10px;
     border-bottom:1px dashed var(--line);
     border-left:4px solid transparent;
     transition:background .15s;
   }
   .todo-row:last-child{ border-bottom:0; }
   .todo-row input[type=checkbox]{
-    width:18px; height:18px; accent-color:var(--accent);
-    cursor:pointer; margin-top:2px;
+    width:16px; height:16px; accent-color:var(--accent);
+    cursor:pointer; margin-top:0; flex-shrink:0;
   }
-  .todo-row .info{ flex:1; min-width:0; }
+  .todo-row .info{ flex:1; min-width:0; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
   .todo-row .title{
-    font-size:14px; font-weight:600; line-height:1.3;
+    font-size:13px; font-weight:600; line-height:1.25;
     word-wrap:break-word;
   }
   .todo-row.done{ opacity:.65; }
   .todo-row.done .title{ text-decoration:line-through; color:var(--ink-soft); }
   .todo-row .meta{
-    margin-top:4px; display:flex; flex-wrap:wrap; gap:6px;
-    font-size:12px; color:var(--ink-soft);
+    margin-top:0; display:flex; flex-wrap:wrap; gap:4px;
+    font-size:11px; color:var(--ink-soft);
     align-items:center;
   }
-  .todo-row .meta .added{ font-size:11px; }
+  .todo-row .meta .added{ font-size:10px; }
   .pill{
     display:inline-flex; align-items:center; gap:5px;
     padding:2px 8px; border-radius:999px;
@@ -620,9 +626,9 @@
   .pill.due.overdue{ background:#f6d4d4; color:#9a3636; border-color:#e7b2b2; }
   .pill.due.today{ background:#fff2c8; color:#7a5a08; border-color:#e8d39a; }
   .pill.recurring{ background:var(--warm-soft); color:#82531e; border-color:#e7c8a5; }
-  .todo-row .actions{
-    display:flex; gap:2px; flex-shrink:0;
-  }
+  /* Drop-position indicator while dragging a todo */
+  .todo-row.drop-before{ box-shadow: inset 0 3px 0 0 var(--accent); }
+  .todo-row.drop-after { box-shadow: inset 0 -3px 0 0 var(--accent); }
 
   /* Todos toolbar / grouping */
   .todos-toolbar{
@@ -631,11 +637,11 @@
     margin-bottom:10px;
   }
   .todos-toolbar .right{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
-  .group-section{ margin-bottom:14px; }
+  .group-section{ margin-bottom:8px; }
   .group-section h3{
-    margin:14px 0 6px; font-size:14px;
+    margin:8px 0 2px; font-size:13px;
     color:var(--accent-2);
-    padding:6px 10px; border-radius:8px;
+    padding:4px 10px; border-radius:8px;
     background:var(--accent-soft);
     display:flex; align-items:center; gap:8px;
     border-left:4px solid transparent;
@@ -661,18 +667,39 @@
 
   /* Drag-and-drop (person grouping) */
   .group-section.person-section.drop-target > h3,
-  .group-section.unassigned-section.drop-target > h3{
+  .group-section.unassigned-section.drop-target > h3,
+  .group-section.list-section.drop-target > h3{
     outline:2px dashed var(--accent);
     outline-offset:2px;
   }
   .group-section.person-section.drop-target,
-  .group-section.unassigned-section.drop-target{
+  .group-section.unassigned-section.drop-target,
+  .group-section.list-section.drop-target{
     background:var(--accent-soft);
     border-radius:10px;
   }
+  /* Section header drag-to-reorder visuals */
+  .group-section h3[draggable="true"]{ cursor:grab; user-select:none; }
+  .group-section h3[draggable="true"]:active{ cursor:grabbing; }
+  .group-section .sec-grip{
+    opacity:.5; font-weight:400; letter-spacing:-2px;
+    margin-right:6px; font-size:14px;
+  }
+  .group-section.section-dragging{ opacity:.5; }
+  .group-section.section-drop-before{ box-shadow: 0 -3px 0 0 var(--accent); }
+  .group-section.section-drop-after { box-shadow: 0 3px 0 0 var(--accent); }
+  .group-section .sec-btn{
+    appearance:none; background:rgba(255,255,255,.6); border:1px solid var(--line);
+    border-radius:6px; padding:2px 6px; font-size:12px; cursor:pointer;
+    color:var(--ink-soft); line-height:1;
+  }
+  .group-section .sec-btn:hover{ background:#fff; color:var(--ink); }
   .todo-row.dragging{ opacity:.4; }
   .todo-row[draggable="true"]{ cursor:grab; }
   .todo-row[draggable="true"]:active{ cursor:grabbing; }
+  /* Rows behave as buttons — tap anywhere on the row to open the editor */
+  .todo-row{ cursor:pointer; }
+  .todo-row.done{ cursor:pointer; }
 
   /* Modal field group */
   .assignee-checks{
@@ -757,6 +784,14 @@
   .meal-section.l h4 .dot{ background:var(--l-color); }
   .meal-section.d h4 .dot{ background:var(--d-color); }
   .meal-section select{ width:100%; }
+  .meal-section-focus{
+    animation: mealSectionFlash 1.4s ease-out;
+    box-shadow:0 0 0 3px var(--accent), 0 6px 24px rgba(0,0,0,.08);
+  }
+  @keyframes mealSectionFlash{
+    0%   { background:var(--accent-soft); }
+    100% { background:var(--panel-2); }
+  }
   .person-row{
     display:grid; grid-template-columns:90px 1fr auto;
     gap:8px; align-items:center; margin-top:6px;
@@ -775,13 +810,6 @@
   }
   .person-row select{ width:100%; font-size:13px; padding:5px 8px; }
   .person-row select.same-as-family{ color:var(--ink-soft); font-style:italic; }
-  .toggle-people-btn{
-    background:transparent; border:1px dashed var(--line);
-    color:var(--ink-soft); cursor:pointer; font-size:12px;
-    padding:5px 10px; border-radius:8px; margin-top:8px;
-    font-family:inherit;
-  }
-  .toggle-people-btn:hover{ background:var(--panel); color:var(--ink); }
 
   /* ---------- Reading tab ---------- */
   .reading-hero{
@@ -893,21 +921,19 @@
     font-size:11px; font-weight:700;
   }
   .current-book .cb-actions{ display:flex; gap:6px; }
+  .current-book{ cursor:pointer; }
+  .current-book:hover{ background:rgba(0,0,0,.02); }
   .current-book .cb-finish{
     background:linear-gradient(135deg, #5b8a72, #3f6b56);
     color:#fff; border:0;
-    padding:6px 12px; border-radius:8px;
-    font-weight:700; font-size:12px; cursor:pointer;
+    padding:12px 22px; border-radius:10px;
+    font-weight:700; font-size:15px; cursor:pointer;
     font-family:inherit;
+    box-shadow:0 2px 6px rgba(63, 107, 86, .25);
+    transition:filter .15s ease, transform .15s ease;
   }
-  .current-book .cb-finish:hover{ filter:brightness(1.1); }
-  .current-book .cb-edit{
-    background:transparent; border:1px solid var(--line);
-    color:var(--ink-soft); cursor:pointer;
-    padding:6px 10px; border-radius:8px;
-    font-size:12px; font-family:inherit;
-  }
-  .current-book .cb-edit:hover{ background:var(--panel); color:var(--ink); }
+  .current-book .cb-finish:hover{ filter:brightness(1.08); transform:translateY(-1px); }
+  .current-book .cb-finish:active{ transform:translateY(0); }
 
   .bookshelf{
     display:grid;
@@ -958,6 +984,15 @@
     color:var(--ink-soft); font-size:14px;
   }
   .reading-empty .re-emoji{ font-size:40px; display:block; margin-bottom:6px; opacity:.6; }
+
+  /* Currently Reading lays its person sections side-by-side when space permits */
+  #currently-reading{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(360px, 1fr));
+    gap:16px;
+    align-items:start;
+  }
+  #currently-reading .person-section{ margin-top:0; }
 
   /* Per-person grouped sections under Currently Reading / Finished Bookshelf */
   .person-section{
@@ -1109,7 +1144,6 @@
     .cal-bar{ padding:0 4px; }
     .cal-cell .dnum{ font-size:11px; padding-bottom:0; gap:2px; }
     .cal-cell .dnum .dow{ display:none; }
-    .cal-cell .dnum .day-edit{ font-size:12px; padding:0 2px; }
     .cal-cell .day-notes{
       font-size:9px; padding:2px 4px; line-height:1.2;
       -webkit-line-clamp:1; line-clamp:1;
@@ -1125,6 +1159,9 @@
     }
     /* Hide leading/trailing "other-month" padding cells */
     #cal-scroll .cal-cell.other{ display:none; }
+    /* Past-day spacers are only needed for desktop column alignment;
+       in the mobile vertical layout they'd just create empty rows. */
+    #cal-scroll .cal-cell.past-spacer{ display:none; }
     /* Each day becomes a roomy card: date header on top, meals row below */
     #cal-scroll .cal-cell{
       min-height:0;
@@ -1151,10 +1188,6 @@
     #cal-scroll .cal-cell .dnum .dow{
       display:inline-block; font-size:12px; font-weight:600;
       color:var(--ink-soft); margin-top:0;
-    }
-    #cal-scroll .cal-cell .dnum .day-edit{
-      font-size:16px; margin-left:auto; margin-top:0;
-      padding:0 4px;
     }
     #cal-scroll .cal-cell.today{
       box-shadow:0 0 0 2px var(--accent) inset;
@@ -1184,7 +1217,6 @@
       font-size:10px; gap:4px;
     }
     #cal-scroll .meal-slot .lbl .dot{ display:inline-block; width:6px; height:6px; }
-    #cal-scroll .meal-slot .lbl .ppl-flag{ font-size:10px; }
     #cal-scroll .meal-slot select{
       font-size:13px; padding:2px 0;
     }
@@ -1204,7 +1236,6 @@
     .meal-slot.b, .meal-slot.l, .meal-slot.d{ border-left-width:2px; }
     .meal-slot .lbl{ font-size:8px; gap:2px; }
     .meal-slot .lbl .dot{ display:none; }
-    .meal-slot .lbl .ppl-flag{ font-size:9px; }
     .meal-slot select{ font-size:10px; padding:0; }
     .meal-override{ font-size:9px; gap:3px; }
 
@@ -1258,10 +1289,10 @@
     button.btn{ padding:10px 14px; font-size:14px; }
 
     /* Todos */
-    .todo-row{ padding:8px; gap:8px; }
-    .todo-row .title{ font-size:13px; }
-    .todo-row .meta{ gap:4px; font-size:11px; }
-    .pill{ font-size:10px; padding:2px 7px; }
+    .todo-row{ padding:5px 8px; gap:6px; }
+    .todo-row .title{ font-size:12px; }
+    .todo-row .meta{ gap:3px; font-size:10px; }
+    .pill{ font-size:9px; padding:1px 6px; }
 
     /* Reading scoreboard */
     .reading-hero-content{ flex-direction:column; align-items:stretch; gap:10px; }
@@ -1283,8 +1314,7 @@
     .current-book .cb-title{ font-size:13px; }
     .current-book .cb-meta{ font-size:11px; }
     .current-book .cb-actions{ width:100%; }
-    .current-book .cb-actions .cb-finish,
-    .current-book .cb-actions .cb-edit{ flex:1; }
+    .current-book .cb-actions .cb-finish{ flex:1; font-size:14px; padding:12px 16px; }
 
     .bookshelf{
       grid-template-columns:repeat(auto-fill, minmax(120px, 1fr));
@@ -1503,6 +1533,7 @@
             <option value="person" selected>Person</option>
             <option value="due">Due date</option>
           </select>
+          <button class="btn ghost" id="btn-add-list" title="Create a new task list (e.g. Lake House)">+ List</button>
           <button class="btn" id="btn-add-todo">+ Add Todo</button>
         </div>
       </div>
@@ -1601,6 +1632,11 @@
 
     <label class="field-lbl">Assign to</label>
     <div class="assignee-checks" id="todo-modal-assignees"></div>
+
+    <label class="field-lbl" for="todo-modal-list">List</label>
+    <select id="todo-modal-list" style="width:100%;">
+      <option value="">— No list (group by person) —</option>
+    </select>
 
     <label class="field-lbl" for="todo-modal-due">Due date</label>
     <div class="row">
@@ -1745,6 +1781,7 @@
     </div>
 
     <div class="modal-actions">
+      <button class="btn danger" id="event-modal-delete-instance" style="margin-right:auto; display:none;">Delete only this date</button>
       <button class="btn danger" id="event-modal-delete" style="margin-right:auto; display:none;">Delete</button>
       <button class="btn ghost" id="event-modal-copy" style="display:none;">📋 Copy to other days</button>
       <button class="btn ghost" id="event-modal-cancel">Cancel</button>
@@ -1799,6 +1836,14 @@ const DEFAULT_DATA = {
   //            recurring: {pattern, interval, weekdays, until} | null }]
   events: [],
   todos: [],
+  // lists: user-defined task buckets (e.g. "Later", "Lake House") that show as
+  // their own sections alongside the person sections in person-grouping mode.
+  // A todo with listId set lives in that list's section instead of person sections.
+  // lists: [{ id, name, color }]
+  lists: [],
+  // sectionOrder: ordered keys for the person-grouping view. Tokens look like
+  // "person:<pid>", "list:<lid>", or "unassigned". Missing entities are appended.
+  sectionOrder: [],
   // books: [{ id, personId, title, author, startedAt (YYYY-MM-DD), finishedAt (YYYY-MM-DD|null), createdAt }]
   books: [],
   // defaultMeals: per-person meal defaults applied automatically when no explicit override exists.
@@ -1819,7 +1864,7 @@ function load(){
       people: (parsed.people && parsed.people.length) ? parsed.people : clone(DEFAULT_DATA.people),
       menus: { ...DEFAULT_DATA.menus, ...(parsed.menus || {}) },
       plan: parsed.plan || {},
-      events: parsed.events || [],
+      events: (parsed.events || []).map(ev => ({ ...ev, exdates: Array.isArray(ev.exdates) ? ev.exdates : [] })),
       todos: parsed.todos || [],
       books: parsed.books || [],
       defaultMeals: {
@@ -2009,6 +2054,8 @@ function mergeWithDefaults(parsed){
     events: parsed.events || [],
     todos: parsed.todos || [],
     books: parsed.books || [],
+    lists: Array.isArray(parsed.lists) ? parsed.lists : [],
+    sectionOrder: Array.isArray(parsed.sectionOrder) ? parsed.sectionOrder : [],
     defaultMeals: {
       weekday: (parsed.defaultMeals && parsed.defaultMeals.weekday) || {},
       weekend: (parsed.defaultMeals && parsed.defaultMeals.weekend) || {}
@@ -2035,10 +2082,6 @@ document.getElementById("tabs").addEventListener("click", e=>{
   document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
   document.getElementById("page-"+btn.dataset.tab).classList.add("active");
   renderAll();
-  // When switching TO the meals tab, jump to today's row
-  if(btn.dataset.tab === "meals"){
-    scrollMealCalToToday();
-  }
 });
 
 function scrollMealCalToToday(){
@@ -2052,6 +2095,10 @@ function scrollMealCalToToday(){
 }
 
 /* ---------- Render: Meal plan calendar ---------- */
+// How many days before today the meal calendar shows. 0 = today is the
+// earliest visible day; click “Show previous week” to extend by 7.
+let mealCalPastDays = 0;
+
 function renderMealCalendar(){
   // Day-of-week headers
   document.getElementById("cal-dows").innerHTML =
@@ -2063,12 +2110,24 @@ function renderMealCalendar(){
   const now = new Date();
 
   // Cap how far back the user can scroll. Anything before this date is hidden.
-  const PAST_DAYS = 10;
-  const minDate = addDays(now, -PAST_DAYS);
+  const minDate = addDays(now, -mealCalPastDays);
   const minYmd = ymd(minDate);
 
-  // Render 1 prior month (clipped to PAST_DAYS) + current + 3 future months.
-  const PAST_MONTHS = 1;
+  // “Show previous week” button — lets the user reveal earlier weeks on demand
+  const prevBtn = document.createElement("button");
+  prevBtn.type = "button";
+  prevBtn.className = "btn ghost meal-prev-week-btn";
+  prevBtn.textContent = mealCalPastDays === 0
+    ? "↑ Show previous week"
+    : `↑ Show another week (currently showing ${mealCalPastDays} day${mealCalPastDays===1?'':'s'} back)`;
+  prevBtn.addEventListener("click", ()=>{
+    mealCalPastDays += 7;
+    renderMealCalendar();
+  });
+  scroll.appendChild(prevBtn);
+
+  // Render enough prior months to cover the requested past days, plus 3 future months.
+  const PAST_MONTHS = Math.max(1, Math.ceil((mealCalPastDays + 7) / 28));
   const FUTURE_MONTHS = 3;
   for(let mi = -PAST_MONTHS; mi <= FUTURE_MONTHS; mi++){
     const monthStart = new Date(now.getFullYear(), now.getMonth() + mi, 1);
@@ -2093,8 +2152,14 @@ function renderMealCalendar(){
     for(let i=0;i<totalCells;i++){
       const d = addDays(gridStart, i);
       const dy = ymd(d);
-      // Hide anything older than the 10-day cutoff
-      if(dy < minYmd) continue;
+      // Past the visible cutoff: render an invisible placeholder so the
+      // remaining cells still line up under the correct day-of-week column.
+      if(dy < minYmd){
+        const spacer = document.createElement("div");
+        spacer.className = "cal-cell past-spacer";
+        grid.appendChild(spacer);
+        continue;
+      }
       const cell = document.createElement("div");
       cell.className = "cal-cell";
       if(d.getMonth() !== monthStart.getMonth()) cell.classList.add("other");
@@ -2107,10 +2172,9 @@ function renderMealCalendar(){
         : "";
 
       cell.innerHTML = `
-        <div class="dnum">
+        <div class="dnum" data-edit-day="${dy}" title="Edit day (per-person meals & notes)" role="button" tabindex="0">
           <span>${d.getDate()}</span>
           <span class="dow">${DOW_SHORT[d.getDay()]}</span>
-          <button class="day-edit" data-edit-day="${dy}" title="Edit day (per-person meals & notes)" aria-label="Edit day">✏️</button>
         </div>
         ${mealSlotHtml(dy, "breakfast", "B")}
         ${mealSlotHtml(dy, "lunch", "L")}
@@ -2126,12 +2190,16 @@ function renderMealCalendar(){
   if(!scroll.dataset.bound){
     scroll.addEventListener("change", onMealSelectChange);
     scroll.addEventListener("click", e=>{
+      // Clicking the meal slot opens the day modal scrolled to that meal's section
+      const slot = e.target.closest(".meal-slot[data-edit-day]");
+      if(slot && e.target.tagName !== "SELECT"){
+        openDayModal(slot.dataset.editDay, slot.dataset.mealKey);
+        return;
+      }
       const t = e.target.closest("[data-edit-day]");
-      if(t){ openDayModal(t.dataset.editDay); }
+      if(t){ openDayModal(t.dataset.editDay); return; }
     });
     scroll.dataset.bound = "1";
-    // First render: jump straight to today so past months are scrolled above
-    scrollMealCalToToday();
   }
 }
 
@@ -2167,11 +2235,7 @@ function mealSlotHtml(dy, mealType, label){
       });
     }
   }
-  const overrideCount = overrides.length;
-  const flag = overrideCount
-    ? `<span class="ppl-flag" title="${overrideCount} per-person value${overrideCount===1?'':'s'}">👥 ${overrideCount}</span>`
-    : "";
-  const overrideRows = overrideCount
+  const overrideRows = overrides.length
     ? `<div class="meal-overrides">` + overrides.map(o => {
         const tip = o.fromDefault ? `${o.name}: ${o.value} (default)` : `${o.name}: ${o.value}`;
         const dotStyle = o.fromDefault ? `background:${o.color};opacity:.65;` : `background:${o.color};`;
@@ -2180,8 +2244,8 @@ function mealSlotHtml(dy, mealType, label){
     : "";
 
   return `
-    <div class="meal-slot ${cls}">
-      <div class="lbl"><span class="dot"></span>${label}${flag}</div>
+    <div class="meal-slot ${cls}" data-edit-day="${dy}" data-meal-key="${mealType}">
+      <div class="lbl"><span class="dot"></span>${label}</div>
       <select data-day="${dy}" data-meal="${mealType}" class="${isUnset?'unset':''}" title="${escapeHtml(current || 'No meal selected')}">
         <option value="">— none —</option>
         ${opts.map(o=>`<option value="${escapeHtml(o)}" ${o===current?"selected":""}>${escapeHtml(o)}</option>`).join("")}
@@ -2455,7 +2519,7 @@ document.getElementById("new-person").addEventListener("keydown", e=>{
 /* ---------- Day-edit modal ---------- */
 let dayModalState = { dy: null, perPerson: {}, notes: "" };
 
-function openDayModal(dy){
+function openDayModal(dy, focusMeal){
   const day = data.plan[dy] || {};
   // Deep-clone the per-person object so cancel works
   dayModalState = {
@@ -2475,6 +2539,20 @@ function openDayModal(dy){
   const bg = document.getElementById("day-modal-bg");
   bg.classList.add("open");
   bg.setAttribute("aria-hidden", "false");
+
+  // If a specific meal was clicked, scroll the modal to that section and
+  // briefly highlight it so the user sees what they're editing.
+  if(focusMeal){
+    requestAnimationFrame(()=>{
+      const section = document.querySelector(`#day-modal-meals .meal-section[data-meal-key="${focusMeal}"]`);
+      if(!section) return;
+      section.scrollIntoView({ behavior: "smooth", block: "start" });
+      section.classList.add("meal-section-focus");
+      setTimeout(()=> section.classList.remove("meal-section-focus"), 1400);
+      const familySel = section.querySelector('select[data-modal-scope="family"]');
+      if(familySel) familySel.focus({ preventScroll: true });
+    });
+  }
 }
 
 function closeDayModal(){
@@ -2523,44 +2601,20 @@ function renderDayModalMeals(){
       `;
     }).join("");
     return `
-      <div class="meal-section ${m.cls}">
+      <div class="meal-section ${m.cls}" data-meal-key="${m.key}">
         <h4><span class="dot"></span>${m.label}</h4>
         <label class="field-lbl" style="margin-top:0;">Family default</label>
         ${familySelect}
-        <button type="button" class="toggle-people-btn" data-toggle-people="${m.key}">👥 Per-person overrides ▾</button>
-        <div data-people-rows="${m.key}" style="display:none; margin-top:6px;">
+        <div class="people-rows-lbl" style="margin-top:10px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-soft);">👥 Per-person overrides</div>
+        <div data-people-rows="${m.key}" style="margin-top:4px;">
           ${ppRows}
         </div>
       </div>
     `;
   }).join("");
-
-  // If any person already has overrides OR a per-person default, expand that section by default
-  meals.forEach(m=>{
-    const hasOverride = data.people.some(p=>{
-      const v = (dayModalState.perPerson[p.id] || {})[m.key];
-      return v !== undefined;
-    });
-    const hasDefault = data.people.some(p=> !!personDefaultMeal(p.id, m.key, dy));
-    if(hasOverride || hasDefault){
-      container.querySelector(`[data-people-rows="${m.key}"]`).style.display = "";
-      const btn = container.querySelector(`[data-toggle-people="${m.key}"]`);
-      btn.textContent = "👥 Per-person overrides ▴";
-    }
-  });
 }
 
 // Modal event delegation
-document.getElementById("day-modal-meals").addEventListener("click", e=>{
-  const tog = e.target.closest("[data-toggle-people]");
-  if(tog){
-    const key = tog.dataset.togglePeople;
-    const rows = document.querySelector(`[data-people-rows="${key}"]`);
-    const open = rows.style.display === "none";
-    rows.style.display = open ? "" : "none";
-    tog.textContent = open ? "👥 Per-person overrides ▴" : "👥 Per-person overrides ▾";
-  }
-});
 document.getElementById("day-modal-meals").addEventListener("change", e=>{
   const sel = e.target.closest("select[data-modal-meal]");
   if(!sel) return;
@@ -2785,7 +2839,7 @@ function renderPlainCalendar(){
             if(ev.notes){
               notesHtml = `<span class="ev-notes">📝 ${escapeHtml(ev.notes)}</span>`;
             }
-            return `<div class="cal-event" style="background:${escapeHtml(c)}" data-event-id="${ev.id}" title="${escapeHtml(eventTooltip(ev))}">${timeTxt}${titleHtml}${attHtml}${notesHtml}</div>`;
+            return `<div class="cal-event" style="background:${escapeHtml(c)}" data-event-id="${ev.id}" data-event-date="${dy}" title="${escapeHtml(eventTooltip(ev))}">${timeTxt}${titleHtml}${attHtml}${notesHtml}</div>`;
           }).join("") + `</div>`;
         }
 
@@ -2802,7 +2856,7 @@ function renderPlainCalendar(){
               if(pasteTemplate){
                 pasteEventOnDay(dy);
               } else {
-                openEventModal(evChip.dataset.eventId);
+                openEventModal(evChip.dataset.eventId, null, evChip.dataset.eventDate || null);
               }
             } else if(pasteTemplate){
               pasteEventOnDay(dy);
@@ -2819,7 +2873,7 @@ function renderPlainCalendar(){
               if(pasteTemplate){
                 pasteEventOnDay(dy);
               } else {
-                openEventModal(chip.dataset.eventId);
+                openEventModal(chip.dataset.eventId, null, chip.dataset.eventDate || null);
               }
             });
           });
@@ -2843,6 +2897,7 @@ function renderPlainCalendar(){
           barEl.style.setProperty("--lane", bar.lane);
           barEl.style.background = c;
           barEl.dataset.eventId = ev.id;
+          barEl.dataset.eventDate = bar.inst.days[0];
           barEl.title = eventTooltip(ev);
           // Build label: time + title on the starting segment; just title (with leading …) on continuation weeks.
           const timeTxt = !ev.allDay && ev.startTime && !bar.continuedLeft
@@ -2860,7 +2915,7 @@ function renderPlainCalendar(){
               const firstVisibleDy = ymd(weekDays[bar.startCol]);
               pasteEventOnDay(firstVisibleDy);
             } else {
-              openEventModal(ev.id);
+              openEventModal(ev.id, null, bar.inst.days[0]);
             }
           });
           overlay.appendChild(barEl);
@@ -3004,8 +3059,9 @@ function describeRecurrence(r){
 // Return an array of YYYY-MM-DD strings where this event occurs within [fromYmd, toYmd]
 function expandEventOccurrences(ev, fromYmd, toYmd){
   const out = [];
+  const exdates = new Set(Array.isArray(ev.exdates) ? ev.exdates : []);
   if(!ev.recurring){
-    if(ev.date >= fromYmd && ev.date <= toYmd) out.push(ev.date);
+    if(ev.date >= fromYmd && ev.date <= toYmd && !exdates.has(ev.date)) out.push(ev.date);
     return out;
   }
   const r = ev.recurring;
@@ -3020,7 +3076,7 @@ function expandEventOccurrences(ev, fromYmd, toYmd){
     let safety = 0;
     while(d <= stopD && safety++ < 2000){
       const dy = ymd(d);
-      if(dy >= fromYmd) out.push(dy);
+      if(dy >= fromYmd && !exdates.has(dy)) out.push(dy);
       d = addDays(d, interval);
     }
   } else if(r.pattern === "weekly"){
@@ -3031,7 +3087,7 @@ function expandEventOccurrences(ev, fromYmd, toYmd){
     while(d <= stopD && safety++ < 2000){
       if(weekdays.includes(d.getDay())){
         const dy = ymd(d);
-        if(dy >= fromYmd) out.push(dy);
+        if(dy >= fromYmd && !exdates.has(dy)) out.push(dy);
       }
       d = addDays(d, 1);
       // For interval > 1, skip whole weeks after each occurrence in the original weekday
@@ -3045,7 +3101,7 @@ function expandEventOccurrences(ev, fromYmd, toYmd){
     let safety = 0;
     while(d <= stopD && safety++ < 240){
       const dy = ymd(d);
-      if(dy >= fromYmd) out.push(dy);
+      if(dy >= fromYmd && !exdates.has(dy)) out.push(dy);
       d.setMonth(d.getMonth() + interval);
     }
   }
@@ -3053,6 +3109,7 @@ function expandEventOccurrences(ev, fromYmd, toYmd){
 }
 
 let editingEventId = null;
+let editingInstanceDate = null; // when set, an exdates-style "just this date" delete is offered
 
 // Copy/paste state — when set, clicking a day cell creates a copy on that day.
 // pasteTemplate is a partial event object (no id/date/endDate/recurring) used as the source.
@@ -3146,7 +3203,7 @@ function pasteEventOnDay(dy){
   renderPlainCalendar();
 }
 
-function openEventModal(id, prefillDate){
+function openEventModal(id, prefillDate, instanceDate){
   editingEventId = id;
   const bg = document.getElementById("event-modal-bg");
   const titleH = document.getElementById("event-modal-title");
@@ -3163,6 +3220,7 @@ function openEventModal(id, prefillDate){
   const notes = document.getElementById("event-modal-notes");
   const locationIn = document.getElementById("event-modal-location");
   const delBtn = document.getElementById("event-modal-delete");
+  const delInstBtn = document.getElementById("event-modal-delete-instance");
   const copyBtn = document.getElementById("event-modal-copy");
   const recurSel = document.getElementById("event-modal-recur");
   const intervalIn = document.getElementById("event-modal-interval");
@@ -3170,8 +3228,16 @@ function openEventModal(id, prefillDate){
   const wdayCont = document.getElementById("event-modal-weekdays");
 
   const ev = id ? data.events.find(e=>e.id===id) : null;
+  editingInstanceDate = (ev && ev.recurring && instanceDate) ? instanceDate : null;
   titleH.textContent = ev ? "Edit Event" : "Add Event";
   delBtn.style.display = ev ? "" : "none";
+  delBtn.textContent = (ev && ev.recurring) ? "Delete entire series" : "Delete";
+  delInstBtn.style.display = editingInstanceDate ? "" : "none";
+  if(editingInstanceDate){
+    const niceDate = new Date(editingInstanceDate + "T00:00:00")
+      .toLocaleDateString(undefined, { weekday:"short", month:"short", day:"numeric" });
+    delInstBtn.textContent = `Delete only ${niceDate}`;
+  }
   copyBtn.style.display = ev ? "" : "none";
 
   tIn.value = ev ? ev.title : "";
@@ -3225,6 +3291,7 @@ function closeEventModal(){
   bg.classList.remove("open");
   bg.setAttribute("aria-hidden","true");
   editingEventId = null;
+  editingInstanceDate = null;
 }
 
 function updateEventRecurExtras(){
@@ -3303,6 +3370,40 @@ function updateEventRecurExtras(){
     const label = ev && ev.recurring ? `Delete the entire "${ev.title}" series?` : `Delete event "${ev ? ev.title : ''}"?`;
     if(!confirm(label)) return;
     data.events = data.events.filter(e=>e.id !== editingEventId);
+    save();
+    closeEventModal();
+    renderPlainCalendar();
+  });
+
+  document.getElementById("event-modal-delete-instance").addEventListener("click", ()=>{
+    if(!editingEventId || !editingInstanceDate) return;
+    const ev = data.events.find(e=>e.id===editingEventId);
+    if(!ev) return;
+    const niceDate = new Date(editingInstanceDate + "T00:00:00")
+      .toLocaleDateString(undefined, { weekday:"long", month:"long", day:"numeric" });
+    if(!confirm(`Delete only the ${niceDate} occurrence of "${ev.title}"? The rest of the series will stay.`)) return;
+    // If they deleted the very first date of the series, advance ev.date to the
+    // next remaining occurrence so the recurrence base stays sensible.
+    if(editingInstanceDate === ev.date){
+      // Look ahead ~2 years for the next occurrence
+      const exSet = new Set([...(ev.exdates || []), editingInstanceDate]);
+      const probeStart = editingInstanceDate;
+      const probeEnd = ymd(addDays(new Date(probeStart + "T00:00:00"), 365 * 2));
+      const tempEv = { ...ev, exdates: [...exSet] };
+      const remaining = expandEventOccurrences(tempEv, probeStart, probeEnd);
+      if(remaining.length){
+        ev.date = remaining[0];
+      } else {
+        // No future occurrences left — just delete the whole event.
+        data.events = data.events.filter(e=>e.id !== editingEventId);
+        save();
+        closeEventModal();
+        renderPlainCalendar();
+        return;
+      }
+    }
+    ev.exdates = Array.isArray(ev.exdates) ? ev.exdates : [];
+    if(!ev.exdates.includes(editingInstanceDate)) ev.exdates.push(editingInstanceDate);
     save();
     closeEventModal();
     renderPlainCalendar();
@@ -3406,6 +3507,8 @@ function normalizeTodo(t){
     id: t.id || uid(),
     title: t.title || "",
     assignees: Array.isArray(t.assignees) ? t.assignees : [],
+    listId: t.listId || null,           // user-defined list (e.g. "Lake House")
+    order: typeof t.order === "number" ? t.order : null,
     due: t.due || null,                 // "YYYY-MM-DD" or null
     createdAt: t.createdAt || todayYmd(),
     done: !!t.done,
@@ -3419,6 +3522,8 @@ function normalizeTodo(t){
 }
 // Run normalization on initial load
 data.todos = data.todos.map(normalizeTodo);
+if(!Array.isArray(data.lists)) data.lists = [];
+if(!Array.isArray(data.sectionOrder)) data.sectionOrder = [];
 
 let todoGroupBy = "person";
 let todoModalState = { editingId: null };
@@ -3447,31 +3552,214 @@ function personColor(id){
   return p ? (p.color || "#5b8a72") : "#999";
 }
 
-// Drop-target wiring for person sections
-function attachDropTarget(sec, targetPid){
+// Drop-target wiring for grouping sections. `target` describes where dropped
+// todos land:
+//   { kind: "person", pid }   — assign to this person, clear listId
+//   { kind: "list",   lid }   — set listId to this list, keep assignees
+//   { kind: "unassigned" }    — clear all assignees and listId
+function attachDropTarget(sec, target){
+  const clearIndicators = ()=>{
+    sec.querySelectorAll(".drop-before, .drop-after").forEach(r=>{
+      r.classList.remove("drop-before", "drop-after");
+    });
+  };
+  // Find the row we should insert BEFORE based on mouse Y. Returns the row
+  // element (or null to mean "append to end").
+  const findInsertBeforeRow = (clientY)=>{
+    const rows = [...sec.querySelectorAll(".todo-row:not(.dragging)")];
+    for(const row of rows){
+      const rect = row.getBoundingClientRect();
+      if(clientY < rect.top + rect.height / 2) return row;
+    }
+    return null;
+  };
   sec.addEventListener("dragover", e=>{
+    // Only handle todo drags here — section header drags are handled elsewhere.
+    const types = e.dataTransfer && e.dataTransfer.types;
+    if(types && [...types].includes("application/x-section-key")) return;
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
     sec.classList.add("drop-target");
+    clearIndicators();
+    const before = findInsertBeforeRow(e.clientY);
+    if(before){
+      before.classList.add("drop-before");
+    } else {
+      const rows = sec.querySelectorAll(".todo-row:not(.dragging)");
+      if(rows.length) rows[rows.length-1].classList.add("drop-after");
+    }
   });
   sec.addEventListener("dragleave", e=>{
-    // Only clear if pointer truly left the section
-    if(!sec.contains(e.relatedTarget)) sec.classList.remove("drop-target");
+    if(!sec.contains(e.relatedTarget)){
+      sec.classList.remove("drop-target");
+      clearIndicators();
+    }
   });
   sec.addEventListener("drop", e=>{
+    const types = e.dataTransfer && e.dataTransfer.types;
+    if(types && [...types].includes("application/x-section-key")) return;
     e.preventDefault();
     sec.classList.remove("drop-target");
+    const before = findInsertBeforeRow(e.clientY);
+    clearIndicators();
     let payload;
     try { payload = JSON.parse(e.dataTransfer.getData("text/plain") || "{}"); } catch { return; }
     const { tid, sourcePid } = payload;
     if(!tid) return;
-    if(sourcePid === targetPid) return; // no-op
     const todo = data.todos.find(t=>t.id === tid);
     if(!todo) return;
-    moveTodoAssignee(todo, sourcePid, targetPid);
+
+    // Apply membership change based on target kind
+    if(target.kind === "list"){
+      todo.listId = target.lid;
+      // Keep assignees as-is — a list task can still belong to specific people.
+    } else if(target.kind === "person"){
+      todo.listId = null;
+      if(sourcePid !== target.pid){
+        moveTodoAssignee(todo, sourcePid, target.pid);
+      }
+    } else if(target.kind === "unassigned"){
+      todo.listId = null;
+      todo.assignees = [];
+    }
+
+    // Compute a new `order` placing it just before `before` (or at end)
+    const beforeTid = before ? before.dataset.tid : null;
+    const beforeTodo = beforeTid ? data.todos.find(t=>t.id === beforeTid) : null;
+    // Build the in-section list AFTER the membership change.
+    const inSection = data.todos.filter(t=>{
+      if(t.done) return false;
+      if(target.kind === "list")       return t.listId === target.lid;
+      if(target.kind === "unassigned") return !t.listId && (!t.assignees || !t.assignees.length);
+      if(target.kind === "person")     return !t.listId && (t.assignees || []).includes(target.pid);
+      return false;
+    }).sort(todoSortByOrder);
+
+    // Normalize: assign explicit, well-spaced, unique `order` values to every
+    // todo in this section in their current sorted positions. Without this,
+    // todos that share a createdAt date all collapse to the same fallback
+    // value, the "midpoint" between neighbors equals both neighbors, and
+    // the drop position is effectively ignored (drag appears to snap back).
+    inSection.forEach((t, i) => { t.order = (i + 1) * 1000; });
+
+    const others = inSection.filter(t=>t.id !== tid);
+    let afterTodo = null;
+    if(beforeTodo){
+      const idx = others.indexOf(beforeTodo);
+      afterTodo = idx > 0 ? others[idx - 1] : null;
+    } else {
+      afterTodo = others[others.length - 1] || null;
+    }
+    const afterOrder  = afterTodo  ? afterTodo.order  : null;
+    const beforeOrder = beforeTodo ? beforeTodo.order : null;
+    let newOrder;
+    if(afterOrder == null && beforeOrder == null) newOrder = 1000;
+    else if(afterOrder == null) newOrder = beforeOrder - 500;
+    else if(beforeOrder == null) newOrder = afterOrder + 500;
+    else newOrder = (afterOrder + beforeOrder) / 2;
+    todo.order = newOrder;
+
     save();
     renderTodos();
   });
+}
+
+// Resolve the persisted section order, appending any missing entities at the end
+function getOrderedSectionKeys(){
+  const keys = [];
+  const known = new Set();
+  const validate = key => {
+    if(known.has(key)) return false;
+    if(key === "unassigned") return true;
+    if(key.startsWith("person:")) return data.people.some(p => p.id === key.slice(7));
+    if(key.startsWith("list:"))   return data.lists.some(L => L.id === key.slice(5));
+    return false;
+  };
+  (data.sectionOrder || []).forEach(k=>{
+    if(validate(k)){ keys.push(k); known.add(k); }
+  });
+  data.people.forEach(p=>{
+    const k = `person:${p.id}`;
+    if(!known.has(k)){ keys.push(k); known.add(k); }
+  });
+  data.lists.forEach(L=>{
+    const k = `list:${L.id}`;
+    if(!known.has(k)){ keys.push(k); known.add(k); }
+  });
+  if(!known.has("unassigned")) keys.push("unassigned");
+  return keys;
+}
+
+// Drag-and-drop on section headers to reorder the sections themselves
+function attachSectionHeaderDrag(sec){
+  const handle = sec.querySelector("h3[data-section-handle]");
+  if(!handle) return;
+  const myKey = handle.dataset.sectionHandle;
+
+  handle.addEventListener("dragstart", e=>{
+    e.stopPropagation();
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("application/x-section-key", myKey);
+    // Some browsers (esp. Firefox) require text/plain to be set too.
+    e.dataTransfer.setData("text/plain", `section:${myKey}`);
+    sec.classList.add("section-dragging");
+  });
+  handle.addEventListener("dragend", ()=>{
+    sec.classList.remove("section-dragging");
+    document.querySelectorAll(".section-drop-before, .section-drop-after").forEach(s=>{
+      s.classList.remove("section-drop-before", "section-drop-after");
+    });
+  });
+
+  sec.addEventListener("dragover", e=>{
+    const types = e.dataTransfer && e.dataTransfer.types;
+    if(!types || ![...types].includes("application/x-section-key")) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    document.querySelectorAll(".section-drop-before, .section-drop-after").forEach(s=>{
+      s.classList.remove("section-drop-before", "section-drop-after");
+    });
+    const rect = sec.getBoundingClientRect();
+    const before = e.clientY < rect.top + rect.height / 2;
+    sec.classList.add(before ? "section-drop-before" : "section-drop-after");
+  });
+  sec.addEventListener("drop", e=>{
+    const types = e.dataTransfer && e.dataTransfer.types;
+    if(!types || ![...types].includes("application/x-section-key")) return;
+    e.preventDefault();
+    const draggedKey = e.dataTransfer.getData("application/x-section-key");
+    if(!draggedKey || draggedKey === myKey){
+      sec.classList.remove("section-drop-before", "section-drop-after");
+      return;
+    }
+    const rect = sec.getBoundingClientRect();
+    const dropBefore = e.clientY < rect.top + rect.height / 2;
+    sec.classList.remove("section-drop-before", "section-drop-after");
+
+    // Rebuild sectionOrder
+    let order = getOrderedSectionKeys();
+    order = order.filter(k => k !== draggedKey);
+    const targetIdx = order.indexOf(myKey);
+    if(targetIdx < 0) order.push(draggedKey);
+    else order.splice(dropBefore ? targetIdx : targetIdx + 1, 0, draggedKey);
+    data.sectionOrder = order;
+    save();
+    renderTodos();
+  });
+}
+
+// Initial fallback order when a todo doesn't yet have one (older data).
+// Newer todos go to the bottom (numerically larger order) by default.
+function todoOrderFallback(t){
+  if(!t || !t.createdAt) return Date.now();
+  return Date.parse(t.createdAt + "T00:00:00") || Date.now();
+}
+// Sort by manual order asc, then createdAt asc for ties.
+function todoSortByOrder(a, b){
+  const ao = a.order ?? todoOrderFallback(a);
+  const bo = b.order ?? todoOrderFallback(b);
+  if(ao !== bo) return ao - bo;
+  return (a.createdAt || "").localeCompare(b.createdAt || "");
 }
 
 // Replace the source assignee with the target (or add/remove for unassigned)
@@ -3524,49 +3812,135 @@ function renderTodos(){
       c.innerHTML += `<div class="empty">All caught up! 🎉</div>`;
     }
   } else if(todoGroupBy === "person"){
-    // Group by assignee (a todo with multiple appears in each); plus an "Unassigned" group
+    // Buckets keyed by section token: "person:<pid>", "list:<lid>", "unassigned"
+    // A todo with a listId goes ONLY into its list section. Otherwise it goes
+    // into each assignee's bucket (or unassigned).
     const buckets = {};
-    data.people.forEach(p=>{ buckets[p.id] = []; });
-    buckets["__unassigned__"] = [];
+    const keyForPerson = pid => `person:${pid}`;
+    const keyForList   = lid => `list:${lid}`;
+    const UNASSIGNED = "unassigned";
+    data.people.forEach(p=>{ buckets[keyForPerson(p.id)] = []; });
+    data.lists.forEach(L=>{ buckets[keyForList(L.id)] = []; });
+    buckets[UNASSIGNED] = [];
     active.forEach(t=>{
-      if(!t.assignees.length){ buckets["__unassigned__"].push(t); }
-      else{
-        t.assignees.forEach(pid=>{
-          if(!buckets[pid]) buckets[pid] = [];
-          buckets[pid].push(t);
+      if(t.listId){
+        const k = keyForList(t.listId);
+        if(buckets[k]) buckets[k].push(t);
+        else {
+          // Orphaned listId (list was deleted) — fall back to person/unassigned
+          if(!t.assignees.length) buckets[UNASSIGNED].push(t);
+          else t.assignees.forEach(pid=>{
+            const pk = keyForPerson(pid);
+            if(buckets[pk]) buckets[pk].push(t);
+            else buckets[UNASSIGNED].push(t);
+          });
+        }
+        return;
+      }
+      if(!t.assignees.length){ buckets[UNASSIGNED].push(t); }
+      else t.assignees.forEach(pid=>{
+        const pk = keyForPerson(pid);
+        if(buckets[pk]) buckets[pk].push(t);
+        else buckets[UNASSIGNED].push(t);
+      });
+    });
+
+    // Resolve a section key to its renderable record
+    const personById = Object.fromEntries(data.people.map(p=>[p.id, p]));
+    const listById   = Object.fromEntries(data.lists.map(L=>[L.id, L]));
+    const orderedKeys = getOrderedSectionKeys();
+    orderedKeys.forEach(key=>{
+      if(key === UNASSIGNED){
+        // Always render Unassigned as a drop target (even when empty)
+        const sec = document.createElement("div");
+        sec.className = "group-section unassigned-section";
+        sec.dataset.sectionKey = UNASSIGNED;
+        sec.innerHTML = `<h3 draggable="true" data-section-handle="${UNASSIGNED}">🤷 Unassigned</h3>`;
+        buckets[UNASSIGNED].slice().sort(todoSortByOrder).forEach(t=>sec.appendChild(todoRow(t, null)));
+        attachDropTarget(sec, { kind:"unassigned" });
+        attachSectionHeaderDrag(sec);
+        c.appendChild(sec);
+        return;
+      }
+      if(key.startsWith("person:")){
+        const pid = key.slice("person:".length);
+        const p = personById[pid]; if(!p) return;
+        const list = buckets[keyForPerson(pid)] || [];
+        if(!list.length) return;
+        list.sort(todoSortByOrder);
+        const sec = document.createElement("div");
+        sec.className = "group-section person-section";
+        sec.dataset.pid = p.id;
+        sec.dataset.sectionKey = key;
+        const pc = p.color || '#5b8a72';
+        sec.style.background = `linear-gradient(0deg, ${pc}26, ${pc}26), #ffffff`;
+        sec.style.borderColor = `${pc}80`;
+        sec.style.borderLeft = `8px solid ${pc}`;
+        sec.innerHTML = `<h3 draggable="true" data-section-handle="${escapeHtml(key)}" style="background:transparent; color:var(--ink); border-left:0; padding-left:0;"><span class="sec-grip" aria-hidden="true">⋮⋮</span>${escapeHtml(p.name)}</h3>`;
+        list.forEach(t=>sec.appendChild(todoRow(t, p.id)));
+        attachDropTarget(sec, { kind:"person", pid: p.id });
+        attachSectionHeaderDrag(sec);
+        c.appendChild(sec);
+        return;
+      }
+      if(key.startsWith("list:")){
+        const lid = key.slice("list:".length);
+        const L = listById[lid]; if(!L) return;
+        const list = (buckets[keyForList(lid)] || []).slice().sort(todoSortByOrder);
+        const sec = document.createElement("div");
+        sec.className = "group-section list-section";
+        sec.dataset.lid = L.id;
+        sec.dataset.sectionKey = key;
+        const lc = L.color || '#7a8a99';
+        sec.style.background = `linear-gradient(0deg, ${lc}22, ${lc}22), #ffffff`;
+        sec.style.borderColor = `${lc}80`;
+        sec.style.borderLeft = `8px solid ${lc}`;
+        sec.innerHTML = `
+          <h3 draggable="true" data-section-handle="${escapeHtml(key)}" style="background:transparent; color:var(--ink); border-left:0; padding-left:0; display:flex; align-items:center; gap:8px;">
+            <span class="sec-grip" aria-hidden="true">⋮⋮</span>
+            <span class="sec-title">📌 ${escapeHtml(L.name)}</span>
+            <span class="sec-actions" style="margin-left:auto; display:inline-flex; gap:4px;">
+              <button type="button" class="sec-btn" data-list-act="rename" title="Rename list" aria-label="Rename">✏️</button>
+              <button type="button" class="sec-btn" data-list-act="delete" title="Delete list" aria-label="Delete">✕</button>
+            </span>
+          </h3>`;
+        if(!list.length){
+          const emp = document.createElement("div");
+          emp.className = "empty";
+          emp.style.fontSize = "12px";
+          emp.style.padding = "6px 4px";
+          emp.textContent = "Drag tasks here, or use the list selector when editing a task.";
+          sec.appendChild(emp);
+        }
+        list.forEach(t=>sec.appendChild(todoRow(t, null)));
+        attachDropTarget(sec, { kind:"list", lid: L.id });
+        attachSectionHeaderDrag(sec);
+        // Wire list header buttons
+        sec.querySelector('[data-list-act="rename"]').addEventListener("click", e=>{
+          e.stopPropagation();
+          const name = prompt("Rename list:", L.name);
+          if(name == null) return;
+          const trimmed = name.trim();
+          if(!trimmed) return;
+          L.name = trimmed; save(); renderTodos();
         });
+        sec.querySelector('[data-list-act="delete"]').addEventListener("click", e=>{
+          e.stopPropagation();
+          const count = data.todos.filter(t=>t.listId === L.id).length;
+          const msg = count
+            ? `Delete list "${L.name}"? ${count} task(s) will be moved back to person grouping.`
+            : `Delete list "${L.name}"?`;
+          if(!confirm(msg)) return;
+          // Detach tasks from the list
+          data.todos.forEach(t=>{ if(t.listId === L.id) t.listId = null; });
+          data.lists = data.lists.filter(x => x.id !== L.id);
+          data.sectionOrder = data.sectionOrder.filter(k => k !== `list:${L.id}`);
+          save(); renderTodos();
+        });
+        c.appendChild(sec);
+        return;
       }
     });
-    data.people.forEach(p=>{
-      const list = buckets[p.id];
-      if(!list.length) return;
-      const sec = document.createElement("div");
-      sec.className = "group-section person-section";
-      sec.dataset.pid = p.id;
-      const pc = p.color || '#5b8a72';
-      // Tint the whole section in the person's color.
-      // Use white base so the translucent color reads TRUE (a translucent blue
-      // over the page's warm beige looks muddy/olive).
-      // Also set border-left LAST so the shorthand doesn't get clobbered by
-      // a later borderColor write.
-      sec.style.background = `linear-gradient(0deg, ${pc}26, ${pc}26), #ffffff`;
-      sec.style.borderColor = `${pc}80`;
-      sec.style.borderLeft = `8px solid ${pc}`;
-      sec.innerHTML = `<h3 style="background:transparent; color:var(--ink); border-left:0; padding-left:0;">${escapeHtml(p.name)}</h3>`;
-      list.forEach(t=>sec.appendChild(todoRow(t, p.id)));
-      attachDropTarget(sec, p.id);
-      c.appendChild(sec);
-    });
-    // Always show the Unassigned section as a drop target (even when empty)
-    {
-      const sec = document.createElement("div");
-      sec.className = "group-section unassigned-section";
-      sec.dataset.pid = "__unassigned__";
-      sec.innerHTML = `<h3>🤷 Unassigned</h3>`;
-      buckets["__unassigned__"].forEach(t=>sec.appendChild(todoRow(t, null)));
-      attachDropTarget(sec, "__unassigned__");
-      c.appendChild(sec);
-    }
   } else if(todoGroupBy === "due"){
     const today = todayYmd();
     const buckets = {
@@ -3669,10 +4043,12 @@ function todoRow(t, sourcePid){
     duePill = `<span class="pill due ${cls}">📅 ${escapeHtml(text)}</span>`;
   }
 
-  const assigneePills = t.assignees.map(pid=>{
-    const pc = personColor(pid);
-    return `<span class="pill assignee" style="background:${escapeHtml(pc)}22; border-color:${escapeHtml(pc)}66; color:var(--ink);"><span class="dot" style="background:${escapeHtml(pc)}"></span>${escapeHtml(personName(pid))}</span>`;
-  }).join("");
+  const assigneePills = t.assignees.length > 1
+    ? t.assignees.map(pid=>{
+        const pc = personColor(pid);
+        return `<span class="pill assignee" style="background:${escapeHtml(pc)}22; border-color:${escapeHtml(pc)}66; color:var(--ink);"><span class="dot" style="background:${escapeHtml(pc)}"></span>${escapeHtml(personName(pid))}</span>`;
+      }).join("")
+    : "";;
 
   let recurPill = "";
   if(t.recurring){
@@ -3695,6 +4071,12 @@ function todoRow(t, sourcePid){
     ? `Completed ${fmtDateShort(t.completedAt)}`
     : `Added ${fmtDateShort(t.createdAt)}`;
 
+  // Only completed tasks show a status pill in the main view; the "added"
+  // date is only shown in the edit modal sub-header.
+  const statusPill = (t.done && t.completedAt)
+    ? `<span class="added" title="Completed ${fmtDateLong(t.completedAt)}">${escapeHtml(addedTxt)}</span>`
+    : "";
+
   row.innerHTML = `
     <input type="checkbox" ${t.done?"checked":""} aria-label="Mark done" />
     <div class="info">
@@ -3702,25 +4084,21 @@ function todoRow(t, sourcePid){
       <div class="meta">
         ${assigneePills}
         ${duePill}
-        ${recurPill}
-        <span class="added" title="${t.done && t.completedAt ? 'Completed '+fmtDateLong(t.completedAt) : 'Added '+fmtDateLong(t.createdAt)}">${escapeHtml(addedTxt)}</span>
+        ${statusPill}
       </div>
-    </div>
-    <div class="actions">
-      <button class="icon" data-act="edit" title="Edit" aria-label="Edit">✏️</button>
-      <button class="icon" data-act="delete" title="Delete" aria-label="Delete">✕</button>
     </div>
   `;
 
-  row.querySelector("input").addEventListener("change", e=>{
+  // Checkbox toggles done without opening modal
+  const cb = row.querySelector("input");
+  cb.addEventListener("click", e => e.stopPropagation());
+  cb.addEventListener("change", e=>{
     handleTodoCheck(t.id, e.target.checked);
   });
-  row.querySelector('[data-act="edit"]').addEventListener("click",()=> openTodoModal(t.id));
-  row.querySelector('[data-act="delete"]').addEventListener("click",()=>{
-    if(!confirm(`Delete todo "${t.title}"?`)) return;
-    data.todos = data.todos.filter(x=>x.id !== t.id);
-    save();
-    renderTodos();
+  // Tap anywhere else on the row to open the editor
+  row.addEventListener("click", e=>{
+    if(e.target.closest("input,button")) return;
+    openTodoModal(t.id);
   });
   return row;
 }
@@ -3792,6 +4170,12 @@ function openTodoModal(id){
   if(!data.people.length){
     ac.innerHTML = `<div class="empty" style="padding:6px;">No family members defined yet.</div>`;
   }
+
+  // List selector
+  const listSel = document.getElementById("todo-modal-list");
+  const currentListId = t ? (t.listId || "") : "";
+  listSel.innerHTML = `<option value="">— No list (group by person) —</option>` +
+    data.lists.map(L => `<option value="${escapeHtml(L.id)}" ${L.id === currentListId ? "selected" : ""}>${escapeHtml(L.name)}</option>`).join("");
 
   // Recurring
   const recurSel = document.getElementById("todo-modal-recur");
@@ -3869,6 +4253,7 @@ document.getElementById("todo-modal-save").addEventListener("click",()=>{
   if(!title){ alert("Please enter a title."); return; }
   const assignees = [...document.querySelectorAll('#todo-modal-assignees input[type=checkbox]:checked')]
     .map(cb=>cb.dataset.pid);
+  const listId = document.getElementById("todo-modal-list").value || null;
   const due = document.getElementById("todo-modal-due").value || null;
   const recurPattern = document.getElementById("todo-modal-recur").value;
   let recurring = null;
@@ -3885,12 +4270,13 @@ document.getElementById("todo-modal-save").addEventListener("click",()=>{
     if(t){
       t.title = title;
       t.assignees = assignees;
+      t.listId = listId;
       t.due = due;
       t.recurring = recurring;
     }
   } else {
     data.todos.push(normalizeTodo({
-      title, assignees, due, recurring,
+      title, assignees, listId, due, recurring,
       createdAt: todayYmd(),
       done: false
     }));
@@ -3912,6 +4298,33 @@ document.getElementById("todo-modal-delete").addEventListener("click",()=>{
 });
 
 document.getElementById("btn-add-todo").addEventListener("click",()=> openTodoModal(null));
+
+// Create a new list (e.g. "Later", "Lake House")
+document.getElementById("btn-add-list").addEventListener("click",()=>{
+  const name = prompt("Name your new task list (e.g. Later, Lake House):");
+  if(name == null) return;
+  const trimmed = name.trim();
+  if(!trimmed) return;
+  // Pick a neutral color from a small palette
+  const palette = ["#7a8a99","#9c7bad","#b08a5b","#6b9a8a","#c47b7b","#8f9d5c"];
+  const used = new Set(data.lists.map(L=>L.color));
+  const color = palette.find(c=>!used.has(c)) || palette[data.lists.length % palette.length];
+  const list = { id: uid(), name: trimmed, color };
+  data.lists.push(list);
+  // Place new list right before "unassigned" by default
+  let order = getOrderedSectionKeys();
+  order = order.filter(k => k !== `list:${list.id}` && k !== "unassigned");
+  order.push(`list:${list.id}`);
+  order.push("unassigned");
+  data.sectionOrder = order;
+  // Auto-switch to person grouping so the new list is visible
+  if(todoGroupBy !== "person"){
+    todoGroupBy = "person";
+    document.getElementById("todo-group-by").value = "person";
+  }
+  save();
+  renderTodos();
+});
 
 // Quick-add input
 document.getElementById("quick-todo").addEventListener("keydown", e=>{
@@ -3951,13 +4364,16 @@ document.getElementById("btn-close-meals-admin").addEventListener("click",()=>{
 
 let bookModalEditingId = null;
 
-function readerMedal(count){
-  if(count >= 25) return { emoji: "👑", label: "Royal Reader" };
-  if(count >= 15) return { emoji: "🏆", label: "Reading Champion" };
-  if(count >= 10) return { emoji: "🥇", label: "Gold Reader" };
-  if(count >= 5)  return { emoji: "🥈", label: "Silver Reader" };
-  if(count >= 1)  return { emoji: "🥉", label: "Bookworm" };
-  return { emoji: "📖", label: "Ready to read!" };
+// Award icons assigned by family ranking (dense rank by finished book count)
+// rather than absolute counts. Readers with 0 books always get the
+// "Ready to read!" placeholder; anyone above 0 places relative to siblings.
+function readerMedalByRank(count, rank, readersCount){
+  if(count === 0) return { emoji: "📖", label: "Ready to read!" };
+  // If only one person has read anything, they're automatically the leader.
+  if(rank === 1) return { emoji: "👑", label: readersCount > 1 ? "Top Reader of the family" : "Top Reader" };
+  if(rank === 2) return { emoji: "🥇", label: "2nd most books read" };
+  if(rank === 3) return { emoji: "🥈", label: "3rd most books read" };
+  return { emoji: "🥉", label: "Bookworm" };
 }
 
 function daysReading(startedAt){
@@ -3987,10 +4403,21 @@ function renderReading(){
   // Scoreboard
   const board = document.getElementById("reader-board");
   if(board){
+    // Pre-compute each person's finished count and assign dense ranks within
+    // the family (ties share a rank). Zero-book readers don't get a rank.
+    const counts = data.people.map(p => ({
+      pid: p.id,
+      count: finished.filter(b=>b.personId === p.id).length
+    }));
+    const uniqueCountsDesc = [...new Set(counts.filter(c=>c.count > 0).map(c=>c.count))].sort((a,b)=>b-a);
+    const rankByCount = new Map(uniqueCountsDesc.map((c,i)=>[c, i+1]));
+    const readersCount = counts.filter(c=>c.count > 0).length;
+
     board.innerHTML = data.people.map(p=>{
       const pBooks = finished.filter(b=>b.personId === p.id);
       const pCurrent = inProgress.filter(b=>b.personId === p.id);
-      const medal = readerMedal(pBooks.length);
+      const rank = rankByCount.get(pBooks.length) || 0;
+      const medal = readerMedalByRank(pBooks.length, rank, readersCount);
       const initial = (p.name || "?").charAt(0).toUpperCase();
       const zero = pBooks.length === 0 && pCurrent.length === 0 ? "zero" : "";
       const currentTxt = pCurrent.length
@@ -4030,7 +4457,7 @@ function renderReading(){
           const coverStyle = b.cover ? `background-image:url('${b.cover}');` : "";
           const coverInner = b.cover ? "" : "📖";
           return `
-            <div class="current-book" data-book-id="${b.id}">
+            <div class="current-book" data-book-id="${b.id}" data-edit-book-id="${b.id}" role="button" tabindex="0" title="Click to edit">
               <div class="cb-cover" style="${coverStyle}">${coverInner}</div>
               <div class="cb-info">
                 <div class="cb-title">${escapeHtml(b.title)}${authorTxt}</div>
@@ -4038,8 +4465,7 @@ function renderReading(){
               </div>
               <span class="cb-days">${daysLabel}</span>
               <div class="cb-actions">
-                <button class="cb-finish" data-finish-id="${b.id}">✓ Finished!</button>
-                <button class="cb-edit" data-edit-book-id="${b.id}">Edit</button>
+                <button class="cb-finish" data-finish-id="${b.id}">✓ I finished this book!</button>
               </div>
             </div>
           `;
