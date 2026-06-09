@@ -260,23 +260,18 @@
     font-weight:700; font-size:13px;
     display:flex; justify-content:space-between; align-items:center;
     padding:2px 4px; gap:4px;
-    cursor:pointer; border-radius:6px;
-    transition:background .15s;
-  }
-  .cal-cell .dnum:hover{
-    background:var(--accent-soft);
+    border-radius:6px;
   }
   .cal-cell .dnum .dow{
     font-size:10px; color:var(--ink-soft); font-weight:500;
     text-transform:uppercase;
   }
-  .cal-cell .day-notes{
-    font-size:11px; color:var(--ink-soft); font-style:italic;
-    background:var(--warm-soft); border-left:3px solid var(--warm);
-    border-radius:4px; padding:3px 5px; line-height:1.25;
+  .meal-slot .meal-note{
+    font-size:10px; color:var(--ink-soft); font-style:italic;
+    line-height:1.2;
     overflow:hidden; text-overflow:ellipsis;
     display:-webkit-box; -webkit-line-clamp:2; line-clamp:2; -webkit-box-orient:vertical;
-    cursor:pointer;
+    margin-top:2px;
   }
   .meal-slot{
     display:flex; flex-direction:column; gap:2px;
@@ -1873,16 +1868,13 @@
 <!-- Day-edit modal -->
 <div class="modal-bg" id="day-modal-bg" aria-hidden="true">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="day-modal-title">
-    <h3 id="day-modal-title">Edit Day</h3>
+    <h3 id="day-modal-title">Edit Meal</h3>
     <p class="modal-sub" id="day-modal-sub"></p>
 
     <div id="day-modal-meals"></div>
 
-    <label class="field-lbl" for="day-modal-notes">📝 Notes for this day</label>
-    <textarea id="day-modal-notes" rows="2" placeholder="e.g. Late dinner after volleyball" style="width:100%; display:block; resize:vertical;"></textarea>
-
     <div class="modal-actions">
-      <button class="btn danger" id="day-modal-clear" title="Clear all meal plans and notes for this day">Clear Day</button>
+      <button class="btn danger" id="day-modal-clear" title="Clear this meal's plan, overrides, and notes">Clear Meal</button>
       <button class="btn ghost" id="day-modal-cancel">Cancel</button>
       <button class="btn" id="day-modal-save">Save</button>
     </div>
@@ -2295,6 +2287,9 @@ function scrollMealCalToToday(){
 // How many days before today the meal calendar shows. 0 = today is the
 // earliest visible day; click “Show previous week” to extend by 7.
 let mealCalPastDays = 0;
+// How many days after today are visible. Default 10; click "Show next week"
+// to extend by 7.
+let mealCalFutureDays = 10;
 
 function renderMealCalendar(){
   // Day-of-week headers
@@ -2309,6 +2304,9 @@ function renderMealCalendar(){
   // Cap how far back the user can scroll. Anything before this date is hidden.
   const minDate = addDays(now, -mealCalPastDays);
   const minYmd = ymd(minDate);
+  // Cap how far forward the calendar shows.
+  const maxDate = addDays(now, mealCalFutureDays);
+  const maxYmd = ymd(maxDate);
 
   // “Show previous week” button — lets the user reveal earlier weeks on demand
   const prevBtn = document.createElement("button");
@@ -2323,15 +2321,17 @@ function renderMealCalendar(){
   });
   scroll.appendChild(prevBtn);
 
-  // Render enough prior months to cover the requested past days, plus 3 future months.
+  // Render enough prior months to cover the requested past days, and enough
+  // future months to cover the requested future days.
   const PAST_MONTHS = Math.max(1, Math.ceil((mealCalPastDays + 7) / 28));
-  const FUTURE_MONTHS = 3;
+  const FUTURE_MONTHS = Math.max(1, Math.ceil((mealCalFutureDays + 7) / 28));
   for(let mi = -PAST_MONTHS; mi <= FUTURE_MONTHS; mi++){
     const monthStart = new Date(now.getFullYear(), now.getMonth() + mi, 1);
     const monthEnd = new Date(monthStart.getFullYear(), monthStart.getMonth()+1, 0);
 
-    // Skip months that are entirely before the cutoff
+    // Skip months that are entirely before the cutoff or entirely after it
     if(ymd(monthEnd) < minYmd) continue;
+    if(ymd(monthStart) > maxYmd) continue;
 
     const title = document.createElement("div");
     title.className = "month-title";
@@ -2349,9 +2349,9 @@ function renderMealCalendar(){
     for(let i=0;i<totalCells;i++){
       const d = addDays(gridStart, i);
       const dy = ymd(d);
-      // Past the visible cutoff: render an invisible placeholder so the
+      // Outside the visible window: render an invisible placeholder so the
       // remaining cells still line up under the correct day-of-week column.
-      if(dy < minYmd){
+      if(dy < minYmd || dy > maxYmd){
         const spacer = document.createElement("div");
         spacer.className = "cal-cell past-spacer";
         grid.appendChild(spacer);
@@ -2362,39 +2362,41 @@ function renderMealCalendar(){
       if(d.getMonth() !== monthStart.getMonth()) cell.classList.add("other");
       if(dy === today) cell.classList.add("today");
 
-      const day = data.plan[dy] || {};
-      const notes = day.notes || "";
-      const notesHtml = notes
-        ? `<div class="day-notes" data-edit-day="${dy}" title="${escapeHtml(notes)} — click to edit">${escapeHtml(notes)}</div>`
-        : "";
-
       cell.innerHTML = `
-        <div class="dnum" data-edit-day="${dy}" title="Edit day (per-person meals & notes)" role="button" tabindex="0">
+        <div class="dnum">
           <span>${d.getDate()}</span>
           <span class="dow">${DOW_SHORT[d.getDay()]}</span>
         </div>
         ${mealSlotHtml(dy, "breakfast", "B")}
         ${mealSlotHtml(dy, "lunch", "L")}
         ${mealSlotHtml(dy, "dinner", "D")}
-        ${notesHtml}
       `;
       grid.appendChild(cell);
     }
     scroll.appendChild(grid);
   }
 
-  // Wire up selects + edit-day clicks (once)
+  // “Show next week” button — extends the visible window forward by 7 days.
+  const nextBtn = document.createElement("button");
+  nextBtn.type = "button";
+  nextBtn.className = "btn ghost meal-prev-week-btn";
+  nextBtn.textContent = `↓ Show next week (currently showing ${mealCalFutureDays} days ahead)`;
+  nextBtn.addEventListener("click", ()=>{
+    mealCalFutureDays += 7;
+    renderMealCalendar();
+  });
+  scroll.appendChild(nextBtn);
+
+  // Wire up selects + meal-slot clicks (once)
   if(!scroll.dataset.bound){
     scroll.addEventListener("change", onMealSelectChange);
     scroll.addEventListener("click", e=>{
-      // Clicking the meal slot opens the day modal scrolled to that meal's section
+      // Clicking anywhere in a meal slot (except the select) opens the
+      // per-meal edit modal focused on that meal.
       const slot = e.target.closest(".meal-slot[data-edit-day]");
       if(slot && e.target.tagName !== "SELECT"){
         openDayModal(slot.dataset.editDay, slot.dataset.mealKey);
-        return;
       }
-      const t = e.target.closest("[data-edit-day]");
-      if(t){ openDayModal(t.dataset.editDay); return; }
     });
     scroll.dataset.bound = "1";
   }
@@ -2408,14 +2410,19 @@ function mealSlotHtml(dy, mealType, label){
   const isUnset = !current;
 
   // Per-person overrides: anyone whose effective value differs from the family default.
-  // Effective value = explicit override (incl. "" skip) > weekday/weekend default > family default.
+  // Effective value resolution:
+  //   "__family__" sentinel → explicitly match family (skip personal default)
+  //   explicit food string  → use that
+  //   missing key           → personal default → family
   const pp = day.perPerson || {};
   const overrides = [];
   for(const p of data.people){
     const explicit = pp[p.id] && Object.prototype.hasOwnProperty.call(pp[p.id], mealType) ? pp[p.id][mealType] : undefined;
     const def = personDefaultMeal(p.id, mealType, dy);
     let effective, fromDefault = false;
-    if(explicit !== undefined){
+    if(explicit === "__family__"){
+      effective = current;
+    } else if(explicit !== undefined){
       effective = explicit;
     } else if(def){
       effective = def;
@@ -2440,6 +2447,11 @@ function mealSlotHtml(dy, mealType, label){
       }).join("") + `</div>`
     : "";
 
+  const mealNote = (day.mealNotes && day.mealNotes[mealType]) || "";
+  const noteHtml = mealNote
+    ? `<div class="meal-note" title="${escapeHtml(mealNote)}">📝 ${escapeHtml(mealNote)}</div>`
+    : "";
+
   return `
     <div class="meal-slot ${cls}" data-edit-day="${dy}" data-meal-key="${mealType}">
       <div class="lbl"><span class="dot"></span>${label}</div>
@@ -2448,6 +2460,7 @@ function mealSlotHtml(dy, mealType, label){
         ${opts.map(o=>`<option value="${escapeHtml(o)}" ${o===current?"selected":""}>${escapeHtml(o)}</option>`).join("")}
       </select>
       ${overrideRows}
+      ${noteHtml}
     </div>
   `;
 }
@@ -2714,42 +2727,37 @@ document.getElementById("new-person").addEventListener("keydown", e=>{
 });
 
 /* ---------- Day-edit modal ---------- */
-let dayModalState = { dy: null, perPerson: {}, notes: "" };
+let dayModalState = { dy: null, perPerson: {}, focusMeal: null };
 
 function openDayModal(dy, focusMeal){
+  if(!focusMeal) return; // modal is always per-meal now
   const day = data.plan[dy] || {};
   // Deep-clone the per-person object so cancel works
   dayModalState = {
     dy,
     perPerson: clone(day.perPerson || {}),
-    notes: day.notes || ""
+    focusMeal
   };
 
   const d = new Date(dy + "T00:00:00");
-  document.getElementById("day-modal-title").textContent = "Edit Day";
+  const mealLabels = { breakfast: "Breakfast", lunch: "Lunch", dinner: "Dinner" };
+  document.getElementById("day-modal-title").textContent = `Edit ${mealLabels[focusMeal] || "Meal"}`;
   document.getElementById("day-modal-sub").textContent =
     d.toLocaleDateString(undefined, { weekday:"long", month:"long", day:"numeric", year:"numeric" });
 
   renderDayModalMeals();
-  document.getElementById("day-modal-notes").value = dayModalState.notes;
 
   const bg = document.getElementById("day-modal-bg");
   bg.classList.add("open");
   bg.setAttribute("aria-hidden", "false");
 
-  // If a specific meal was clicked, scroll the modal to that section and
-  // briefly highlight it so the user sees what they're editing.
-  if(focusMeal){
-    requestAnimationFrame(()=>{
-      const section = document.querySelector(`#day-modal-meals .meal-section[data-meal-key="${focusMeal}"]`);
-      if(!section) return;
-      section.scrollIntoView({ behavior: "smooth", block: "start" });
-      section.classList.add("meal-section-focus");
-      setTimeout(()=> section.classList.remove("meal-section-focus"), 1400);
-      const familySel = section.querySelector('select[data-modal-scope="family"]');
-      if(familySel) familySel.focus({ preventScroll: true });
-    });
-  }
+  // Focus the family-default select of the focused meal for fast editing.
+  requestAnimationFrame(()=>{
+    const section = document.querySelector(`#day-modal-meals .meal-section[data-meal-key="${focusMeal}"]`);
+    if(!section) return;
+    const familySel = section.querySelector('select[data-modal-scope="family"]');
+    if(familySel) familySel.focus({ preventScroll: true });
+  });
 }
 
 function closeDayModal(){
@@ -2762,11 +2770,14 @@ function renderDayModalMeals(){
   const container = document.getElementById("day-modal-meals");
   const dy = dayModalState.dy;
   const day = data.plan[dy] || {};
-  const meals = [
+  const allMeals = [
     { key:"breakfast", label:"Breakfast", cls:"b" },
     { key:"lunch",     label:"Lunch",     cls:"l" },
     { key:"dinner",    label:"Dinner",    cls:"d" }
   ];
+  const meals = dayModalState.focusMeal
+    ? allMeals.filter(m => m.key === dayModalState.focusMeal)
+    : allMeals;
   container.innerHTML = meals.map(m=>{
     const opts = data.menus[m.key] || [];
     const familyVal = day[m.key] || "";
@@ -2778,20 +2789,17 @@ function renderDayModalMeals(){
     `;
     const ppRows = data.people.map(p=>{
       const pv = (dayModalState.perPerson[p.id] || {})[m.key];
-      const isSame = pv == null;
-      const effective = isSame ? familyVal : pv;
-      const def = personDefaultMeal(p.id, m.key, dy);
-      const fallback = def || familyVal;
-      const sameLabel = fallback
-        ? `— use default (${fallback}${def ? "" : " — family"}) —`
-        : `— same as family —`;
+      const isFamily  = pv === "__family__";
+      const isDefault = pv === undefined || pv === null;
+      const isFood    = !isFamily && !isDefault;
+      const effective = isFood ? pv : "";
       return `
         <div class="person-row" data-person="${p.id}" data-meal="${m.key}">
           <div class="pname"><span class="pdot" style="background:${escapeHtml(p.color||'#5b8a72')}"></span>${escapeHtml(p.name)}</div>
-          <select data-modal-meal="${m.key}" data-modal-scope="person" data-person-id="${p.id}" class="${isSame?'same-as-family':''}">
-            <option value="__same__" ${isSame?"selected":""}>${escapeHtml(sameLabel)}</option>
-            <option value="">— none (skip) —</option>
-            ${opts.map(o=>`<option value="${escapeHtml(o)}" ${(!isSame && o===effective)?"selected":""}>${escapeHtml(o)}</option>`).join("")}
+          <select data-modal-meal="${m.key}" data-modal-scope="person" data-person-id="${p.id}" class="${isDefault||isFamily?'same-as-family':''}">
+            <option value="__family__" ${isFamily?"selected":""}>— same as family —</option>
+            <option value="__default__" ${isDefault?"selected":""}>— default —</option>
+            ${opts.map(o=>`<option value="${escapeHtml(o)}" ${(isFood && o===effective)?"selected":""}>${escapeHtml(o)}</option>`).join("")}
           </select>
           <span class="same" data-same-flag></span>
         </div>
@@ -2800,12 +2808,14 @@ function renderDayModalMeals(){
     return `
       <div class="meal-section ${m.cls}" data-meal-key="${m.key}">
         <h4><span class="dot"></span>${m.label}</h4>
-        <label class="field-lbl" style="margin-top:0;">Family default</label>
+        <label class="field-lbl" style="margin-top:0;">Family</label>
         ${familySelect}
         <div class="people-rows-lbl" style="margin-top:10px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-soft);">👥 Per-person overrides</div>
         <div data-people-rows="${m.key}" style="margin-top:4px;">
           ${ppRows}
         </div>
+        <label class="field-lbl" for="meal-modal-notes-${m.key}" style="margin-top:12px;">📝 Notes for this meal</label>
+        <textarea id="meal-modal-notes-${m.key}" data-modal-meal-notes="${m.key}" rows="2" placeholder="e.g. Lunch at the park with OWS" style="width:100%; display:block; resize:vertical;">${escapeHtml((day.mealNotes && day.mealNotes[m.key]) || "")}</textarea>
       </div>
     `;
   }).join("");
@@ -2819,12 +2829,17 @@ document.getElementById("day-modal-meals").addEventListener("change", e=>{
   if(sel.dataset.modalScope === "person"){
     const pid = sel.dataset.personId;
     if(!dayModalState.perPerson[pid]) dayModalState.perPerson[pid] = {};
-    if(sel.value === "__same__"){
+    if(sel.value === "__default__"){
+      // Use person's default (fall back to family if no personal default)
       delete dayModalState.perPerson[pid][meal];
       if(Object.keys(dayModalState.perPerson[pid]).length === 0) delete dayModalState.perPerson[pid];
       sel.classList.add("same-as-family");
+    } else if(sel.value === "__family__"){
+      // Explicitly match family — skip personal default
+      dayModalState.perPerson[pid][meal] = "__family__";
+      sel.classList.add("same-as-family");
     } else {
-      dayModalState.perPerson[pid][meal] = sel.value; // "" means explicit skip
+      dayModalState.perPerson[pid][meal] = sel.value;
       sel.classList.remove("same-as-family");
     }
   }
@@ -2834,30 +2849,36 @@ document.getElementById("day-modal-meals").addEventListener("change", e=>{
 
 document.getElementById("day-modal-save").addEventListener("click",()=>{
   const dy = dayModalState.dy;
-  if(!dy) return;
+  const focusMeal = dayModalState.focusMeal;
+  if(!dy || !focusMeal) return;
   if(!data.plan[dy]) data.plan[dy] = {};
   const day = data.plan[dy];
 
-  // Pull family selects from DOM
-  document.querySelectorAll('select[data-modal-meal][data-modal-scope="family"]').forEach(sel=>{
-    const meal = sel.dataset.modalMeal;
-    const val = sel.value;
-    if(val) day[meal] = val; else delete day[meal];
-  });
+  // Family value for the focused meal
+  const famSel = document.querySelector(`select[data-modal-meal="${focusMeal}"][data-modal-scope="family"]`);
+  if(famSel){
+    const val = famSel.value;
+    if(val) day[focusMeal] = val; else delete day[focusMeal];
+  }
 
-  // Per-person from state
+  // Per-person: merge only the focused meal's edits into existing perPerson.
+  // dayModalState.perPerson started as a clone of day.perPerson and was only
+  // mutated for this meal, so we can safely write it back.
   if(Object.keys(dayModalState.perPerson).length){
     day.perPerson = dayModalState.perPerson;
   } else {
     delete day.perPerson;
   }
 
-  // Notes
-  const notes = document.getElementById("day-modal-notes").value.trim();
-  if(notes) day.notes = notes; else delete day.notes;
+  // Per-meal notes
+  const noteEl = document.querySelector(`textarea[data-modal-meal-notes="${focusMeal}"]`);
+  const note = noteEl ? noteEl.value.trim() : "";
+  if(!day.mealNotes) day.mealNotes = {};
+  if(note) day.mealNotes[focusMeal] = note; else delete day.mealNotes[focusMeal];
+  if(Object.keys(day.mealNotes).length === 0) delete day.mealNotes;
 
   // Clean up empty day entries
-  if(!day.breakfast && !day.lunch && !day.dinner && !day.perPerson && !day.notes){
+  if(!day.breakfast && !day.lunch && !day.dinner && !day.perPerson && !day.mealNotes){
     delete data.plan[dy];
   }
 
@@ -2877,9 +2898,29 @@ document.addEventListener("keydown", e=>{
 });
 
 document.getElementById("day-modal-clear").addEventListener("click",()=>{
-  if(!confirm("Clear all meals, per-person overrides, and notes for this day?")) return;
+  const focusMeal = dayModalState.focusMeal;
+  if(!focusMeal) return;
+  const mealLabels = { breakfast: "breakfast", lunch: "lunch", dinner: "dinner" };
+  if(!confirm(`Clear the ${mealLabels[focusMeal] || "meal"} plan, per-person overrides, and notes for this day?`)) return;
   const dy = dayModalState.dy;
-  if(dy) delete data.plan[dy];
+  const day = data.plan[dy];
+  if(day){
+    delete day[focusMeal];
+    if(day.perPerson){
+      for(const pid of Object.keys(day.perPerson)){
+        delete day.perPerson[pid][focusMeal];
+        if(Object.keys(day.perPerson[pid]).length === 0) delete day.perPerson[pid];
+      }
+      if(Object.keys(day.perPerson).length === 0) delete day.perPerson;
+    }
+    if(day.mealNotes){
+      delete day.mealNotes[focusMeal];
+      if(Object.keys(day.mealNotes).length === 0) delete day.mealNotes;
+    }
+    if(!day.breakfast && !day.lunch && !day.dinner && !day.perPerson && !day.mealNotes){
+      delete data.plan[dy];
+    }
+  }
   save();
   closeDayModal();
   renderMealCalendar();
