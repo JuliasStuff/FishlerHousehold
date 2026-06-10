@@ -663,12 +663,12 @@
   .agenda-ev{
     position:absolute;
     border-radius:6px;
-    background:var(--accent-soft);
+    background:var(--accent);
     border:1px solid var(--accent);
-    border-left:4px solid var(--accent);
+    border-left:4px solid rgba(0,0,0,.18);
     padding:1px 6px 2px;
     font-size:12px; line-height:1.2;
-    color:var(--ink);
+    color:#fff;
     cursor:pointer;
     overflow:hidden;
     transition:filter .12s;
@@ -676,22 +676,24 @@
     display:flex; flex-direction:row; align-items:flex-start;
     gap:6px; flex-wrap:wrap;
   }
-  .agenda-ev:hover{ filter:brightness(0.97); z-index:5; box-shadow:0 1px 4px rgba(0,0,0,.12); }
+  .agenda-ev:hover{ filter:brightness(1.05); z-index:5; box-shadow:0 1px 4px rgba(0,0,0,.18); }
   .agenda-ev .ae-body{
     flex:1 1 140px; min-width:0;
   }
-  .agenda-ev .ae-title{ font-weight:700; line-height:1.15; }
+  .agenda-ev .ae-title{ font-weight:700; line-height:1.15; color:#fff; }
   .agenda-ev .ae-time{
-    font-size:11px; opacity:.8;
+    font-size:11px; opacity:.92;
     margin-top:0;
     line-height:1.1;
+    color:#fff;
   }
   .agenda-ev .ae-meta{
-    font-size:11px; opacity:.85;
+    font-size:11px; opacity:.95;
     flex:0 1 auto;
     margin-left:auto;
     margin-top:0;
     line-height:1.1;
+    color:#fff;
     display:flex; flex-direction:row; flex-wrap:wrap; align-items:center;
     gap:2px 10px;
     min-width:0;
@@ -700,6 +702,7 @@
   .agenda-ev .ae-meta .pdot{
     display:inline-block; width:7px; height:7px; border-radius:50%;
     vertical-align:1px; margin-right:3px;
+    box-shadow:0 0 0 1px rgba(255,255,255,.85);
   }
   .agenda-now-line{
     position:absolute; left:0; right:0;
@@ -1824,6 +1827,7 @@
 
     <label class="field-lbl" for="todo-modal-notes">Details</label>
     <textarea id="todo-modal-notes" rows="3" placeholder="Optional notes, links, or extra context" style="width:100%; display:block; resize:vertical;"></textarea>
+    <div id="todo-modal-notes-links" class="notes-links" style="display:none; margin-top:6px; font-size:12px; color:var(--ink-soft); word-break:break-all;"></div>
 
     <label class="field-lbl">Assign to</label>
     <div class="assignee-checks" id="todo-modal-assignees"></div>
@@ -2113,6 +2117,41 @@ function escapeHtml(s){
   return String(s ?? "").replace(/[&<>"']/g, c => ({
     "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"
   }[c]));
+}
+// Convert a plain-text string to HTML with URLs turned into clickable anchors.
+// Matches http(s)://, www., and bare domains with a path (e.g. amazon.com/foo).
+// All other text is HTML-escaped.
+const URL_REGEX = /\b((?:https?:\/\/|www\.)[^\s<>"']+|[a-z0-9-]+\.[a-z]{2,}(?:\/[^\s<>"']*)?)\b/gi;
+function linkifyText(s){
+  const str = String(s ?? "");
+  let out = "";
+  let last = 0;
+  str.replace(URL_REGEX, (match, _g, offset) => {
+    out += escapeHtml(str.slice(last, offset));
+    // Strip common trailing punctuation that shouldn't be part of the link
+    let url = match;
+    let trailing = "";
+    const trailMatch = /[.,;:!?)\]}>]+$/.exec(url);
+    if(trailMatch){
+      trailing = trailMatch[0];
+      url = url.slice(0, -trailing.length);
+    }
+    const href = /^https?:\/\//i.test(url) ? url : ("https://" + url);
+    out += `<a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer">${escapeHtml(url)}</a>${escapeHtml(trailing)}`;
+    last = offset + match.length;
+    return match;
+  });
+  out += escapeHtml(str.slice(last));
+  return out.replace(/\n/g, "<br>");
+}
+// Return the first URL found in a string, fully-qualified with https:// if
+// missing, or null if no URL is present.
+function firstUrlIn(s){
+  const m = URL_REGEX.exec(String(s ?? ""));
+  URL_REGEX.lastIndex = 0;
+  if(!m) return null;
+  let url = m[0].replace(/[.,;:!?)\]}>]+$/, "");
+  return /^https?:\/\//i.test(url) ? url : ("https://" + url);
 }
 function hexToRgba(hex, alpha){
   if(!hex || typeof hex !== "string") return `rgba(91,138,114,${alpha})`;
@@ -3069,7 +3108,7 @@ function renderPlainCalendar(){
               ? `<span class="ev-time">${escapeHtml(fmtTime12(ev.startTime))}</span>`
               : "";
             const locTxt = ev.location ? ` <span class="ev-loc" style="opacity:.8;font-weight:500;">📍 ${escapeHtml(ev.location)}</span>` : "";
-            const titleHtml = `<span class="ev-title">${ev.recurring ? '<span class="ev-recur">🔁 </span>' : ''}${escapeHtml(ev.title)}${locTxt}</span>`;
+            const titleHtml = `<span class="ev-title">${escapeHtml(ev.title)}${locTxt}</span>`;
             let attHtml = "";
             if(ev.attendees && ev.attendees.length && ev.attendees.length < data.people.length){
               attHtml = `<span class="ev-att">` +
@@ -3144,11 +3183,10 @@ function renderPlainCalendar(){
           const timeTxt = !ev.allDay && ev.startTime && !bar.continuedLeft
             ? `<span class="ev-time">${escapeHtml(fmtTime12(ev.startTime))}</span>`
             : "";
-          const recurTxt = ev.recurring ? "🔁 " : "";
           const dayTxt = (!bar.continuedLeft && !bar.continuedRight && bar.inst.span > 1)
             ? ` <span style="opacity:.75;font-weight:500;">(${bar.inst.span}d)</span>` : "";
           const prefix = bar.continuedLeft ? "… " : "";
-          barEl.innerHTML = `${timeTxt}<span class="ev-title">${prefix}${recurTxt}${escapeHtml(ev.title)}${dayTxt}</span>`;
+          barEl.innerHTML = `${timeTxt}<span class="ev-title">${prefix}${escapeHtml(ev.title)}${dayTxt}</span>`;
           // Click handler: open event modal (or paste on the first visible day in paste mode)
           barEl.addEventListener("click", e=>{
             e.stopPropagation();
@@ -3445,17 +3483,16 @@ function renderAgendaDayBody(items, dy){
     if(ev.notes) metaParts.push(`<span class="ae-meta-item">📝 ${escapeHtml(ev.notes)}</span>`);
     const dayLbl = item.totalSpan > 1 ? ` (day ${item.spanDay}/${item.totalSpan})` : "";
 
-    // Tint background using event color at ~22% alpha (hex8). Fallback if color
-    // isn't recognized: just keep the accent-soft default.
-    const bg = colorWithAlpha(color, 0.22);
+    // Use the event's color as a solid background with white text so the
+    // block reads like a calendar event, not a translucent overlay.
+    const bg = color;
     return `
       <div class="agenda-ev"
            style="top:${topPx}px; height:${heightPx}px;
                   left:calc(${leftPct}% + 2px);
                   width:calc(${widthPct}% - 4px);
                   background:${escapeHtml(bg)};
-                  border-color:${escapeHtml(color)};
-                  border-left-color:${escapeHtml(color)};"
+                  border-color:${escapeHtml(color)};"
            data-event-id="${escapeHtml(ev.id)}" data-event-date="${escapeHtml(item.occurStartDy)}"
            title="${escapeHtml(eventTooltip(ev))}">
         <div class="ae-body">
@@ -4679,10 +4716,17 @@ function todoRow(t, sourcePid){
     ? `<span class="added" title="Completed ${fmtDateLong(t.completedAt)}">${escapeHtml(addedTxt)}</span>`
     : "";
 
+  // If the Details field contains a URL, show a small 🔗 icon next to the
+  // title that opens the first link in a new tab.
+  const firstUrl = firstUrlIn(t.notes);
+  const linkIcon = firstUrl
+    ? ` <a class="todo-link" href="${escapeHtml(firstUrl)}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(firstUrl)}" aria-label="Open link from details">🔗</a>`
+    : "";
+
   row.innerHTML = `
     <input type="checkbox" ${t.done?"checked":""} aria-label="Mark done" />
     <div class="info">
-      <div class="title">${escapeHtml(t.title)}</div>
+      <div class="title">${escapeHtml(t.title)}${linkIcon}</div>
       <div class="meta">
         ${assigneePills}
         ${duePill}
@@ -4697,6 +4741,12 @@ function todoRow(t, sourcePid){
   cb.addEventListener("change", e=>{
     handleTodoCheck(t.id, e.target.checked);
   });
+  // The 🔗 link icon (if present) opens the URL in a new tab without
+  // triggering the row's edit handler.
+  const linkEl = row.querySelector(".todo-link");
+  if(linkEl){
+    linkEl.addEventListener("click", e => e.stopPropagation());
+  }
   // Tap anywhere else on the row to open the editor
   row.addEventListener("click", e=>{
     if(e.target.closest("input,button")) return;
@@ -4756,6 +4806,7 @@ function openTodoModal(id){
     : "Fill in the details below.";
   document.getElementById("todo-modal-input-title").value = t ? t.title : "";
   document.getElementById("todo-modal-notes").value = t ? (t.notes || "") : "";
+  updateTodoNotesLinksPreview();
   document.getElementById("todo-modal-due").value = t ? (t.due || "") : "";
 
   // Assignees
@@ -4829,6 +4880,35 @@ function updateRecurExtras(){
 }
 
 document.getElementById("todo-modal-recur").addEventListener("change", updateRecurExtras);
+
+// Live preview of clickable links found in the Details textarea. Lets the
+// user tap a URL they typed (or pasted) without having to copy it out first.
+function updateTodoNotesLinksPreview(){
+  const ta = document.getElementById("todo-modal-notes");
+  const box = document.getElementById("todo-modal-notes-links");
+  if(!ta || !box) return;
+  const text = ta.value || "";
+  // Collect every URL match (use a local regex so we don't fight the shared
+  // lastIndex state on URL_REGEX).
+  const rx = new RegExp(URL_REGEX.source, "gi");
+  const urls = [];
+  let m;
+  while((m = rx.exec(text))){
+    let u = m[0].replace(/[.,;:!?)\]}>]+$/, "");
+    const href = /^https?:\/\//i.test(u) ? u : ("https://" + u);
+    urls.push({ label: u, href });
+  }
+  if(urls.length === 0){
+    box.style.display = "none";
+    box.innerHTML = "";
+    return;
+  }
+  box.style.display = "";
+  box.innerHTML = "🔗 " + urls.map(u =>
+    `<a href="${escapeHtml(u.href)}" target="_blank" rel="noopener noreferrer">${escapeHtml(u.label)}</a>`
+  ).join(" · ");
+}
+document.getElementById("todo-modal-notes").addEventListener("input", updateTodoNotesLinksPreview);
 
 // Weekday toggle visuals
 document.getElementById("todo-modal-weekdays").addEventListener("change", e=>{
