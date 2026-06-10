@@ -666,8 +666,8 @@
     background:var(--accent-soft);
     border:1px solid var(--accent);
     border-left:4px solid var(--accent);
-    padding:3px 6px;
-    font-size:12px; line-height:1.25;
+    padding:1px 6px 2px;
+    font-size:12px; line-height:1.2;
     color:var(--ink);
     cursor:pointer;
     overflow:hidden;
@@ -680,15 +680,18 @@
   .agenda-ev .ae-body{
     flex:1 1 140px; min-width:0;
   }
-  .agenda-ev .ae-title{ font-weight:700; }
+  .agenda-ev .ae-title{ font-weight:700; line-height:1.15; }
   .agenda-ev .ae-time{
     font-size:11px; opacity:.8;
-    margin-top:1px;
+    margin-top:0;
+    line-height:1.1;
   }
   .agenda-ev .ae-meta{
     font-size:11px; opacity:.85;
     flex:0 1 auto;
     margin-left:auto;
+    margin-top:0;
+    line-height:1.1;
     display:flex; flex-direction:row; flex-wrap:wrap; align-items:center;
     gap:2px 10px;
     min-width:0;
@@ -1158,10 +1161,12 @@
   }
   .reading-empty .re-emoji{ font-size:40px; display:block; margin-bottom:6px; opacity:.6; }
 
-  /* Currently Reading lays its person sections side-by-side when space permits */
+  /* Currently Reading lays its person sections side-by-side when space permits.
+     Min width is sized so the inner card (cover + title + days pill + finish
+     button) has room without the pill overlapping a wrapped title. */
   #currently-reading{
     display:grid;
-    grid-template-columns:repeat(auto-fit, minmax(360px, 1fr));
+    grid-template-columns:repeat(auto-fit, minmax(520px, 1fr));
     gap:16px;
     align-items:start;
   }
@@ -1701,8 +1706,6 @@
       <div class="cal-toolbar">
         <h2 style="margin:0;" id="week-view-title">This Week</h2>
         <div class="right" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-          <button class="btn ghost" id="btn-week-less" title="Show one fewer week">− Week</button>
-          <button class="btn ghost" id="btn-week-more" title="Show one more week">+ Week</button>
           <button class="btn" id="btn-week-add-event">+ Add Event</button>
         </div>
       </div>
@@ -3168,25 +3171,34 @@ function renderPlainCalendar(){
 }
 
 /* ---------- Render: This Week list view ---------- */
-// How many days the "This Week" tab covers, starting today. Defaults to 7;
-// the user can extend or shrink by 7-day chunks.
+// How many days forward (from today) the "This Week" tab covers. Defaults to
+// 7; click "Show next week" at the bottom of the list to extend by 7.
 let weekViewDays = 7;
+// How many days before today are visible. 0 = today is the earliest day;
+// click "Show previous week" at the top to extend backward by 7.
+let weekViewPastDays = 0;
 
 function renderWeekView(){
   const listEl = document.getElementById("week-view-list");
   if(!listEl) return;
   const titleEl = document.getElementById("week-view-title");
-  const totalDays = Math.max(7, weekViewDays);
-  const numWeeks = Math.round(totalDays / 7);
+  const futureDays = Math.max(7, weekViewDays);
+  const totalDays = futureDays + weekViewPastDays;
+  const numWeeksForward = Math.round(futureDays / 7);
   if(titleEl){
-    titleEl.textContent = numWeeks === 1
-      ? "This Week"
-      : `Next ${numWeeks} Weeks`;
+    if(weekViewPastDays === 0 && numWeeksForward === 1){
+      titleEl.textContent = "This Week";
+    } else if(weekViewPastDays === 0){
+      titleEl.textContent = `Next ${numWeeksForward} Weeks`;
+    } else {
+      titleEl.textContent = `Past ${weekViewPastDays} day${weekViewPastDays===1?'':'s'} + Next ${numWeeksForward} Week${numWeeksForward===1?'':'s'}`;
+    }
   }
 
   const today = todayYmd();
-  const startD = new Date(today + "T00:00:00");
-  const endD = addDays(startD, totalDays - 1);
+  const todayD = new Date(today + "T00:00:00");
+  const startD = addDays(todayD, -weekViewPastDays);
+  const endD = addDays(todayD, futureDays - 1);
   const startYmd = ymd(startD);
   const endYmd = ymd(endD);
 
@@ -3229,6 +3241,21 @@ function renderWeekView(){
 
   // Build the day-by-day list
   listEl.innerHTML = "";
+
+  // "Show previous week" button at the top — extends the visible window
+  // backward by 7 days (matches the Meals calendar pattern).
+  const prevBtn = document.createElement("button");
+  prevBtn.type = "button";
+  prevBtn.className = "btn ghost meal-prev-week-btn";
+  prevBtn.textContent = weekViewPastDays === 0
+    ? "↑ Show previous week"
+    : `↑ Show another week (currently showing ${weekViewPastDays} day${weekViewPastDays===1?'':'s'} back)`;
+  prevBtn.addEventListener("click", ()=>{
+    weekViewPastDays += 7;
+    renderWeekView();
+  });
+  listEl.appendChild(prevBtn);
+
   for(let i = 0; i < totalDays; i++){
     const d = addDays(startD, i);
     const dy = ymd(d);
@@ -3255,6 +3282,20 @@ function renderWeekView(){
     `;
     listEl.appendChild(dayCard);
   }
+
+  // "Show next week" button at the bottom — extends the visible window
+  // forward by 7 days (matches the Meals calendar pattern).
+  const nextBtn = document.createElement("button");
+  nextBtn.type = "button";
+  nextBtn.className = "btn ghost meal-prev-week-btn";
+  nextBtn.style.marginTop = "10px";
+  nextBtn.style.marginBottom = "0";
+  nextBtn.textContent = `↓ Show next week (currently showing ${futureDays} days ahead)`;
+  nextBtn.addEventListener("click", ()=>{
+    weekViewDays = futureDays + 7;
+    renderWeekView();
+  });
+  listEl.appendChild(nextBtn);
 }
 
 // Pixels per hour in the agenda timeline.
@@ -3487,18 +3528,6 @@ function colorWithAlpha(hex, alpha){
 (function wireWeekViewToolbar(){
   const addBtn = document.getElementById("btn-week-add-event");
   if(addBtn) addBtn.addEventListener("click", ()=> openEventModal(null, todayYmd()));
-  const moreBtn = document.getElementById("btn-week-more");
-  if(moreBtn) moreBtn.addEventListener("click", ()=>{
-    weekViewDays += 7;
-    renderWeekView();
-  });
-  const lessBtn = document.getElementById("btn-week-less");
-  if(lessBtn) lessBtn.addEventListener("click", ()=>{
-    if(weekViewDays > 7){
-      weekViewDays -= 7;
-      renderWeekView();
-    }
-  });
 })();
 
 /* ---------- Events ---------- */
