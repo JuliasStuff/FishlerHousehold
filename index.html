@@ -735,6 +735,7 @@
   }
   .agenda-lanes{
     position:relative;
+    cursor:pointer;
     background:
       repeating-linear-gradient(
         to bottom,
@@ -1941,7 +1942,6 @@
             <button type="button" id="btn-week-layout-horiz" data-week-layout="horizontal">☰̃ Horizontal</button>
           </div>
           <div class="cal-people-filter" id="week-people-filter" title="Show only events for selected people"></div>
-          <button class="btn" id="btn-week-add-event">+ Add Event</button>
         </div>
       </div>
       <div id="week-view-list"></div>
@@ -3015,7 +3015,7 @@ function renderPeopleAdmin(){
       renderMealCalendar();
       renderDefaultMeals();
       renderCalendarPeopleFilter();
-      renderPlainCalendar();
+      renderEventViews();
     });
     c.appendChild(chip);
   });
@@ -3239,6 +3239,14 @@ document.getElementById("day-modal-clear").addEventListener("click",()=>{
 });
 
 /* ---------- Calendar tab (month view with events) ---------- */
+// Re-render every surface that displays events. Call this after any event
+// mutation (add / edit / delete / paste / remote sync) so the Calendar page,
+// the This Week page, and any other event surface stay in sync without a
+// manual page refresh.
+function renderEventViews(){
+  renderPlainCalendar();
+  renderWeekView();
+}
 function renderPlainCalendar(){
   document.getElementById("cal2-dows").innerHTML =
     DOW_SHORT.map(d=>`<div class="cal-dow">${d}</div>`).join("");
@@ -3916,7 +3924,7 @@ function renderAgendaDayBody(items, dy, sharedWindow){
     ${allDayHtml}
     <div class="agenda-grid${sharedWindow ? ' agenda-grid-noh' : ''}" style="--hour-h:${AGENDA_HOUR_PX}px;">
       ${sharedWindow ? '' : `<div class="agenda-hours" style="height:${totalPx}px;">${hoursHtml}</div>`}
-      <div class="agenda-lanes" style="height:${totalPx}px;">${nowHtml}${lanesHtml}</div>
+      <div class="agenda-lanes" data-lane-day="${escapeHtml(dy)}" data-lane-start-min="${windowStartMin}" style="height:${totalPx}px;">${nowHtml}${lanesHtml}</div>
     </div>
   `;
 }
@@ -3951,6 +3959,20 @@ function colorWithAlpha(hex, alpha){
       openEventModal(null, addBtn.dataset.addDay);
       return;
     }
+    // Click on empty space inside a day's timeline — prefill date AND the
+    // approximate time the user clicked (snapped to 15 minutes).
+    const lane = e.target.closest(".agenda-lanes[data-lane-day]");
+    if(lane){
+      const rect = lane.getBoundingClientRect();
+      const offsetY = e.clientY - rect.top;
+      const winStart = parseInt(lane.dataset.laneStartMin, 10) || 0;
+      let mins = winStart + Math.round((offsetY / AGENDA_HOUR_PX) * 60);
+      mins = Math.max(0, Math.min(1440 - 15, Math.round(mins / 15) * 15));
+      const hh = String(Math.floor(mins / 60)).padStart(2, "0");
+      const mm = String(mins % 60).padStart(2, "0");
+      openEventModal(null, lane.dataset.laneDay, null, `${hh}:${mm}`);
+      return;
+    }
     const hd = e.target.closest(".week-day-hd[data-day]");
     if(hd){
       openEventModal(null, hd.dataset.day);
@@ -3960,9 +3982,6 @@ function colorWithAlpha(hex, alpha){
 
 // Toolbar buttons for the This Week tab
 (function wireWeekViewToolbar(){
-  const addBtn = document.getElementById("btn-week-add-event");
-  if(addBtn) addBtn.addEventListener("click", ()=> openEventModal(null, todayYmd()));
-
   // Layout toggle (vertical / horizontal)
   document.querySelectorAll(".week-layout-toggle button[data-week-layout]").forEach(btn=>{
     btn.addEventListener("click", ()=> setWeekViewLayout(btn.dataset.weekLayout));
@@ -4250,10 +4269,10 @@ function pasteEventOnDay(dy){
     createdAt: todayYmd()
   });
   save();
-  renderPlainCalendar();
+  renderEventViews();
 }
 
-function openEventModal(id, prefillDate, instanceDate){
+function openEventModal(id, prefillDate, instanceDate, prefillStartTime){
   editingEventId = id;
   const bg = document.getElementById("event-modal-bg");
   const titleH = document.getElementById("event-modal-title");
@@ -4294,8 +4313,20 @@ function openEventModal(id, prefillDate, instanceDate){
   dIn.value = ev ? ev.date : (prefillDate || todayYmd());
   endDIn.value = ev && ev.endDate && ev.endDate > ev.date ? ev.endDate : "";
   allDay.checked = ev ? !!ev.allDay : false;
-  setTimePickerValue(startIn, ev && ev.startTime ? ev.startTime : null);
-  setTimePickerValue(endIn,   ev && ev.endTime   ? ev.endTime   : null);
+  // For a new event we may have a prefill start time (e.g. user clicked a
+  // spot on the week-view timeline). Auto-fill end as start + 1h.
+  let initialStart = ev && ev.startTime ? ev.startTime : null;
+  let initialEnd   = ev && ev.endTime   ? ev.endTime   : null;
+  if(!ev && prefillStartTime){
+    initialStart = prefillStartTime;
+    const m = /^(\d{1,2}):(\d{2})$/.exec(prefillStartTime);
+    if(m){
+      const endMin = Math.min(1440, parseInt(m[1],10)*60 + parseInt(m[2],10) + 60);
+      initialEnd = `${String(Math.floor(endMin/60)).padStart(2,"0")}:${String(endMin%60).padStart(2,"0")}`;
+    }
+  }
+  setTimePickerValue(startIn, initialStart);
+  setTimePickerValue(endIn,   initialEnd);
   timeRow.style.display = allDay.checked ? "none" : "";
   notes.value = ev ? (ev.notes || "") : "";
   locationIn.value = ev ? (ev.location || "") : "";
@@ -4422,7 +4453,7 @@ function updateEventRecurExtras(){
     data.events = data.events.filter(e=>e.id !== editingEventId);
     save();
     closeEventModal();
-    renderPlainCalendar();
+    renderEventViews();
   });
 
   document.getElementById("event-modal-delete-instance").addEventListener("click", ()=>{
@@ -4448,7 +4479,7 @@ function updateEventRecurExtras(){
         data.events = data.events.filter(e=>e.id !== editingEventId);
         save();
         closeEventModal();
-        renderPlainCalendar();
+        renderEventViews();
         return;
       }
     }
@@ -4456,7 +4487,7 @@ function updateEventRecurExtras(){
     if(!ev.exdates.includes(editingInstanceDate)) ev.exdates.push(editingInstanceDate);
     save();
     closeEventModal();
-    renderPlainCalendar();
+    renderEventViews();
   });
 
   document.getElementById("event-modal-copy").addEventListener("click", ()=>{
@@ -4537,7 +4568,7 @@ function updateEventRecurExtras(){
     }
     save();
     closeEventModal();
-    renderPlainCalendar();
+    renderEventViews();
   });
 
   // ESC closes
