@@ -48,7 +48,7 @@
     color:var(--ink);
     font-family:"Inter","Segoe UI",system-ui,-apple-system,sans-serif;
   }
-  .app{ max-width:1180px; margin:0 auto; padding:16px; }
+  .app{ max-width:1600px; margin:0 auto; padding:16px; }
 
   header.topbar{
     display:flex; align-items:center; gap:14px;
@@ -538,6 +538,103 @@
     background:var(--panel);
     margin-bottom:10px;
     overflow:hidden;
+  }
+  /* Layout toggle pill (Vertical / Horizontal) */
+  .week-layout-toggle{
+    display:inline-flex; gap:0;
+    background:var(--panel-2); border:1px solid var(--line);
+    border-radius:999px; padding:3px;
+  }
+  .week-layout-toggle button{
+    appearance:none; background:transparent; border:0;
+    border-radius:999px; padding:4px 10px;
+    font-family:inherit; font-size:12px; color:var(--ink-soft);
+    cursor:pointer;
+  }
+  .week-layout-toggle button.on{
+    background:var(--accent); color:#fff;
+  }
+  .week-layout-toggle button:hover:not(.on){
+    background:var(--panel);
+    color:var(--ink);
+  }
+  /* Horizontal day layout — columns flush together, sized to fit the viewport
+     (Google Calendar style — no inter-day gaps, shared vertical dividers).
+     First grid column is a 56px hour-label gutter shared by all days. */
+  .week-days-wrap.horizontal{
+    display:grid;
+    grid-auto-flow:column;
+    grid-template-columns: 56px;
+    grid-auto-columns: minmax(0, 1fr);
+    gap:0;
+    overflow:hidden;
+    padding-bottom:0;
+    border:1px solid var(--line);
+    border-radius:10px;
+    background:var(--panel);
+  }
+  .week-days-wrap.horizontal .week-day{
+    margin-bottom:0;
+    display:flex; flex-direction:column;
+    border:0;
+    border-right:1px solid var(--line);
+    border-radius:0;
+    box-shadow:none;
+    min-width:0;
+  }
+  .week-days-wrap.horizontal .week-day:last-child{
+    border-right:0;
+  }
+  /* Today highlight: use an inset accent stripe instead of a glowing border so
+     adjacent day columns still sit flush against each other. */
+  .week-days-wrap.horizontal .week-day.today{
+    box-shadow:inset 0 3px 0 var(--accent);
+  }
+  .week-days-wrap.horizontal .week-day-body{
+    flex:1 1 auto;
+    overflow-y:auto;
+  }
+  /* Uniform all-day strip across columns so the timelines below start at the
+     same Y in every day. Empty strips still reserve the same height. */
+  .week-days-wrap.horizontal .agenda-allday{
+    min-height:34px;
+    align-content:flex-start;
+  }
+  .week-days-wrap.horizontal .week-day-body > .agenda-allday-empty{
+    min-height:34px;
+    border-bottom:1px dashed var(--line);
+  }
+  /* Shared hour-label gutter on the left of the horizontal week grid */
+  .week-hour-gutter{
+    background:var(--panel-2);
+    border-right:1px solid var(--line);
+    scroll-snap-align:none;
+  }
+  .week-hour-gutter .week-day-hd{
+    background:transparent;
+    cursor:default;
+    justify-content:center;
+  }
+  .week-hour-gutter .week-day-hd:hover{ background:transparent; }
+  .week-hour-gutter .agenda-grid-gutter{
+    grid-template-columns: 1fr;
+    padding:6px 0 8px;
+  }
+  .week-hour-gutter .agenda-grid-gutter .agenda-hours{
+    border-right:0;
+    background:var(--panel-2);
+  }
+  /* Hour-label pills sit on the cream gutter, not the white panel */
+  .week-hour-gutter .agenda-hours .ag-hr{
+    background:var(--panel-2);
+  }
+  /* Horizontal mode: drop the per-day +Add buttons — users add by clicking the
+     calendar grid instead. */
+  .week-days-wrap.horizontal .wd-add{ display:none; }
+  /* When the hour gutter is supplied externally (horizontal mode), each day
+     column drops its own hour column so events use the full width. */
+  .agenda-grid.agenda-grid-noh{
+    grid-template-columns: 1fr;
   }
   .week-day.today{
     border-color:var(--accent);
@@ -1839,6 +1936,11 @@
       <div class="cal-toolbar">
         <h2 style="margin:0;" id="week-view-title">This Week</h2>
         <div class="right" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+          <div class="week-layout-toggle" role="group" aria-label="Layout" title="Switch between stacked and side-by-side days">
+            <button type="button" id="btn-week-layout-vert" data-week-layout="vertical">☰ Vertical</button>
+            <button type="button" id="btn-week-layout-horiz" data-week-layout="horizontal">☰̃ Horizontal</button>
+          </div>
+          <div class="cal-people-filter" id="week-people-filter" title="Show only events for selected people"></div>
           <button class="btn" id="btn-week-add-event">+ Add Event</button>
         </div>
       </div>
@@ -3383,6 +3485,17 @@ let weekViewDays = 7;
 // How many days before today are visible. 0 = today is the earliest day;
 // click "Show previous week" at the top to extend backward by 7.
 let weekViewPastDays = 0;
+// Layout: "vertical" (stacked, default) or "horizontal" (side-by-side columns).
+// Persisted in localStorage so the user's choice survives reloads.
+let weekViewLayout = (function(){
+  try { return localStorage.getItem("weekViewLayout") || "vertical"; }
+  catch(_) { return "vertical"; }
+})();
+function setWeekViewLayout(mode){
+  weekViewLayout = (mode === "horizontal") ? "horizontal" : "vertical";
+  try { localStorage.setItem("weekViewLayout", weekViewLayout); } catch(_){}
+  renderWeekView();
+}
 
 function renderWeekView(){
   const listEl = document.getElementById("week-view-list");
@@ -3445,8 +3558,44 @@ function renderWeekView(){
     });
   });
 
+  // In horizontal mode, compute a single shared hour window across ALL visible
+  // days so each day column's timeline starts/ends at the same hour and the
+  // hour labels line up across columns (Google Calendar style).
+  let sharedWindow = null;
+  if(weekViewLayout === "horizontal"){
+    let earliest = Infinity, latest = -Infinity;
+    Object.values(dayEvents).forEach(list=>{
+      list.forEach(item=>{
+        const ev = item.ev;
+        if(item.totalSpan > 1 && item.spanDay > 1) return;
+        if(ev.allDay) return;
+        const sm = parseTimeMinutes(ev.startTime);
+        if(sm == null) return;
+        let em = parseTimeMinutes(ev.endTime);
+        if(em == null || em <= sm) em = Math.min(1440, sm + 60);
+        earliest = Math.min(earliest, sm);
+        latest   = Math.max(latest, em);
+      });
+    });
+    if(earliest === Infinity){
+      // No timed events anywhere this week — fall back to a sensible default.
+      earliest = 8 * 60;
+      latest   = 20 * 60;
+    }
+    sharedWindow = {
+      startHour: Math.floor(earliest / 60),
+      endHour:   Math.ceil(latest / 60)
+    };
+  }
+
   // Build the day-by-day list
   listEl.innerHTML = "";
+
+  // Sync layout toggle button state
+  const layoutBtns = document.querySelectorAll(".week-layout-toggle button[data-week-layout]");
+  layoutBtns.forEach(btn=>{
+    btn.classList.toggle("on", btn.dataset.weekLayout === weekViewLayout);
+  });
 
   // "Show previous week" button at the top — extends the visible window
   // backward by 7 days (matches the Meals calendar pattern).
@@ -3462,7 +3611,48 @@ function renderWeekView(){
   });
   listEl.appendChild(prevBtn);
 
-  for(let i = 0; i < totalDays; i++){
+  // Day cards live inside a wrapper so layout (vertical vs horizontal columns)
+  // can be toggled without affecting the prev/next buttons around it.
+  // In horizontal mode we render one wrapper PER 7-day chunk so that clicking
+  // "Show next week" stacks new weeks below instead of squeezing one long row.
+  // Helper: build a single horizontal week row covering [chunkStart, chunkEnd).
+  function buildHorizontalWeekRow(chunkStartIdx, chunkLen){
+    const wrap = document.createElement("div");
+    wrap.className = "week-days-wrap horizontal";
+    if(chunkStartIdx > 0) wrap.style.marginTop = "10px";
+
+    // Shared hour gutter on the left
+    if(sharedWindow){
+      const gTotalHours = Math.max(1, sharedWindow.endHour - sharedWindow.startHour);
+      const gTotalPx = gTotalHours * AGENDA_HOUR_PX;
+      let gHoursHtml = "";
+      for(let h = sharedWindow.startHour; h <= sharedWindow.endHour; h++){
+        const topPx = (h - sharedWindow.startHour) * AGENDA_HOUR_PX;
+        const label = fmtTime12(`${String(h % 24).padStart(2,"0")}:00`);
+        gHoursHtml += `<div class="ag-hr" style="top:${topPx}px;">${escapeHtml(label)}</div>`;
+      }
+      const gutter = document.createElement("div");
+      gutter.className = "week-day week-hour-gutter";
+      gutter.innerHTML = `
+        <div class="week-day-hd"><div class="wd-name">&nbsp;</div></div>
+        <div class="week-day-body">
+          <div class="agenda-allday-empty"></div>
+          <div class="agenda-grid agenda-grid-gutter" style="--hour-h:${AGENDA_HOUR_PX}px;">
+            <div class="agenda-hours" style="height:${gTotalPx}px;">${gHoursHtml}</div>
+          </div>
+        </div>
+      `;
+      wrap.appendChild(gutter);
+    }
+
+    for(let j = 0; j < chunkLen; j++){
+      appendDayCard(wrap, chunkStartIdx + j);
+    }
+    return wrap;
+  }
+
+  // Build and append a single day card to the given wrapper.
+  function appendDayCard(parent, i){
     const d = addDays(startD, i);
     const dy = ymd(d);
     const dayCard = document.createElement("div");
@@ -3473,7 +3663,11 @@ function renderWeekView(){
 
     const events = dayEvents[dy] || [];
     let bodyHtml = "";
-    if(events.length === 0){
+    if(weekViewLayout === "horizontal"){
+      // Always render the agenda body in horizontal mode (even for empty days)
+      // so column heights and hour labels stay aligned across the row.
+      bodyHtml = renderAgendaDayBody(events, dy, sharedWindow);
+    } else if(events.length === 0){
       bodyHtml = `<div class="empty">No events</div>`;
     } else {
       bodyHtml = renderAgendaDayBody(events, dy);
@@ -3486,7 +3680,26 @@ function renderWeekView(){
       </div>
       <div class="week-day-body">${bodyHtml}</div>
     `;
-    listEl.appendChild(dayCard);
+    parent.appendChild(dayCard);
+  }
+
+  if(weekViewLayout === "horizontal"){
+    // Chunk days into rows of 7 so each "show next/previous week" click adds
+    // a new row above or below the existing ones.
+    let i = 0;
+    while(i < totalDays){
+      const chunkLen = Math.min(7, totalDays - i);
+      const row = buildHorizontalWeekRow(i, chunkLen);
+      listEl.appendChild(row);
+      i += chunkLen;
+    }
+  } else {
+    const daysWrap = document.createElement("div");
+    daysWrap.className = "week-days-wrap " + weekViewLayout;
+    listEl.appendChild(daysWrap);
+    for(let i = 0; i < totalDays; i++){
+      appendDayCard(daysWrap, i);
+    }
   }
 
   // "Show next week" button at the bottom — extends the visible window
@@ -3520,7 +3733,9 @@ function parseTimeMinutes(hhmm){
 
 // Build the body of a single day card in agenda view. `items` is the list of
 // dayEvents entries already collected by renderWeekView; `dy` is the day's ymd.
-function renderAgendaDayBody(items, dy){
+// `sharedWindow` (optional) is {startHour, endHour} used in horizontal mode so
+// every day uses the same hour scale and the columns line up.
+function renderAgendaDayBody(items, dy, sharedWindow){
   // Split into all-day (incl. timeless multi-day) and timed.
   const allDay = [];
   const timed = [];
@@ -3546,7 +3761,8 @@ function renderAgendaDayBody(items, dy){
     timed.push({ item, startMin, endMin });
   });
 
-  // All-day chip strip
+  // All-day chip strip. In horizontal mode we always render the strip (even
+  // when empty) so timelines below it start at the same Y across columns.
   let allDayHtml = "";
   if(allDay.length){
     allDayHtml = `<div class="agenda-allday">` + allDay.map(item=>{
@@ -3569,15 +3785,24 @@ function renderAgendaDayBody(items, dy){
         </span>
       `;
     }).join("") + `</div>`;
+  } else if(sharedWindow){
+    allDayHtml = `<div class="agenda-allday-empty"></div>`;
   }
 
-  if(!timed.length) return allDayHtml;
+  if(!timed.length && !sharedWindow) return allDayHtml;
 
-  // Determine the timeline window: floor first start and ceil last end to the hour.
-  const earliestMin = Math.min(...timed.map(t=>t.startMin));
-  const latestMin   = Math.max(...timed.map(t=>t.endMin));
-  const startHour = Math.floor(earliestMin / 60);
-  const endHour   = Math.ceil(latestMin / 60);
+  // Determine the timeline window: use the shared window when provided
+  // (horizontal mode), otherwise floor/ceil this day's own first/last event.
+  let startHour, endHour;
+  if(sharedWindow){
+    startHour = sharedWindow.startHour;
+    endHour   = sharedWindow.endHour;
+  } else {
+    const earliestMin = Math.min(...timed.map(t=>t.startMin));
+    const latestMin   = Math.max(...timed.map(t=>t.endMin));
+    startHour = Math.floor(earliestMin / 60);
+    endHour   = Math.ceil(latestMin / 60);
+  }
   const windowStartMin = startHour * 60;
   const windowEndMin   = endHour * 60;
   const totalHours = Math.max(1, endHour - startHour);
@@ -3618,12 +3843,16 @@ function renderAgendaDayBody(items, dy){
     cluster.forEach(t=>{ t._totalCols = totalCols; });
   });
 
-  // Hour labels (only at actual hour marks, not the very top edge for readability)
+  // Hour labels (only at actual hour marks, not the very top edge for readability).
+  // Skipped in horizontal mode — the labels live in a shared left gutter that
+  // renderWeekView prepends to the row, so each day uses its full width.
   let hoursHtml = "";
-  for(let h = startHour; h <= endHour; h++){
-    const topPx = (h - startHour) * AGENDA_HOUR_PX;
-    const label = fmtTime12(`${String(h % 24).padStart(2,"0")}:00`);
-    hoursHtml += `<div class="ag-hr" style="top:${topPx}px;">${escapeHtml(label)}</div>`;
+  if(!sharedWindow){
+    for(let h = startHour; h <= endHour; h++){
+      const topPx = (h - startHour) * AGENDA_HOUR_PX;
+      const label = fmtTime12(`${String(h % 24).padStart(2,"0")}:00`);
+      hoursHtml += `<div class="ag-hr" style="top:${topPx}px;">${escapeHtml(label)}</div>`;
+    }
   }
 
   // Event blocks
@@ -3685,8 +3914,8 @@ function renderAgendaDayBody(items, dy){
 
   return `
     ${allDayHtml}
-    <div class="agenda-grid" style="--hour-h:${AGENDA_HOUR_PX}px;">
-      <div class="agenda-hours" style="height:${totalPx}px;">${hoursHtml}</div>
+    <div class="agenda-grid${sharedWindow ? ' agenda-grid-noh' : ''}" style="--hour-h:${AGENDA_HOUR_PX}px;">
+      ${sharedWindow ? '' : `<div class="agenda-hours" style="height:${totalPx}px;">${hoursHtml}</div>`}
       <div class="agenda-lanes" style="height:${totalPx}px;">${nowHtml}${lanesHtml}</div>
     </div>
   `;
@@ -3733,6 +3962,11 @@ function colorWithAlpha(hex, alpha){
 (function wireWeekViewToolbar(){
   const addBtn = document.getElementById("btn-week-add-event");
   if(addBtn) addBtn.addEventListener("click", ()=> openEventModal(null, todayYmd()));
+
+  // Layout toggle (vertical / horizontal)
+  document.querySelectorAll(".week-layout-toggle button[data-week-layout]").forEach(btn=>{
+    btn.addEventListener("click", ()=> setWeekViewLayout(btn.dataset.weekLayout));
+  });
 })();
 
 /* ---------- Events ---------- */
@@ -3932,20 +4166,27 @@ function eventMatchesPeopleFilter(ev){
   return ev.attendees.some(pid => calendarPeopleFilter.has(pid));
 }
 function renderCalendarPeopleFilter(){
-  const c = document.getElementById("cal-people-filter");
-  if(!c) return;
-  if(!data.people.length){ c.innerHTML = ""; return; }
+  const containers = [
+    document.getElementById("cal-people-filter"),
+    document.getElementById("week-people-filter")
+  ].filter(Boolean);
+  if(!containers.length) return;
+  if(!data.people.length){
+    containers.forEach(c => c.innerHTML = "");
+    return;
+  }
   const allOn = calendarPeopleFilter.size === 0;
-  c.innerHTML =
+  const html =
     `<span class="cpf-lbl">Show:</span>` +
     `<button type="button" class="all ${allOn?'on':''}" data-cpf="__all__" title="Show all events">Everyone</button>` +
     data.people.map(p=>{
       const on = calendarPeopleFilter.has(p.id);
       return `<button type="button" class="${on?'on':''}" data-cpf="${escapeHtml(p.id)}" style="${on?`border-color:${escapeHtml(p.color||'#5b8a72')};`:''}"><span class="pdot" style="background:${escapeHtml(p.color||'#5b8a72')}"></span>${escapeHtml(p.name)}</button>`;
     }).join("");
+  containers.forEach(c => c.innerHTML = html);
 }
-// Toggle handler (wired once)
-document.getElementById("cal-people-filter").addEventListener("click", e=>{
+// Toggle handler (wired once) — handles clicks on both the Calendar and This Week filter rows
+function _peopleFilterClickHandler(e){
   const btn = e.target.closest("button[data-cpf]");
   if(!btn) return;
   const id = btn.dataset.cpf;
@@ -3957,7 +4198,10 @@ document.getElementById("cal-people-filter").addEventListener("click", e=>{
   }
   renderCalendarPeopleFilter();
   renderPlainCalendar();
-});
+  renderWeekView();
+}
+document.getElementById("cal-people-filter").addEventListener("click", _peopleFilterClickHandler);
+document.getElementById("week-people-filter").addEventListener("click", _peopleFilterClickHandler);
 
 
 function enterPasteMode(ev){
