@@ -4740,15 +4740,6 @@ function renderTodos(){
     });
   }
 
-  // Snoozed recurring section (collapsed) — recurring tasks not yet due again
-  if(snoozed.length){
-    const det = document.createElement("details");
-    det.className = "completed-section";
-    det.innerHTML = `<summary>🔁 Coming up (${snoozed.length})</summary>`;
-    snoozed.forEach(t=>det.appendChild(todoRow(t)));
-    c.appendChild(det);
-  }
-
   // Completed section (always at bottom, collapsed)
   if(done.length){
     const det = document.createElement("details");
