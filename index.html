@@ -829,6 +829,25 @@
     color:var(--ink);
     margin-top:0;
   }
+  /* Card framing for list & unassigned sections — mirrors .person-section so
+     the inline borderColor / borderLeft / background applied in JS render as a
+     full card (not just a thin left strip). */
+  .group-section.list-section,
+  .group-section.unassigned-section{
+    margin-top:16px;
+    border:1px solid var(--line);
+    border-left:6px solid var(--accent);
+    border-radius:12px;
+    padding:14px 16px;
+    background:var(--panel-2);
+  }
+  .group-section.list-section:first-child,
+  .group-section.unassigned-section:first-child{ margin-top:0; }
+  .group-section.list-section > h3,
+  .group-section.unassigned-section > h3{
+    color:var(--ink);
+    margin-top:0;
+  }
   .group-section h3 .pdot{
     width:10px; height:10px; border-radius:50%; display:inline-block;
   }
@@ -1254,6 +1273,101 @@
     animation: book-pop .4s ease-out;
   }
 
+  /* ---------- Notes (sticky-note board) ---------- */
+  .notes-board{
+    position:relative;
+    min-height:560px;
+    background:
+      repeating-linear-gradient(45deg, rgba(0,0,0,.015) 0 2px, transparent 2px 14px),
+      var(--panel-2);
+    border:1px dashed var(--line);
+    border-radius:12px;
+    overflow:hidden;
+  }
+  .notes-board .notes-empty{
+    position:absolute; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    color:var(--ink-soft); font-size:14px; font-style:italic;
+    pointer-events:none;
+  }
+  .sticky{
+    position:absolute;
+    width:240px; min-height:160px;
+    border-radius:6px;
+    box-shadow:0 6px 14px rgba(0,0,0,.18), 0 2px 4px rgba(0,0,0,.10);
+    display:flex; flex-direction:column;
+    font-family:inherit;
+    transform-origin:top left;
+    transition:box-shadow .15s, transform .15s;
+    overflow:hidden;
+  }
+  .sticky:hover{
+    box-shadow:0 10px 22px rgba(0,0,0,.22), 0 3px 6px rgba(0,0,0,.12);
+  }
+  .sticky.dragging{
+    box-shadow:0 16px 30px rgba(0,0,0,.28), 0 4px 8px rgba(0,0,0,.18);
+    transform:rotate(-1.5deg) scale(1.03);
+    z-index:9999 !important;
+    transition:none;
+  }
+  .sticky .sk-header{
+    display:flex; align-items:center; gap:6px;
+    padding:6px 8px;
+    background:rgba(0,0,0,.06);
+    cursor:grab;
+    user-select:none;
+    flex-shrink:0;
+  }
+  .sticky .sk-header:active{ cursor:grabbing; }
+  .sticky .sk-title{
+    flex:1; min-width:0;
+    font-weight:700; font-size:13px;
+    color:rgba(0,0,0,.78);
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .sticky .sk-title.untitled{
+    font-style:italic; font-weight:600; color:rgba(0,0,0,.5);
+  }
+  .sticky .sk-del{
+    background:transparent; border:0; cursor:pointer;
+    color:rgba(0,0,0,.55); font-size:14px;
+    padding:2px 6px; border-radius:4px; line-height:1;
+    flex-shrink:0;
+  }
+  .sticky .sk-del:hover{ background:rgba(0,0,0,.12); color:rgba(0,0,0,.85); }
+  .sticky .sk-body{
+    flex:1;
+    padding:8px 10px 12px;
+    font-size:13px; line-height:1.35;
+    color:rgba(0,0,0,.82);
+    cursor:text;
+    overflow:hidden;
+    white-space:pre-wrap; word-wrap:break-word; overflow-wrap:break-word;
+  }
+  .sticky .sk-body.empty{
+    color:rgba(0,0,0,.45); font-style:italic;
+  }
+  .sticky .sk-body a{
+    color:#1f4d8a; text-decoration:underline;
+  }
+
+  /* Note edit modal color picker */
+  .note-color-picker{
+    display:flex; gap:8px; flex-wrap:wrap; margin-top:4px;
+  }
+  .note-color-picker label{
+    width:32px; height:32px; border-radius:6px;
+    cursor:pointer; border:2px solid transparent;
+    box-shadow:0 2px 4px rgba(0,0,0,.12);
+    transition:transform .1s, border-color .1s;
+  }
+  .note-color-picker label:hover{ transform:scale(1.1); }
+  .note-color-picker label.selected{
+    border-color:var(--ink);
+    box-shadow:0 0 0 2px #fff inset, 0 2px 4px rgba(0,0,0,.12);
+  }
+  .note-color-picker input{ display:none; }
+
   /* ===================== Mobile / phone layout ===================== */
   @media (max-width:780px){
     html,body{ overflow-x:hidden; }
@@ -1305,7 +1419,6 @@
     .todos-toolbar .right{ flex-wrap:wrap; }
     .meals-toolbar .right .btn,
     .cal-toolbar .right .btn{ flex:1 1 auto; }
-    .todos-toolbar #todo-group-by{ flex:1 1 auto; }
 
     /* Calendar / meal-plan grid — much tighter cells */
     .cal-grid{ gap:3px; }
@@ -1517,6 +1630,22 @@
     .assignee-checks{
       grid-template-columns:repeat(2, minmax(0,1fr));
     }
+
+    /* Sticky notes: switch to a single-column flow stack on phones —
+       absolute positioning is awkward to drag on a small screen and notes
+       can slip off the visible board. */
+    .notes-board{
+      min-height:0;
+      padding:8px;
+      display:flex; flex-direction:column; gap:10px;
+    }
+    .notes-board .sticky{
+      position:static !important;
+      left:auto !important; top:auto !important;
+      width:100% !important; height:auto !important;
+      z-index:auto !important;
+    }
+    .sticky .sk-header{ cursor:default; }
   }
 
   /* Extra-narrow phones (≤430px) */
@@ -1606,6 +1735,7 @@
     <button data-tab="todos">✅ Todos</button>
     <button data-tab="meals">🍽️ Meals</button>
     <button data-tab="reading">📚 Reading</button>
+    <button data-tab="notes">📝 Notes</button>
   </nav>
 
   <!-- Meals Page -->
@@ -1722,12 +1852,6 @@
       <div class="todos-toolbar">
         <h2 style="margin:0;">Todos</h2>
         <div class="right">
-          <label style="font-size:13px; color:var(--ink-soft);">Group by:</label>
-          <select id="todo-group-by" style="font-size:13px; padding:6px 8px;">
-            <option value="none">None (newest first)</option>
-            <option value="person" selected>Person</option>
-            <option value="due">Due date</option>
-          </select>
           <button class="btn ghost" id="btn-add-list" title="Create a new task list (e.g. Lake House)">+ List</button>
           <button class="btn" id="btn-add-todo">+ Add Todo</button>
         </div>
@@ -1766,6 +1890,22 @@
         </div>
       </div>
       <div id="finished-bookshelf"></div>
+    </div>
+  </section>
+
+  <!-- Notes Page -->
+  <section id="page-notes" class="page">
+    <div class="card">
+      <div class="todos-toolbar">
+        <h2 style="margin:0;">Sticky Notes</h2>
+        <div class="right">
+          <button class="btn" id="btn-add-note">+ Add Note</button>
+        </div>
+      </div>
+      <p style="margin:0 0 10px; font-size:12px; color:var(--ink-soft);">
+        Drag notes by the header to reposition. Click the body to edit. Links you paste become clickable.
+      </p>
+      <div id="notes-board" class="notes-board"></div>
     </div>
   </section>
 </div>
@@ -1834,7 +1974,7 @@
 
     <label class="field-lbl" for="todo-modal-list">List</label>
     <select id="todo-modal-list" style="width:100%;">
-      <option value="">— No list (group by person) —</option>
+      <option value="">— No list —</option>
     </select>
 
     <label class="field-lbl" for="todo-modal-due">Due date</label>
@@ -1986,6 +2126,29 @@
   </div>
 </div>
 
+<!-- Note edit modal -->
+<div class="modal-bg" id="note-modal-bg" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="note-modal-title">
+    <h3 id="note-modal-title">Edit Note</h3>
+
+    <label class="field-lbl" for="note-modal-input-title">Title</label>
+    <input type="text" id="note-modal-input-title" placeholder="Note title" style="width:100%;" />
+
+    <label class="field-lbl" for="note-modal-body">Body</label>
+    <textarea id="note-modal-body" rows="8" placeholder="Write anything — text, links, lists…" style="width:100%; display:block; resize:vertical;"></textarea>
+    <div id="note-modal-links" class="notes-links" style="display:none; margin-top:6px; font-size:12px; color:var(--ink-soft); word-break:break-all;"></div>
+
+    <label class="field-lbl">Color</label>
+    <div class="note-color-picker" id="note-modal-colors"></div>
+
+    <div class="modal-actions">
+      <button class="btn danger" id="note-modal-delete" style="margin-right:auto;">Delete</button>
+      <button class="btn ghost" id="note-modal-cancel">Cancel</button>
+      <button class="btn" id="note-modal-save">Save</button>
+    </div>
+  </div>
+</div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 import { getFirestore, doc, getDoc, setDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
@@ -2042,6 +2205,9 @@ const DEFAULT_DATA = {
   sectionOrder: [],
   // books: [{ id, personId, title, author, startedAt (YYYY-MM-DD), finishedAt (YYYY-MM-DD|null), createdAt }]
   books: [],
+  // notes: free-form sticky notes pinned to the Notes board.
+  // notes: [{ id, title, body, color, x, y, w, h, z, createdAt, updatedAt }]
+  notes: [],
   // defaultMeals: per-person meal defaults applied automatically when no explicit override exists.
   // Shape: { weekday: { [personId]: { breakfast?, lunch?, dinner? } }, weekend: { ... } }
   defaultMeals: { weekday: {}, weekend: {} }
@@ -2063,6 +2229,7 @@ function load(){
       events: (parsed.events || []).map(ev => ({ ...ev, exdates: Array.isArray(ev.exdates) ? ev.exdates : [] })),
       todos: parsed.todos || [],
       books: parsed.books || [],
+      notes: Array.isArray(parsed.notes) ? parsed.notes : [],
       defaultMeals: {
         weekday: (parsed.defaultMeals && parsed.defaultMeals.weekday) || {},
         weekend: (parsed.defaultMeals && parsed.defaultMeals.weekend) || {}
@@ -2285,6 +2452,7 @@ function mergeWithDefaults(parsed){
     events: parsed.events || [],
     todos: parsed.todos || [],
     books: parsed.books || [],
+    notes: Array.isArray(parsed.notes) ? parsed.notes : [],
     lists: Array.isArray(parsed.lists) ? parsed.lists : [],
     sectionOrder: Array.isArray(parsed.sectionOrder) ? parsed.sectionOrder : [],
     defaultMeals: {
@@ -4164,7 +4332,6 @@ data.todos = data.todos.map(normalizeTodo);
 if(!Array.isArray(data.lists)) data.lists = [];
 if(!Array.isArray(data.sectionOrder)) data.sectionOrder = [];
 
-let todoGroupBy = "person";
 let todoModalState = { editingId: null };
 
 function fmtDateShort(s){
@@ -4441,16 +4608,7 @@ function renderTodos(){
     return (b.completedAt || "").localeCompare(a.completedAt || "");
   });
 
-  if(todoGroupBy === "none"){
-    if(active.length){
-      const sec = document.createElement("div");
-      sec.className = "group-section";
-      active.forEach(t=>sec.appendChild(todoRow(t)));
-      c.appendChild(sec);
-    } else {
-      c.innerHTML += `<div class="empty">All caught up! 🎉</div>`;
-    }
-  } else if(todoGroupBy === "person"){
+  {
     // Buckets keyed by section token: "person:<pid>", "list:<lid>", "unassigned"
     // A todo with a listId goes ONLY into its list section. Otherwise it goes
     // into each assignee's bucket (or unassigned).
@@ -4580,32 +4738,6 @@ function renderTodos(){
         return;
       }
     });
-  } else if(todoGroupBy === "due"){
-    const today = todayYmd();
-    const buckets = {
-      "overdue":   { label:"⚠️ Overdue", items:[] },
-      "today":     { label:"📅 Today",   items:[] },
-      "thisweek":  { label:"This Week",  items:[] },
-      "later":     { label:"Later",      items:[] },
-      "nodate":    { label:"No due date", items:[] }
-    };
-    active.forEach(t=>{
-      if(!t.due){ buckets.nodate.items.push(t); return; }
-      const d = daysDiffYmd(today, t.due);
-      if(d < 0) buckets.overdue.items.push(t);
-      else if(d === 0) buckets.today.items.push(t);
-      else if(d <= 7) buckets.thisweek.items.push(t);
-      else buckets.later.items.push(t);
-    });
-    Object.keys(buckets).forEach(k=>{
-      const b = buckets[k];
-      if(!b.items.length) return;
-      const sec = document.createElement("div");
-      sec.className = "group-section";
-      sec.innerHTML = `<h3>${escapeHtml(b.label)}</h3>`;
-      b.items.forEach(t=>sec.appendChild(todoRow(t)));
-      c.appendChild(sec);
-    });
   }
 
   // Snoozed recurring section (collapsed) — recurring tasks not yet due again
@@ -4631,8 +4763,8 @@ function todoRow(t, sourcePid){
   const row = document.createElement("div");
   row.className = "todo-row" + (t.done ? " done" : "");
   row.dataset.tid = t.id;
-  // Enable dragging only in person grouping mode
-  if(todoGroupBy === "person" && !t.done){
+  // Enable dragging (except for completed tasks)
+  if(!t.done){
     row.draggable = true;
     row.dataset.sourcePid = sourcePid || "__unassigned__";
     row.addEventListener("dragstart", e=>{
@@ -4646,25 +4778,9 @@ function todoRow(t, sourcePid){
     row.addEventListener("dragend", ()=> row.classList.remove("dragging"));
   }
 
-  // Colored left border:
-  // - In person-grouping mode, the section itself already shows the person's
-  //   color on its left edge, so we skip the per-row stripe to avoid a
-  //   redundant double bar.
-  // - Otherwise use the first assignee (or a gradient when there are multiple).
-  if(todoGroupBy === "person"){
-    row.style.borderLeftColor = "transparent";
-  } else if(t.assignees.length === 1){
-    row.style.borderLeftColor = personColor(t.assignees[0]);
-  } else if(t.assignees.length > 1){
-    // Gradient stripe of all assignee colors
-    const stops = t.assignees.map(personColor).join(",");
-    row.style.borderLeft = "0";
-    row.style.boxShadow = `inset 4px 0 0 0 ${personColor(t.assignees[0])}`;
-    row.style.backgroundImage = `linear-gradient(to bottom, ${stops})`;
-    row.style.backgroundSize = "4px 100%";
-    row.style.backgroundRepeat = "no-repeat";
-    row.style.backgroundPosition = "left center";
-  }
+  // The section card already shows the person's / list's color on its left
+  // edge, so skip the per-row stripe to avoid a redundant double bar.
+  row.style.borderLeftColor = "transparent";
 
   // Build meta pills
   const today = todayYmd();
@@ -4828,7 +4944,7 @@ function openTodoModal(id){
   // List selector
   const listSel = document.getElementById("todo-modal-list");
   const currentListId = t ? (t.listId || "") : "";
-  listSel.innerHTML = `<option value="">— No list (group by person) —</option>` +
+  listSel.innerHTML = `<option value="">— No list —</option>` +
     data.lists.map(L => `<option value="${escapeHtml(L.id)}" ${L.id === currentListId ? "selected" : ""}>${escapeHtml(L.name)}</option>`).join("");
 
   // Recurring
@@ -5002,11 +5118,6 @@ document.getElementById("btn-add-list").addEventListener("click",()=>{
   order.push(`list:${list.id}`);
   order.push("unassigned");
   data.sectionOrder = order;
-  // Auto-switch to person grouping so the new list is visible
-  if(todoGroupBy !== "person"){
-    todoGroupBy = "person";
-    document.getElementById("todo-group-by").value = "person";
-  }
   save();
   renderTodos();
 });
@@ -5020,12 +5131,6 @@ document.getElementById("quick-todo").addEventListener("keydown", e=>{
   data.todos.push(normalizeTodo({ title: v, createdAt: todayYmd() }));
   e.target.value = "";
   save();
-  renderTodos();
-});
-
-// Group-by selector
-document.getElementById("todo-group-by").addEventListener("change", e=>{
-  todoGroupBy = e.target.value;
   renderTodos();
 });
 
@@ -5443,6 +5548,320 @@ function resizeImageFile(file, maxDim, quality){
   document.getElementById("reading-filter-person").addEventListener("change", renderReading);
 })();
 
+/* ---------- Notes (sticky-note board) ---------- */
+const NOTE_COLORS = [
+  "#FFF59A", // sunny yellow
+  "#FFD8A8", // peach
+  "#FFB3BA", // pink
+  "#B8E0D2", // mint
+  "#B5D8F2", // sky blue
+  "#D7BDE2", // lilac
+  "#F4D35E", // marigold
+  "#C8E6C9"  // pale green
+];
+const NOTE_DEFAULT_COLOR = NOTE_COLORS[0];
+const NOTE_DEFAULT_W = 240;
+const NOTE_DEFAULT_H = 200;
+
+let noteModalEditingId = null;
+let noteDragState = null;
+
+function normalizeNote(n){
+  return {
+    id: n.id || uid(),
+    title: typeof n.title === "string" ? n.title : "",
+    body:  typeof n.body  === "string" ? n.body  : "",
+    color: NOTE_COLORS.includes(n.color) ? n.color : NOTE_DEFAULT_COLOR,
+    x: Number.isFinite(n.x) ? n.x : 24,
+    y: Number.isFinite(n.y) ? n.y : 24,
+    w: Number.isFinite(n.w) ? n.w : NOTE_DEFAULT_W,
+    h: Number.isFinite(n.h) ? n.h : NOTE_DEFAULT_H,
+    z: Number.isFinite(n.z) ? n.z : 1,
+    createdAt: n.createdAt || todayYmd(),
+    updatedAt: n.updatedAt || todayYmd()
+  };
+}
+// Run normalization on initial load
+data.notes = (data.notes || []).map(normalizeNote);
+
+function nextNoteZ(){
+  const max = data.notes.reduce((m, n) => Math.max(m, n.z || 0), 0);
+  return max + 1;
+}
+
+function pickNewNotePosition(){
+  // Cascade new notes diagonally so they don't all land on top of each other.
+  const board = document.getElementById("notes-board");
+  const bw = (board && board.clientWidth) || 800;
+  const bh = (board && board.clientHeight) || 560;
+  const step = 28;
+  const n = data.notes.length;
+  let x = 24 + step * (n % 10);
+  let y = 24 + step * (n % 10);
+  // Clamp inside the board (best-effort; CSS keeps mobile happy regardless).
+  x = Math.max(0, Math.min(x, Math.max(0, bw - NOTE_DEFAULT_W - 8)));
+  y = Math.max(0, Math.min(y, Math.max(0, bh - NOTE_DEFAULT_H - 8)));
+  return { x, y };
+}
+
+function renderNotes(){
+  const board = document.getElementById("notes-board");
+  if(!board) return;
+  board.innerHTML = "";
+  if(!data.notes.length){
+    const empty = document.createElement("div");
+    empty.className = "notes-empty";
+    empty.textContent = 'Click "+ Add Note" to drop a sticky note onto the board.';
+    board.appendChild(empty);
+    return;
+  }
+  data.notes.forEach(n => board.appendChild(buildStickyEl(n)));
+}
+
+function buildStickyEl(n){
+  const el = document.createElement("div");
+  el.className = "sticky";
+  el.dataset.nid = n.id;
+  el.style.left = n.x + "px";
+  el.style.top  = n.y + "px";
+  el.style.width  = n.w + "px";
+  el.style.minHeight = n.h + "px";
+  el.style.zIndex = String(n.z || 1);
+  el.style.background = n.color;
+
+  const titleText = (n.title || "").trim();
+  const bodyHtml = (n.body || "").trim()
+    ? linkifyText(n.body)
+    : '<span class="empty-hint">Click to add details…</span>';
+
+  el.innerHTML = `
+    <div class="sk-header" data-role="drag">
+      <span class="sk-title ${titleText ? "" : "untitled"}">${escapeHtml(titleText || "Untitled note")}</span>
+      <button type="button" class="sk-del" data-role="delete" title="Delete note" aria-label="Delete note">✕</button>
+    </div>
+    <div class="sk-body ${(n.body || "").trim() ? "" : "empty"}" data-role="edit">${bodyHtml}</div>
+  `;
+
+  // Drag (pointer events — covers mouse + touch + pen)
+  const header = el.querySelector('[data-role="drag"]');
+  header.addEventListener("pointerdown", e => startNoteDrag(e, n, el));
+
+  // Click body to edit (but not when the click was on an embedded link)
+  el.querySelector('[data-role="edit"]').addEventListener("click", e=>{
+    if(e.target.closest("a")) return;
+    openNoteModal(n.id);
+  });
+
+  // Delete
+  el.querySelector('[data-role="delete"]').addEventListener("click", e=>{
+    e.stopPropagation();
+    if(!confirm("Delete this note?")) return;
+    data.notes = data.notes.filter(x => x.id !== n.id);
+    save(); renderNotes();
+  });
+
+  return el;
+}
+
+function startNoteDrag(e, note, el){
+  // Don't start a drag from inside the close button
+  if(e.target.closest('[data-role="delete"]')) return;
+  // On phone-sized screens drag is disabled via CSS (cursor:default); the
+  // board is also flex-column there. Skip to avoid jumping the layout.
+  if(window.matchMedia("(max-width: 780px)").matches) return;
+  e.preventDefault();
+
+  const board = document.getElementById("notes-board");
+  const boardRect = board.getBoundingClientRect();
+  const elRect = el.getBoundingClientRect();
+  noteDragState = {
+    id: note.id,
+    el,
+    board,
+    offsetX: e.clientX - elRect.left,
+    offsetY: e.clientY - elRect.top,
+    boardLeft: boardRect.left,
+    boardTop: boardRect.top,
+    pointerId: e.pointerId
+  };
+  // Bring to front
+  note.z = nextNoteZ();
+  el.style.zIndex = String(note.z);
+  el.classList.add("dragging");
+  try { el.setPointerCapture(e.pointerId); } catch(_) {}
+  document.addEventListener("pointermove", onNoteDragMove);
+  document.addEventListener("pointerup", onNoteDragEnd);
+  document.addEventListener("pointercancel", onNoteDragEnd);
+}
+
+function onNoteDragMove(e){
+  if(!noteDragState) return;
+  const { el, board, offsetX, offsetY, boardLeft, boardTop } = noteDragState;
+  const x = e.clientX - boardLeft - offsetX;
+  const y = e.clientY - boardTop  - offsetY;
+  // Clamp so the note stays at least partially on-board.
+  const minX = -(el.offsetWidth  - 60);
+  const minY = 0;
+  const maxX = board.clientWidth  - 60;
+  const maxY = board.clientHeight - 30;
+  el.style.left = Math.max(minX, Math.min(x, maxX)) + "px";
+  el.style.top  = Math.max(minY, Math.min(y, maxY)) + "px";
+}
+
+function onNoteDragEnd(e){
+  if(!noteDragState) return;
+  const { id, el, pointerId } = noteDragState;
+  el.classList.remove("dragging");
+  try { el.releasePointerCapture(pointerId); } catch(_) {}
+  document.removeEventListener("pointermove", onNoteDragMove);
+  document.removeEventListener("pointerup", onNoteDragEnd);
+  document.removeEventListener("pointercancel", onNoteDragEnd);
+  // Persist the final position
+  const note = data.notes.find(n => n.id === id);
+  if(note){
+    note.x = parseFloat(el.style.left) || 0;
+    note.y = parseFloat(el.style.top)  || 0;
+    note.updatedAt = todayYmd();
+    save();
+  }
+  noteDragState = null;
+}
+
+/* ---------- Note edit modal ---------- */
+function openNoteModal(id){
+  noteModalEditingId = id;
+  const note = id ? data.notes.find(n => n.id === id) : null;
+  document.getElementById("note-modal-title").textContent = note ? "Edit Note" : "New Note";
+  document.getElementById("note-modal-input-title").value = note ? (note.title || "") : "";
+  document.getElementById("note-modal-body").value        = note ? (note.body  || "") : "";
+  document.getElementById("note-modal-delete").style.display = note ? "" : "none";
+
+  // Color swatches
+  const cur = note ? note.color : NOTE_DEFAULT_COLOR;
+  const colorsBox = document.getElementById("note-modal-colors");
+  colorsBox.innerHTML = NOTE_COLORS.map(c=>{
+    const sel = c === cur ? " selected" : "";
+    return `<label class="${sel.trim()}" style="background:${c}"><input type="radio" name="note-color" value="${c}"${sel ? " checked" : ""}></label>`;
+  }).join("");
+
+  updateNoteModalLinksPreview();
+
+  const bg = document.getElementById("note-modal-bg");
+  bg.classList.add("open");
+  bg.setAttribute("aria-hidden", "false");
+  setTimeout(()=> document.getElementById("note-modal-input-title").focus(), 30);
+}
+
+function closeNoteModal(){
+  const bg = document.getElementById("note-modal-bg");
+  bg.classList.remove("open");
+  bg.setAttribute("aria-hidden", "true");
+  noteModalEditingId = null;
+}
+
+function updateNoteModalLinksPreview(){
+  const ta = document.getElementById("note-modal-body");
+  const box = document.getElementById("note-modal-links");
+  if(!ta || !box) return;
+  const text = ta.value || "";
+  const rx = new RegExp(URL_REGEX.source, "gi");
+  const urls = [];
+  let m;
+  while((m = rx.exec(text))){
+    let u = m[0].replace(/[.,;:!?)\]}>]+$/, "");
+    const href = /^https?:\/\//i.test(u) ? u : ("https://" + u);
+    urls.push({ label: u, href });
+  }
+  if(urls.length === 0){
+    box.style.display = "none";
+    box.innerHTML = "";
+    return;
+  }
+  box.style.display = "";
+  box.innerHTML = "🔗 " + urls.map(u =>
+    `<a href="${escapeHtml(u.href)}" target="_blank" rel="noopener noreferrer">${escapeHtml(u.label)}</a>`
+  ).join(" · ");
+}
+
+(function wireNoteModal(){
+  document.getElementById("note-modal-body").addEventListener("input", updateNoteModalLinksPreview);
+
+  // Color swatch click → mark selected (visual only; persisted on Save)
+  document.getElementById("note-modal-colors").addEventListener("click", e=>{
+    const lbl = e.target.closest("label");
+    if(!lbl) return;
+    document.querySelectorAll("#note-modal-colors label").forEach(l => l.classList.remove("selected"));
+    lbl.classList.add("selected");
+  });
+
+  document.getElementById("note-modal-cancel").addEventListener("click", closeNoteModal);
+  document.getElementById("note-modal-bg").addEventListener("click", e=>{
+    if(e.target.id === "note-modal-bg") closeNoteModal();
+  });
+  document.addEventListener("keydown", e=>{
+    if(e.key === "Escape" && document.getElementById("note-modal-bg").classList.contains("open")){
+      closeNoteModal();
+    }
+  });
+
+  document.getElementById("note-modal-save").addEventListener("click", ()=>{
+    const title = document.getElementById("note-modal-input-title").value.trim();
+    const body  = document.getElementById("note-modal-body").value;
+    const colorInput = document.querySelector('#note-modal-colors input[name="note-color"]:checked');
+    const color = colorInput ? colorInput.value : NOTE_DEFAULT_COLOR;
+
+    if(noteModalEditingId){
+      const note = data.notes.find(n => n.id === noteModalEditingId);
+      if(note){
+        note.title = title;
+        note.body  = body;
+        note.color = color;
+        note.updatedAt = todayYmd();
+      }
+    } else {
+      const pos = pickNewNotePosition();
+      data.notes.push(normalizeNote({
+        title, body, color,
+        x: pos.x, y: pos.y,
+        z: nextNoteZ(),
+        createdAt: todayYmd(),
+        updatedAt: todayYmd()
+      }));
+    }
+    save();
+    closeNoteModal();
+    renderNotes();
+  });
+
+  document.getElementById("note-modal-delete").addEventListener("click", ()=>{
+    if(!noteModalEditingId) return;
+    if(!confirm("Delete this note?")) return;
+    data.notes = data.notes.filter(n => n.id !== noteModalEditingId);
+    save();
+    closeNoteModal();
+    renderNotes();
+  });
+
+  document.getElementById("btn-add-note").addEventListener("click", ()=>{
+    // Create the note immediately so the user sees it on the board, then open
+    // the modal for editing.
+    const pos = pickNewNotePosition();
+    const used = new Set(data.notes.map(n => n.color));
+    const color = NOTE_COLORS.find(c => !used.has(c)) || NOTE_COLORS[data.notes.length % NOTE_COLORS.length];
+    const note = normalizeNote({
+      title: "", body: "", color,
+      x: pos.x, y: pos.y,
+      z: nextNoteZ(),
+      createdAt: todayYmd(),
+      updatedAt: todayYmd()
+    });
+    data.notes.push(note);
+    save();
+    renderNotes();
+    openNoteModal(note.id);
+  });
+})();
+
 /* ---------- Render all ---------- */
 function renderAll(){
   renderMealCalendar();
@@ -5454,6 +5873,7 @@ function renderAll(){
   renderWeekView();
   renderTodos();
   renderReading();
+  renderNotes();
 }
 
 renderAll();
