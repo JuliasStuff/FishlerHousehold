@@ -5051,7 +5051,8 @@ function todoRow(t, sourcePid){
   // Build meta pills
   const today = todayYmd();
   let duePill = "";
-  if(t.due){
+  const isDaily = t.recurring && t.recurring.pattern === "daily";
+  if(t.due && !isDaily){
     const diff = daysDiffYmd(today, t.due);
     let cls = "";
     let text = fmtDateShort(t.due);
