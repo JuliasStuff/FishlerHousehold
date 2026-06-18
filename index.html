@@ -3247,6 +3247,10 @@ function renderEventViews(){
   renderPlainCalendar();
   renderWeekView();
 }
+// How many weeks before the current week are visible in the Calendar tab.
+// 0 = current week is the topmost row; click "Show previous week" at the top
+// to extend backward by 7 days.
+let calViewPastWeeks = 0;
 function renderPlainCalendar(){
   document.getElementById("cal2-dows").innerHTML =
     DOW_SHORT.map(d=>`<div class="cal-dow">${d}</div>`).join("");
@@ -3255,8 +3259,37 @@ function renderPlainCalendar(){
   const today = todayYmd();
   const now = new Date();
 
-  // Build a flat list of all event occurrences in the visible window (6 months from now)
-  const winStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  // Cutoff: the Sunday of the current week, pushed back by the number of
+  // extra weeks the user has revealed via "Show previous week". Any whole
+  // week ending before this date is skipped so the topmost visible row is
+  // (by default) the current week.
+  const weekStartOfToday = addDays(now, -now.getDay());
+  const cutoffStart = addDays(weekStartOfToday, -7 * calViewPastWeeks);
+  const cutoffYmd = ymd(cutoffStart);
+
+  // "Show previous week" button — lets the user reveal earlier weeks on demand
+  const prevBtn = document.createElement("button");
+  prevBtn.type = "button";
+  prevBtn.className = "btn ghost meal-prev-week-btn";
+  prevBtn.textContent = calViewPastWeeks === 0
+    ? "↑ Show previous week"
+    : `↑ Show another week (currently showing ${calViewPastWeeks} week${calViewPastWeeks===1?'':'s'} back)`;
+  prevBtn.addEventListener("click", ()=>{
+    calViewPastWeeks += 1;
+    renderPlainCalendar();
+  });
+  scroll.appendChild(prevBtn);
+
+  // How many prior months we need to iterate to cover the revealed past
+  // weeks. Each month spans ~4-5 weeks, so divide and add a buffer.
+  const PAST_MONTHS = Math.max(0, Math.ceil(calViewPastWeeks / 4) + (calViewPastWeeks > 0 ? 1 : 0));
+
+  // Build a flat list of all event occurrences in the visible window
+  // (revealed past weeks through 6 months from now).
+  const winStart = new Date(Math.min(
+    cutoffStart.getTime(),
+    new Date(now.getFullYear(), now.getMonth() - PAST_MONTHS, 1).getTime()
+  ));
   const winEnd   = new Date(now.getFullYear(), now.getMonth() + 6, 0); // last day of 6th month
   const winStartYmd = ymd(winStart);
   const winEndYmd   = ymd(winEnd);
@@ -3298,12 +3331,15 @@ function renderPlainCalendar(){
     });
   });
 
-  for(let mi = 0; mi <= 5; mi++){
+  for(let mi = -PAST_MONTHS; mi <= 5; mi++){
     const monthStart = new Date(now.getFullYear(), now.getMonth() + mi, 1);
+    const monthEnd = new Date(monthStart.getFullYear(), monthStart.getMonth()+1, 0);
+    // Skip months that are entirely before the cutoff.
+    if(ymd(monthEnd) < cutoffYmd) continue;
+
     const title = document.createElement("div");
     title.className = "month-title";
     title.textContent = monthStart.toLocaleDateString(undefined,{month:"long",year:"numeric"});
-    scroll.appendChild(title);
 
     const monthEl = document.createElement("div");
     monthEl.className = "cal-month";
@@ -3313,10 +3349,8 @@ function renderPlainCalendar(){
     const totalCells = Math.ceil((startDay + daysInMonth) / 7) * 7;
     const numWeeks = totalCells / 7;
 
+    let visibleWeeksInMonth = 0;
     for(let wi = 0; wi < numWeeks; wi++){
-      const weekEl = document.createElement("div");
-      weekEl.className = "cal-week";
-
       // Build the 7 day Dates for this week + their ymd lookup
       const weekDays = [];
       for(let dci = 0; dci < 7; dci++){
@@ -3324,6 +3358,13 @@ function renderPlainCalendar(){
       }
       const weekStartYmd = ymd(weekDays[0]);
       const weekEndYmd   = ymd(weekDays[6]);
+
+      // Skip whole weeks that end before the cutoff (entirely in the hidden past).
+      if(weekEndYmd < cutoffYmd) continue;
+
+      const weekEl = document.createElement("div");
+      weekEl.className = "cal-week";
+      visibleWeeksInMonth++;
 
       // Find multi-day instances that intersect this week and compute their
       // column span within this week (clipping at week boundaries).
@@ -3482,7 +3523,10 @@ function renderPlainCalendar(){
 
       monthEl.appendChild(weekEl);
     }
-    scroll.appendChild(monthEl);
+    if(visibleWeeksInMonth > 0){
+      scroll.appendChild(title);
+      scroll.appendChild(monthEl);
+    }
   }
 }
 
@@ -4921,6 +4965,17 @@ function renderTodos(){
     const personById = Object.fromEntries(data.people.map(p=>[p.id, p]));
     const listById   = Object.fromEntries(data.lists.map(L=>[L.id, L]));
     const orderedKeys = getOrderedSectionKeys();
+    // Clicking on the empty space within a section (i.e. not on an existing
+    // todo row or a header button) opens the Add Todo modal pre-filled to
+    // add to that section. Header text / grip are allowed so the section
+    // name itself acts as an "add" hotspot.
+    const attachSectionAddClick = (sec, preset)=>{
+      sec.addEventListener("click", e=>{
+        if(e.target.closest(".todo-row")) return;
+        if(e.target.closest("button,input,select,textarea,a")) return;
+        openTodoModal(null, preset);
+      });
+    };
     orderedKeys.forEach(key=>{
       if(key === UNASSIGNED){
         // Always render Unassigned as a drop target (even when empty)
@@ -4931,6 +4986,7 @@ function renderTodos(){
         buckets[UNASSIGNED].slice().sort(todoSortByOrder).forEach(t=>sec.appendChild(todoRow(t, null)));
         attachDropTarget(sec, { kind:"unassigned" });
         attachSectionHeaderDrag(sec);
+        attachSectionAddClick(sec, {});
         c.appendChild(sec);
         return;
       }
@@ -4952,6 +5008,7 @@ function renderTodos(){
         list.forEach(t=>sec.appendChild(todoRow(t, p.id)));
         attachDropTarget(sec, { kind:"person", pid: p.id });
         attachSectionHeaderDrag(sec);
+        attachSectionAddClick(sec, { assignees: [p.id] });
         c.appendChild(sec);
         return;
       }
@@ -4981,12 +5038,13 @@ function renderTodos(){
           emp.className = "empty";
           emp.style.fontSize = "12px";
           emp.style.padding = "6px 4px";
-          emp.textContent = "Drag tasks here, or use the list selector when editing a task.";
+          emp.textContent = "Click here to add a task, drag tasks in, or use the list selector when editing a task.";
           sec.appendChild(emp);
         }
         list.forEach(t=>sec.appendChild(todoRow(t, null)));
         attachDropTarget(sec, { kind:"list", lid: L.id });
         attachSectionHeaderDrag(sec);
+        attachSectionAddClick(sec, { listId: L.id });
         // Wire list header buttons
         sec.querySelector('[data-list-act="rename"]').addEventListener("click", e=>{
           e.stopPropagation();
@@ -5180,7 +5238,9 @@ function nextRecurrence(fromYmd, r){
 }
 
 /* ---- Todo modal ---- */
-function openTodoModal(id){
+// `preset` (optional) prefills the new-todo form when `id` is null:
+//   { listId: "...", assignees: ["pid", ...] }
+function openTodoModal(id, preset){
   todoModalState.editingId = id || null;
   const t = id ? data.todos.find(x=>x.id===id) : null;
   document.getElementById("todo-modal-title").textContent = id ? "Edit Todo" : "Add Todo";
@@ -5194,8 +5254,11 @@ function openTodoModal(id){
 
   // Assignees
   const ac = document.getElementById("todo-modal-assignees");
+  const presetAssignees = (!t && preset && Array.isArray(preset.assignees)) ? preset.assignees : null;
   ac.innerHTML = data.people.map(p=>{
-    const checked = t && t.assignees.includes(p.id);
+    const checked = t
+      ? t.assignees.includes(p.id)
+      : (presetAssignees ? presetAssignees.includes(p.id) : false);
     return `
       <label>
         <input type="checkbox" data-pid="${escapeHtml(p.id)}" ${checked?"checked":""} />
@@ -5210,7 +5273,9 @@ function openTodoModal(id){
 
   // List selector
   const listSel = document.getElementById("todo-modal-list");
-  const currentListId = t ? (t.listId || "") : "";
+  const currentListId = t
+    ? (t.listId || "")
+    : (preset && preset.listId ? preset.listId : "");
   listSel.innerHTML = `<option value="">— No list —</option>` +
     data.lists.map(L => `<option value="${escapeHtml(L.id)}" ${L.id === currentListId ? "selected" : ""}>${escapeHtml(L.name)}</option>`).join("");
 
