@@ -5200,8 +5200,11 @@ function handleTodoCheck(id, checked){
   const t = data.todos.find(x=>x.id===id);
   if(!t) return;
   if(checked && t.recurring){
-    // Advance the due date to the next occurrence (or from today if no due)
-    const base = t.due || todayYmd();
+    // Advance the due date to the next occurrence after today. Missed
+    // occurrences are forgotten — one check always pushes the todo past
+    // today, even if the previous due date was in the past.
+    const today = todayYmd();
+    const base = (t.due && t.due > today) ? t.due : today;
     t.due = nextRecurrence(base, t.recurring);
     t.done = false;       // re-open with new due date
     t.completedAt = null;
