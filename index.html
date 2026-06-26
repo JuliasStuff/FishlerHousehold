@@ -50,28 +50,15 @@
   }
   .app{ max-width:1600px; margin:0 auto; padding:16px; }
 
-  header.topbar{
-    display:flex; align-items:center; gap:14px;
-    background:var(--panel); border:1px solid var(--line);
-    border-radius:14px; padding:12px 18px; box-shadow:var(--shadow);
-    margin-bottom:14px;
+  .app-footer{
+    display:flex; align-items:center; gap:8px;
+    border-top:1px solid var(--line);
+    padding:8px 12px 14px;
+    margin-top:6px;
+    font-size:13px;
+    color:var(--ink-soft);
   }
-  header.topbar .crest{
-    width:54px; height:54px; border-radius:14px;
-    background:linear-gradient(135deg,var(--accent),var(--accent-2));
-    color:#fff; display:flex; align-items:center; justify-content:center;
-    box-shadow:inset 0 -3px 0 rgba(0,0,0,.12);
-    flex-shrink:0;
-  }
-  header.topbar .crest svg{
-    width:36px; height:36px; display:block;
-  }
-  header.topbar h1{
-    margin:0; font-size:clamp(1.4rem,2.5vw,1.9rem); line-height:1.1;
-  }
-  header.topbar p.sub{
-    margin:2px 0 0; font-size:13px; color:var(--ink-soft);
-  }
+  .app-footer #btn-backups{ margin-left:auto; padding:4px 10px; font-size:18px; line-height:1; }
 
   /* ---------- Cloud sync indicator ---------- */
   .sync-dot{
@@ -110,11 +97,11 @@
   }
 
   /* ---------- Read-only mode ---------- */
-  body.ro-mode #btn-lock{ pointer-events:auto; opacity:1; }
+  body.ro-mode #btn-backups{ pointer-events:auto; opacity:1; }
   body.ro-mode .app input:not([type=checkbox]):not([type=radio]),
   body.ro-mode .app select,
   body.ro-mode .app textarea,
-  body.ro-mode .app button:not([data-tab]):not(#btn-lock):not([data-cpf]):not(.modal button.modal-close){
+  body.ro-mode .app button:not([data-tab]):not(#btn-backups):not([data-cpf]):not(.modal button.modal-close){
     pointer-events:none !important;
     opacity:.55 !important;
     cursor:not-allowed !important;
@@ -148,6 +135,10 @@
     background:linear-gradient(135deg,var(--accent),var(--accent-2));
     border-color:var(--accent-2);
     box-shadow:0 4px 12px rgba(63,107,86,.28);
+  }
+  nav.tabs button .tab-icon{
+    height:1.1em; width:auto; vertical-align:-0.18em;
+    display:inline-block;
   }
 
   .page{ display:none; }
@@ -280,9 +271,30 @@
     cursor:pointer;
   }
   .meal-slot:hover{ border-color:var(--accent); }
-  .meal-prev-week-btn{
-    display:block; margin:0 auto 10px; padding:6px 14px;
-    font-size:12px; cursor:pointer;
+  .meal-prev-week-btn,
+  .cal-toolbar .right .meal-prev-week-btn{
+    display:block; margin:0 auto 10px; padding:9px 14px;
+    font-size:14px; cursor:pointer;
+    width:min(45vw, 280px);
+    max-width:280px;
+    text-align:center;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    flex:0 0 auto;
+  }
+  /* In the toolbar the button sits next to others, so drop the bottom margin
+     that's only needed for the standalone Meals-page button. */
+  .cal-toolbar .right .meal-prev-week-btn,
+  .meals-toolbar .left .meal-prev-week-btn{
+    margin-bottom:0;
+  }
+
+  /* Widen the Add Event button on the calendar toolbar */
+  #btn-add-event{
+    padding-left:28px;
+    padding-right:28px;
+    min-width:160px;
   }
   .meal-slot .lbl{
     font-size:9px; font-weight:700; letter-spacing:.06em;
@@ -541,7 +553,7 @@
   }
   /* Layout toggle pill (Vertical / Horizontal) */
   .week-layout-toggle{
-    display:inline-flex; gap:0;
+    display:inline-flex; gap:0; align-items:stretch;
     background:var(--panel-2); border:1px solid var(--line);
     border-radius:999px; padding:3px;
   }
@@ -1482,14 +1494,7 @@
       flex-wrap:wrap;
       margin-bottom:10px;
     }
-    header.topbar .crest{ width:42px; height:42px; border-radius:10px; }
-    header.topbar .crest svg{ width:28px; height:28px; }
-    header.topbar h1{ font-size:1.15rem; }
-    header.topbar > div[style*="margin-left:auto"]{
-      margin-left:auto;
-    }
     #sync-status{ display:none; }       /* dot is enough on phone */
-    #btn-lock{ font-size:16px; padding:4px 8px; }
 
     /* Tabs: single row, compact */
     nav.tabs{
@@ -1507,12 +1512,18 @@
     .card h2{ font-size:16px; margin-bottom:10px; }
 
     /* Toolbars: stack, full-width buttons */
-    .meals-toolbar, .cal-toolbar, .todos-toolbar{
+    .cal-toolbar, .todos-toolbar{
       flex-direction:column; align-items:stretch; gap:8px;
+    }
+    .meals-toolbar{
+      gap:6px;
     }
     .meals-toolbar .left, .meals-toolbar .right,
     .cal-toolbar .right, .todos-toolbar .right{
-      width:100%; display:flex; gap:6px;
+      display:flex; gap:6px;
+    }
+    .cal-toolbar .right, .todos-toolbar .right{
+      width:100%;
     }
     .todos-toolbar .right{ flex-wrap:wrap; }
     .meals-toolbar .right .btn,
@@ -1802,37 +1813,16 @@
 </div>
 
 <div class="app">
-  <header class="topbar">
-    <div class="crest" aria-label="Fish logo">
-      <!-- Fish icon -->
-      <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <path d="M6 32 C 14 18, 30 14, 42 18 L 56 8 L 52 30 L 56 52 L 42 44 C 30 50, 14 46, 6 32 Z"
-              fill="#ffffff" stroke="#ffffff" stroke-width="1.5" stroke-linejoin="round"/>
-        <circle cx="18" cy="30" r="2.2" fill="#3f6b56"/>
-        <path d="M28 26 C 34 24, 40 24, 44 28" stroke="#3f6b56" stroke-width="1.5" stroke-linecap="round" fill="none"/>
-        <path d="M28 32 C 34 30, 40 30, 44 34" stroke="#3f6b56" stroke-width="1.5" stroke-linecap="round" fill="none"/>
-        <path d="M28 38 C 34 36, 40 36, 44 40" stroke="#3f6b56" stroke-width="1.5" stroke-linecap="round" fill="none"/>
-      </svg>
-    </div>
-    <div>
-      <h1>Fishler Household</h1>
-    </div>
-    <div style="margin-left:auto; display:flex; align-items:center; gap:8px;">
-      <span id="sync-status-dot" class="sync-dot off" aria-hidden="true"></span>
-      <span id="sync-status" style="font-size:13px; color:var(--ink-soft);">Sync: starting…</span>
-      <button id="btn-lock" class="btn ghost" title="Lock / sign out" style="padding:4px 10px; font-size:18px; line-height:1;">🔒</button>
-    </div>
-  </header>
   <div id="readonly-banner" style="display:none; background:#fff4dc; border:1px solid #f0d08a; color:#7a5b1e; border-radius:10px; padding:8px 12px; margin-bottom:10px; font-size:13px;">
     👀 <strong>Read-only mode.</strong> Your changes won't be saved or synced.
   </div>
 
   <nav class="tabs" id="tabs">
     <button data-tab="calendar" class="active">🗓️ Calendar</button>
-    <button data-tab="week">📅 This Week</button>
-    <button data-tab="todos">✅ Todos</button>
-    <button data-tab="meals">🍽️ Meals</button>
-    <button data-tab="reading">📚 Reading</button>
+    <button data-tab="week">📅 Week</button>
+    <button data-tab="todos">✅ Todo</button>
+    <button data-tab="meals"><img src="meal.png" alt="" class="tab-icon" /> Meals</button>
+    <button data-tab="reading"><img src="ReadingIcon.png" alt="" class="tab-icon" /> Reading</button>
     <button data-tab="notes">📝 Notes</button>
   </nav>
 
@@ -1841,15 +1831,17 @@
     <div class="card">
       <div class="meals-toolbar">
         <div class="left">
-          <h2 style="margin:0;">Meal Plan</h2>
+          <button class="btn ghost meal-prev-week-btn" id="btn-meals-prev-week" type="button">↑ Show previous week</button>
         </div>
         <div class="right">
           <button class="btn warm" id="btn-assign-dinners" title="Auto-fill dinner slots for the next 7 days">✨ Assign Dinners</button>
-          <button class="btn ghost" id="btn-toggle-meals-admin" title="Manage menu options">⚙️ Admin</button>
         </div>
       </div>
       <div class="cal-grid" id="cal-dows" style="margin-bottom:6px;"></div>
       <div id="cal-scroll"></div>
+      <div style="display:flex; justify-content:flex-end; margin-top:10px;">
+        <button class="btn ghost" id="btn-toggle-meals-admin" title="Manage menu options">⚙️ Admin</button>
+      </div>
     </div>
 
     <div class="card" id="meals-admin-card" style="display:none;">
@@ -1916,9 +1908,9 @@
   <section id="page-calendar" class="page active">
     <div class="card">
       <div class="cal-toolbar">
-        <h2 style="margin:0;">Calendar</h2>
         <div class="right" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
           <div class="cal-people-filter" id="cal-people-filter" title="Show only events for selected people"></div>
+          <button class="btn ghost meal-prev-week-btn" id="btn-cal-prev-week" type="button">↑ Show previous week</button>
           <button class="btn" id="btn-add-event">+ Add Event</button>
         </div>
       </div>
@@ -1926,7 +1918,6 @@
         <span class="pb-msg"></span>
         <button class="btn ghost" id="paste-banner-done" style="padding:6px 12px; font-size:12px;">Done</button>
       </div>
-      <div class="cal-grid" id="cal2-dows" style="margin-bottom:6px;"></div>
       <div id="cal2-scroll"></div>
     </div>
   </section>
@@ -1935,13 +1926,15 @@
   <section id="page-week" class="page">
     <div class="card">
       <div class="cal-toolbar">
-        <h2 style="margin:0;" id="week-view-title">This Week</h2>
         <div class="right" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-          <div class="week-layout-toggle" role="group" aria-label="Layout" title="Switch between stacked and side-by-side days">
-            <button type="button" id="btn-week-layout-vert" data-week-layout="vertical">☰ Vertical</button>
-            <button type="button" id="btn-week-layout-horiz" data-week-layout="horizontal">☰̃ Horizontal</button>
-          </div>
           <div class="cal-people-filter" id="week-people-filter" title="Show only events for selected people"></div>
+          <div style="display:flex; gap:8px; align-items:stretch; flex-wrap:nowrap;">
+            <button class="btn ghost meal-prev-week-btn" id="btn-week-prev-week" type="button">↑ Show previous week</button>
+            <div class="week-layout-toggle" role="group" aria-label="Layout" title="Switch between stacked and side-by-side days">
+              <button type="button" id="btn-week-layout-vert" data-week-layout="vertical">☰ Vertical</button>
+              <button type="button" id="btn-week-layout-horiz" data-week-layout="horizontal">☰̃ Horizontal</button>
+            </div>
+          </div>
         </div>
       </div>
       <div id="week-view-list"></div>
@@ -1952,16 +1945,29 @@
   <section id="page-todos" class="page">
     <div class="card">
       <div class="todos-toolbar">
-        <h2 style="margin:0;">Todos</h2>
         <div class="right">
-          <button class="btn ghost" id="btn-add-list" title="Create a new task list (e.g. Lake House)">+ List</button>
           <button class="btn" id="btn-add-todo">+ Add Todo</button>
         </div>
       </div>
-      <div class="row" style="margin-bottom:10px;">
-        <input type="text" id="quick-todo" placeholder="Quick add a todo and press Enter…" style="flex:1;" />
-      </div>
       <div id="todo-list"></div>
+      <div style="display:flex; justify-content:flex-end; margin-top:10px;">
+        <button class="btn ghost" id="btn-toggle-todos-admin" title="Manage lists">⚙️ Admin</button>
+      </div>
+    </div>
+
+    <div class="card" id="todos-admin-card" style="display:none;">
+      <div class="row" style="justify-content:space-between; margin-bottom:8px;">
+        <h2 style="margin:0;">⚙️ Todos Admin — Lists</h2>
+        <button class="btn ghost" id="btn-close-todos-admin" title="Hide admin">Close</button>
+      </div>
+      <p style="margin:0 0 12px; color:var(--ink-soft); font-size:13px;">
+        Add or remove task lists (e.g. Lake House, Later). Deleting a list moves its tasks back to person grouping.
+      </p>
+      <div class="row">
+        <input type="text" id="new-list-name" placeholder="Add a list (e.g. Lake House)" style="flex:1;" />
+        <button class="btn" id="btn-add-list">Add</button>
+      </div>
+      <div class="chip-list" id="list-todos-lists"></div>
     </div>
   </section>
 
@@ -2010,6 +2016,12 @@
       <div id="notes-board" class="notes-board"></div>
     </div>
   </section>
+
+  <footer class="app-footer">
+    <span id="sync-status-dot" class="sync-dot off" aria-hidden="true"></span>
+    <span id="sync-status">Sync: starting…</span>
+    <button id="btn-backups" class="btn ghost" title="Backups">🗄️</button>
+  </footer>
 </div>
 
 <!-- Book modal -->
@@ -2073,11 +2085,6 @@
 
     <label class="field-lbl">Assign to</label>
     <div class="assignee-checks" id="todo-modal-assignees"></div>
-
-    <label class="field-lbl" for="todo-modal-list">List</label>
-    <select id="todo-modal-list" style="width:100%;">
-      <option value="">— No list —</option>
-    </select>
 
     <label class="field-lbl" for="todo-modal-due">Due date</label>
     <div class="row">
@@ -2251,9 +2258,26 @@
   </div>
 </div>
 
+<div class="modal-bg" id="backups-modal-bg" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="backups-modal-title" style="max-width:640px;">
+    <h3 id="backups-modal-title">Backups</h3>
+    <p class="modal-sub">Automatic cloud snapshots of your household data. Snapshots are taken about every 10&nbsp;minutes of activity and the last 50 are kept.</p>
+    <div id="backups-list" style="max-height:55vh; overflow-y:auto; border:1px solid var(--line); border-radius:10px; background:var(--panel-2);">
+      <div style="padding:16px; text-align:center; color:var(--ink-soft);">Loading…</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn ghost" id="backups-refresh">Refresh</button>
+      <button class="btn ghost" id="backups-close">Close</button>
+    </div>
+  </div>
+</div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+import {
+  getFirestore, doc, getDoc, setDoc, onSnapshot, serverTimestamp,
+  collection, addDoc, getDocs, deleteDoc, query, orderBy, limit
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 /* =========================================================
    Fishler Household — localStorage data + tabs + meal plan
@@ -2264,6 +2288,10 @@ const STORAGE_KEY = "fishler-household-v1";
 const CLIENT_ID_STORAGE_KEY = "fishler-household-client-id";
 const FIREBASE_COLLECTION = "households";
 const HOUSEHOLD_ID = "fishler";
+// Rolling backup config
+const BACKUP_SUBCOLLECTION = "history";
+const BACKUP_THROTTLE_MS = 10 * 60 * 1000;  // at most one snapshot per 10 min, per client
+const BACKUP_MAX = 50;                       // retain last 50 snapshots, older are pruned
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyDUqZ53nOjALi7wnzUo8hQBv9MNZh3_8jI",
   authDomain: "fishlerhousehold.firebaseapp.com",
@@ -2372,6 +2400,7 @@ function save(){
       updatedAt: serverTimestamp(),
       updatedBy: clientId
     }, { merge: true }))
+    .then(()=>maybeBackup(payload))
     .catch(err=>{
       console.error("Save to Firebase failed:", err);
       syncStatus("Sync: save failed (kept locally)");
@@ -2445,6 +2474,7 @@ let unsubscribeRemote = null;
 let saveQueue = Promise.resolve();
 let syncErrorShown = false;
 let applyingRemote = false;
+let lastBackupAt = 0;     // in-memory throttle for rolling snapshots
 const clientId = getClientId();
 
 function getClientId(){
@@ -2480,10 +2510,14 @@ async function connectCloudSync(){
   try{
     firebaseApp = initializeApp(FIREBASE_CONFIG);
     firebaseDb  = getFirestore(firebaseApp);
-    trackerRef  = doc(firebaseDb, FIREBASE_COLLECTION, HOUSEHOLD_ID);
+    // Build the ref locally; do NOT publish it as trackerRef until the
+    // initial remote payload has been fetched + applied (or initially seeded).
+    // Otherwise a save() triggered during the initial getDoc window would push
+    // stale local data to the cloud and clobber the good copy for every device.
+    const pendingRef = doc(firebaseDb, FIREBASE_COLLECTION, HOUSEHOLD_ID);
 
     // Initial fetch — adopt remote if it exists, otherwise seed it with local.
-    const snap = await getDoc(trackerRef);
+    const snap = await getDoc(pendingRef);
     if(snap.exists()){
       const remotePayload = snap.data()?.payload;
       if(remotePayload && typeof remotePayload === "object"){
@@ -2493,14 +2527,18 @@ async function connectCloudSync(){
         saveLocal();
         if(typeof renderAll === "function") renderAll();
       }
+      // Safe to start writing now.
+      trackerRef = pendingRef;
       setSyncDot("connected");
       syncStatus(`Sync: connected • last update ${formatUpdatedAt(snap.data()?.updatedAt)}`);
     }else{
-      await setDoc(trackerRef, {
+      // No remote doc yet — seed it with local data, then allow writes.
+      await setDoc(pendingRef, {
         payload: JSON.parse(JSON.stringify(data)),
         updatedAt: serverTimestamp(),
         updatedBy: clientId
       });
+      trackerRef = pendingRef;
       setSyncDot("connected");
       syncStatus("Sync: connected");
     }
@@ -2534,6 +2572,10 @@ async function connectCloudSync(){
         showSyncErrorOnce("Firebase sync failed; the app will keep working locally.");
       }
     );
+
+    // Establish a baseline snapshot for this session. maybeBackup is throttled
+    // but lastBackupAt is in-memory so each fresh session can create one.
+    maybeBackup(JSON.parse(JSON.stringify(data)));
   }catch(err){
     console.error("Firebase initialization failed:", err);
     trackerRef = null;
@@ -2541,6 +2583,82 @@ async function connectCloudSync(){
     syncStatus("Sync: failed, local-only");
     showSyncErrorOnce("Firebase setup failed; the app is using local storage only.");
   }
+}
+
+/* =========================================================
+   Rolling backups (Firestore subcollection)
+   Each snapshot is a full payload + capturedAt. Throttled to
+   one per BACKUP_THROTTLE_MS per client; oldest pruned past
+   BACKUP_MAX. Snapshots are NEVER overwritten, so they survive
+   a clobber of the main doc.
+   ========================================================= */
+function backupsCollection(){
+  if(!firebaseDb) return null;
+  return collection(firebaseDb, FIREBASE_COLLECTION, HOUSEHOLD_ID, BACKUP_SUBCOLLECTION);
+}
+
+async function maybeBackup(payload){
+  if(!trackerRef || !firebaseDb) return;
+  const now = Date.now();
+  if(now - lastBackupAt < BACKUP_THROTTLE_MS) return;
+  lastBackupAt = now;  // reserve the slot before the awaited call
+  try{
+    const col = backupsCollection();
+    if(!col) return;
+    await addDoc(col, {
+      payload,
+      capturedAt: serverTimestamp(),
+      capturedAtLocal: now,
+      capturedBy: clientId
+    });
+    pruneBackups().catch(err => console.warn("Backup prune failed:", err));
+  }catch(err){
+    console.warn("Backup snapshot failed:", err);
+    lastBackupAt = 0;  // allow retry on next save
+  }
+}
+
+async function pruneBackups(){
+  const col = backupsCollection();
+  if(!col) return;
+  const snap = await getDocs(query(col, orderBy("capturedAt", "desc")));
+  const docs = snap.docs;
+  if(docs.length <= BACKUP_MAX) return;
+  const toDelete = docs.slice(BACKUP_MAX);
+  await Promise.all(toDelete.map(d => deleteDoc(d.ref)));
+}
+
+async function listBackups(){
+  const col = backupsCollection();
+  if(!col) return [];
+  const snap = await getDocs(query(col, orderBy("capturedAt", "desc"), limit(BACKUP_MAX)));
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
+async function restoreBackup(backupId){
+  if(!trackerRef || !firebaseDb) throw new Error("Not connected to cloud");
+  const ref = doc(firebaseDb, FIREBASE_COLLECTION, HOUSEHOLD_ID, BACKUP_SUBCOLLECTION, backupId);
+  const snap = await getDoc(ref);
+  if(!snap.exists()) throw new Error("Backup not found");
+  const payload = snap.data()?.payload;
+  if(!payload || typeof payload !== "object") throw new Error("Backup is empty");
+  // Force-snapshot the current state before we overwrite it, so the user can
+  // always undo a restore — bypass the throttle for this one call.
+  lastBackupAt = 0;
+  await maybeBackup(JSON.parse(JSON.stringify(data)));
+  // Write the snapshot's payload back to the main doc so it propagates to all
+  // devices via onSnapshot. Our own listener will echo-skip (updatedBy is us),
+  // so we apply locally ourselves.
+  await setDoc(trackerRef, {
+    payload,
+    updatedAt: serverTimestamp(),
+    updatedBy: clientId
+  }, { merge: true });
+  applyingRemote = true;
+  data = mergeWithDefaults(payload);
+  applyingRemote = false;
+  saveLocal();
+  if(typeof renderAll === "function") renderAll();
 }
 
 function mergeWithDefaults(parsed){
@@ -2585,6 +2703,53 @@ document.getElementById("tabs").addEventListener("click", e=>{
   renderAll();
 });
 
+/* ---------- Swipe to switch tabs ---------- */
+(function(){
+  const TAB_ORDER = ["calendar","week","todos","meals","reading","notes"];
+  const appEl = document.querySelector(".app");
+  let swipeStartX = 0;
+  let swipeStartY = 0;
+  let swipeBlocked = false;
+
+  function isInHScroll(el) {
+    while (el && el !== appEl) {
+      const ov = window.getComputedStyle(el).overflowX;
+      if (ov === "auto" || ov === "scroll") {
+        return true;
+      }
+      el = el.parentElement;
+    }
+    return false;
+  }
+
+  appEl.addEventListener("touchstart", e => {
+    swipeStartX = e.touches[0].clientX;
+    swipeStartY = e.touches[0].clientY;
+    swipeBlocked = isInHScroll(e.target);
+  }, { passive: true });
+
+  appEl.addEventListener("touchend", e => {
+    if (swipeBlocked) {
+      return;
+    }
+    const dx = e.changedTouches[0].clientX - swipeStartX;
+    const dy = e.changedTouches[0].clientY - swipeStartY;
+    if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy)) {
+      return;
+    }
+    const activeBtn = document.querySelector("#tabs button.active");
+    if (!activeBtn) {
+      return;
+    }
+    const cur = TAB_ORDER.indexOf(activeBtn.dataset.tab);
+    const next = dx < 0 ? cur + 1 : cur - 1;
+    if (next < 0 || next >= TAB_ORDER.length) {
+      return;
+    }
+    document.querySelector(`#tabs button[data-tab="${TAB_ORDER[next]}"]`).click();
+  }, { passive: true });
+})();
+
 function scrollMealCalToToday(){
   // Defer to next frame so the layout (esp. mobile vertical) settles first
   requestAnimationFrame(()=>{
@@ -2620,18 +2785,22 @@ function renderMealCalendar(){
   const maxDate = addDays(now, mealCalFutureDays);
   const maxYmd = ymd(maxDate);
 
-  // “Show previous week” button — lets the user reveal earlier weeks on demand
-  const prevBtn = document.createElement("button");
-  prevBtn.type = "button";
-  prevBtn.className = "btn ghost meal-prev-week-btn";
-  prevBtn.textContent = mealCalPastDays === 0
-    ? "↑ Show previous week"
-    : `↑ Show another week (currently showing ${mealCalPastDays} day${mealCalPastDays===1?'':'s'} back)`;
-  prevBtn.addEventListener("click", ()=>{
-    mealCalPastDays += 7;
-    renderMealCalendar();
-  });
-  scroll.appendChild(prevBtn);
+  // “Show previous week” button — lets the user reveal earlier weeks on demand.
+  // The button itself lives in the toolbar above; here we just keep its label
+  // current and bind the click handler once.
+  const prevBtn = document.getElementById("btn-meals-prev-week");
+  if(prevBtn){
+    prevBtn.textContent = mealCalPastDays === 0
+      ? "↑ Show previous week"
+      : `↑ Show another week (currently showing ${mealCalPastDays} day${mealCalPastDays===1?'':'s'} back)`;
+    if(!prevBtn.dataset.bound){
+      prevBtn.dataset.bound = "1";
+      prevBtn.addEventListener("click", ()=>{
+        mealCalPastDays += 7;
+        renderMealCalendar();
+      });
+    }
+  }
 
   // Render enough prior months to cover the requested past days, and enough
   // future months to cover the requested future days.
@@ -3252,8 +3421,6 @@ function renderEventViews(){
 // to extend backward by 7 days.
 let calViewPastWeeks = 0;
 function renderPlainCalendar(){
-  document.getElementById("cal2-dows").innerHTML =
-    DOW_SHORT.map(d=>`<div class="cal-dow">${d}</div>`).join("");
   const scroll = document.getElementById("cal2-scroll");
   scroll.innerHTML = "";
   const today = todayYmd();
@@ -3267,18 +3434,18 @@ function renderPlainCalendar(){
   const cutoffStart = addDays(weekStartOfToday, -7 * calViewPastWeeks);
   const cutoffYmd = ymd(cutoffStart);
 
-  // "Show previous week" button — lets the user reveal earlier weeks on demand
-  const prevBtn = document.createElement("button");
-  prevBtn.type = "button";
-  prevBtn.className = "btn ghost meal-prev-week-btn";
+  // "Show previous week" button lives in the toolbar; just update its label
+  const prevBtn = document.getElementById("btn-cal-prev-week");
   prevBtn.textContent = calViewPastWeeks === 0
     ? "↑ Show previous week"
     : `↑ Show another week (currently showing ${calViewPastWeeks} week${calViewPastWeeks===1?'':'s'} back)`;
-  prevBtn.addEventListener("click", ()=>{
-    calViewPastWeeks += 1;
-    renderPlainCalendar();
-  });
-  scroll.appendChild(prevBtn);
+  if (!prevBtn.dataset.bound) {
+    prevBtn.addEventListener("click", ()=>{
+      calViewPastWeeks += 1;
+      renderPlainCalendar();
+    });
+    prevBtn.dataset.bound = "1";
+  }
 
   // How many prior months we need to iterate to cover the revealed past
   // weeks. Each month spans ~4-5 weeks, so divide and add a buffer.
@@ -3524,7 +3691,11 @@ function renderPlainCalendar(){
       monthEl.appendChild(weekEl);
     }
     if(visibleWeeksInMonth > 0){
+      const dowRow = document.createElement("div");
+      dowRow.className = "cal-grid cal-dow-row";
+      dowRow.innerHTML = DOW_SHORT.map(d=>`<div class="cal-dow">${d}</div>`).join("");
       scroll.appendChild(title);
+      scroll.appendChild(dowRow);
       scroll.appendChild(monthEl);
     }
   }
@@ -3558,7 +3729,7 @@ function renderWeekView(){
   const numWeeksForward = Math.round(futureDays / 7);
   if(titleEl){
     if(weekViewPastDays === 0 && numWeeksForward === 1){
-      titleEl.textContent = "This Week";
+      titleEl.textContent = "Week";
     } else if(weekViewPastDays === 0){
       titleEl.textContent = `Next ${numWeeksForward} Weeks`;
     } else {
@@ -3649,19 +3820,19 @@ function renderWeekView(){
     btn.classList.toggle("on", btn.dataset.weekLayout === weekViewLayout);
   });
 
-  // "Show previous week" button at the top — extends the visible window
-  // backward by 7 days (matches the Meals calendar pattern).
-  const prevBtn = document.createElement("button");
-  prevBtn.type = "button";
-  prevBtn.className = "btn ghost meal-prev-week-btn";
-  prevBtn.textContent = weekViewPastDays === 0
+  // "Show previous week" button lives in the toolbar; just update its label
+  const prevBtn = document.getElementById("btn-week-prev-week");
+  const weeksBack = Math.round(weekViewPastDays / 7);
+  prevBtn.textContent = weeksBack === 0
     ? "↑ Show previous week"
-    : `↑ Show another week (currently showing ${weekViewPastDays} day${weekViewPastDays===1?'':'s'} back)`;
-  prevBtn.addEventListener("click", ()=>{
-    weekViewPastDays += 7;
-    renderWeekView();
-  });
-  listEl.appendChild(prevBtn);
+    : `↑ Show another week (currently showing ${weeksBack} week${weeksBack===1?'':'s'} back)`;
+  if (!prevBtn.dataset.bound) {
+    prevBtn.addEventListener("click", ()=>{
+      weekViewPastDays += 7;
+      renderWeekView();
+    });
+    prevBtn.dataset.bound = "1";
+  }
 
   // Day cards live inside a wrapper so layout (vertical vs horizontal columns)
   // can be toggled without affecting the prev/next buttons around it.
@@ -5004,7 +5175,7 @@ function renderTodos(){
         sec.style.background = `linear-gradient(0deg, ${pc}26, ${pc}26), #ffffff`;
         sec.style.borderColor = `${pc}80`;
         sec.style.borderLeft = `8px solid ${pc}`;
-        sec.innerHTML = `<h3 draggable="true" data-section-handle="${escapeHtml(key)}" style="background:transparent; color:var(--ink); border-left:0; padding-left:0;"><span class="sec-grip" aria-hidden="true">⋮⋮</span>${escapeHtml(p.name)}</h3>`;
+        sec.innerHTML = `<h3 draggable="true" data-section-handle="${escapeHtml(key)}" style="background:transparent; color:var(--ink); border-left:0; padding-left:0;">${escapeHtml(p.name)}</h3>`;
         list.forEach(t=>sec.appendChild(todoRow(t, p.id)));
         attachDropTarget(sec, { kind:"person", pid: p.id });
         attachSectionHeaderDrag(sec);
@@ -5026,12 +5197,7 @@ function renderTodos(){
         sec.style.borderLeft = `8px solid ${lc}`;
         sec.innerHTML = `
           <h3 draggable="true" data-section-handle="${escapeHtml(key)}" style="background:transparent; color:var(--ink); border-left:0; padding-left:0; display:flex; align-items:center; gap:8px;">
-            <span class="sec-grip" aria-hidden="true">⋮⋮</span>
             <span class="sec-title">📌 ${escapeHtml(L.name)}</span>
-            <span class="sec-actions" style="margin-left:auto; display:inline-flex; gap:4px;">
-              <button type="button" class="sec-btn" data-list-act="rename" title="Rename list" aria-label="Rename">✏️</button>
-              <button type="button" class="sec-btn" data-list-act="delete" title="Delete list" aria-label="Delete">✕</button>
-            </span>
           </h3>`;
         if(!list.length){
           const emp = document.createElement("div");
@@ -5045,28 +5211,6 @@ function renderTodos(){
         attachDropTarget(sec, { kind:"list", lid: L.id });
         attachSectionHeaderDrag(sec);
         attachSectionAddClick(sec, { listId: L.id });
-        // Wire list header buttons
-        sec.querySelector('[data-list-act="rename"]').addEventListener("click", e=>{
-          e.stopPropagation();
-          const name = prompt("Rename list:", L.name);
-          if(name == null) return;
-          const trimmed = name.trim();
-          if(!trimmed) return;
-          L.name = trimmed; save(); renderTodos();
-        });
-        sec.querySelector('[data-list-act="delete"]').addEventListener("click", e=>{
-          e.stopPropagation();
-          const count = data.todos.filter(t=>t.listId === L.id).length;
-          const msg = count
-            ? `Delete list "${L.name}"? ${count} task(s) will be moved back to person grouping.`
-            : `Delete list "${L.name}"?`;
-          if(!confirm(msg)) return;
-          // Detach tasks from the list
-          data.todos.forEach(t=>{ if(t.listId === L.id) t.listId = null; });
-          data.lists = data.lists.filter(x => x.id !== L.id);
-          data.sectionOrder = data.sectionOrder.filter(k => k !== `list:${L.id}`);
-          save(); renderTodos();
-        });
         c.appendChild(sec);
         return;
       }
@@ -5249,16 +5393,19 @@ function openTodoModal(id, preset){
   document.getElementById("todo-modal-title").textContent = id ? "Edit Todo" : "Add Todo";
   document.getElementById("todo-modal-sub").textContent = t
     ? `Added ${fmtDateLong(t.createdAt)}${t.completedAt ? ' · Completed '+fmtDateLong(t.completedAt) : ''}`
-    : "Fill in the details below.";
+    : "";
   document.getElementById("todo-modal-input-title").value = t ? t.title : "";
   document.getElementById("todo-modal-notes").value = t ? (t.notes || "") : "";
   updateTodoNotesLinksPreview();
   document.getElementById("todo-modal-due").value = t ? (t.due || "") : "";
 
-  // Assignees
+  // Assignees + lists (unified checkbox picker; lists behave radio-style)
   const ac = document.getElementById("todo-modal-assignees");
   const presetAssignees = (!t && preset && Array.isArray(preset.assignees)) ? preset.assignees : null;
-  ac.innerHTML = data.people.map(p=>{
+  const currentListId = t
+    ? (t.listId || "")
+    : (preset && preset.listId ? preset.listId : "");
+  const peopleHtml = data.people.map(p=>{
     const checked = t
       ? t.assignees.includes(p.id)
       : (presetAssignees ? presetAssignees.includes(p.id) : false);
@@ -5270,17 +5417,33 @@ function openTodoModal(id, preset){
       </label>
     `;
   }).join("");
-  if(!data.people.length){
-    ac.innerHTML = `<div class="empty" style="padding:6px;">No family members defined yet.</div>`;
+  const listsHtml = data.lists.map(L=>{
+    const checked = L.id === currentListId;
+    return `
+      <label>
+        <input type="checkbox" data-lid="${escapeHtml(L.id)}" ${checked?"checked":""} />
+        <span class="pdot" style="background:${escapeHtml(L.color||'#7a8a99')}"></span>
+        ${escapeHtml(L.name)}
+      </label>
+    `;
+  }).join("");
+  ac.innerHTML = peopleHtml + listsHtml;
+  if(!data.people.length && !data.lists.length){
+    ac.innerHTML = `<div class="empty" style="padding:6px;">No people or lists defined yet.</div>`;
   }
-
-  // List selector
-  const listSel = document.getElementById("todo-modal-list");
-  const currentListId = t
-    ? (t.listId || "")
-    : (preset && preset.listId ? preset.listId : "");
-  listSel.innerHTML = `<option value="">— No list —</option>` +
-    data.lists.map(L => `<option value="${escapeHtml(L.id)}" ${L.id === currentListId ? "selected" : ""}>${escapeHtml(L.name)}</option>`).join("");
+  // List checkboxes act radio-style: only one can be selected at a time.
+  if(!ac.dataset.listRadioBound){
+    ac.dataset.listRadioBound = "1";
+    ac.addEventListener("change", e=>{
+      const cb = e.target;
+      if(!(cb instanceof HTMLInputElement)) return;
+      if(cb.checked && cb.dataset.lid){
+        ac.querySelectorAll('input[type=checkbox][data-lid]').forEach(other=>{
+          if(other !== cb) other.checked = false;
+        });
+      }
+    });
+  }
 
   // Recurring
   const recurSel = document.getElementById("todo-modal-recur");
@@ -5386,9 +5549,10 @@ document.getElementById("todo-modal-save").addEventListener("click",()=>{
   const title = document.getElementById("todo-modal-input-title").value.trim();
   if(!title){ alert("Please enter a title."); return; }
   const notes = document.getElementById("todo-modal-notes").value.trim();
-  const assignees = [...document.querySelectorAll('#todo-modal-assignees input[type=checkbox]:checked')]
+  const assignees = [...document.querySelectorAll('#todo-modal-assignees input[type=checkbox][data-pid]:checked')]
     .map(cb=>cb.dataset.pid);
-  const listId = document.getElementById("todo-modal-list").value || null;
+  const checkedList = document.querySelector('#todo-modal-assignees input[type=checkbox][data-lid]:checked');
+  const listId = checkedList ? checkedList.dataset.lid : null;
   const due = document.getElementById("todo-modal-due").value || null;
   const recurPattern = document.getElementById("todo-modal-recur").value;
   let recurring = null;
@@ -5435,17 +5599,49 @@ document.getElementById("todo-modal-delete").addEventListener("click",()=>{
 
 document.getElementById("btn-add-todo").addEventListener("click",()=> openTodoModal(null));
 
-// Create a new list (e.g. "Later", "Lake House")
+/* ---------- Todos Admin: manage lists ---------- */
+function renderTodosListAdmin(){
+  const c = document.getElementById("list-todos-lists");
+  c.innerHTML = "";
+  if(!data.lists.length){
+    c.innerHTML = `<div class="empty" style="padding:8px;">No lists yet.</div>`;
+    return;
+  }
+  data.lists.forEach((L, idx)=>{
+    const chip = document.createElement("span");
+    chip.className = "chip";
+    chip.innerHTML = `
+      <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${escapeHtml(L.color||'#7a8a99')};"></span>
+      <span>${escapeHtml(L.name)}</span>
+      <button title="Remove" aria-label="Remove ${escapeHtml(L.name)}">✕</button>
+    `;
+    chip.querySelector("button").addEventListener("click",()=>{
+      const count = data.todos.filter(t=>t.listId === L.id).length;
+      const msg = count
+        ? `Delete list "${L.name}"? ${count} task(s) will be moved back to person grouping.`
+        : `Delete list "${L.name}"?`;
+      if(!confirm(msg)) return;
+      data.todos.forEach(t=>{ if(t.listId === L.id) t.listId = null; });
+      data.lists.splice(idx, 1);
+      if(Array.isArray(data.sectionOrder)){
+        data.sectionOrder = data.sectionOrder.filter(k => k !== `list:${L.id}`);
+      }
+      save();
+      renderTodosListAdmin();
+      renderTodos();
+    });
+    c.appendChild(chip);
+  });
+}
+
 document.getElementById("btn-add-list").addEventListener("click",()=>{
-  const name = prompt("Name your new task list (e.g. Later, Lake House):");
-  if(name == null) return;
-  const trimmed = name.trim();
-  if(!trimmed) return;
-  // Pick a neutral color from a small palette
+  const input = document.getElementById("new-list-name");
+  const name = (input.value || "").trim();
+  if(!name) return;
   const palette = ["#7a8a99","#9c7bad","#b08a5b","#6b9a8a","#c47b7b","#8f9d5c"];
   const used = new Set(data.lists.map(L=>L.color));
   const color = palette.find(c=>!used.has(c)) || palette[data.lists.length % palette.length];
-  const list = { id: uid(), name: trimmed, color };
+  const list = { id: uid(), name, color };
   data.lists.push(list);
   // Place new list right before "unassigned" by default
   let order = getOrderedSectionKeys();
@@ -5453,20 +5649,32 @@ document.getElementById("btn-add-list").addEventListener("click",()=>{
   order.push(`list:${list.id}`);
   order.push("unassigned");
   data.sectionOrder = order;
+  input.value = "";
   save();
+  renderTodosListAdmin();
   renderTodos();
 });
+document.getElementById("new-list-name").addEventListener("keydown", e=>{
+  if(e.key === "Enter"){
+    e.preventDefault();
+    document.getElementById("btn-add-list").click();
+  }
+});
 
-// Quick-add input
-document.getElementById("quick-todo").addEventListener("keydown", e=>{
-  if(e.key !== "Enter") return;
-  e.preventDefault();
-  const v = e.target.value.trim();
-  if(!v) return;
-  data.todos.push(normalizeTodo({ title: v, createdAt: todayYmd() }));
-  e.target.value = "";
-  save();
-  renderTodos();
+function setTodosAdminVisible(show){
+  const card = document.getElementById("todos-admin-card");
+  card.style.display = show ? "" : "none";
+  if(show){
+    renderTodosListAdmin();
+    card.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+}
+document.getElementById("btn-toggle-todos-admin").addEventListener("click",()=>{
+  const card = document.getElementById("todos-admin-card");
+  setTodosAdminVisible(card.style.display === "none");
+});
+document.getElementById("btn-close-todos-admin").addEventListener("click",()=>{
+  setTodosAdminVisible(false);
 });
 
 /* ---------- Meals Admin toggle ---------- */
@@ -6283,9 +6491,79 @@ document.getElementById("lock-form").addEventListener("submit", async (e) => {
   }
 });
 
-document.getElementById("btn-lock").addEventListener("click", () => {
-  setRole(null);
-  showLockScreen();
+/* ---------- Backups UI ---------- */
+function openBackupsModal(){
+  const bg = document.getElementById("backups-modal-bg");
+  bg.classList.add("open");
+  bg.setAttribute("aria-hidden", "false");
+  refreshBackupsList();
+}
+function closeBackupsModal(){
+  const bg = document.getElementById("backups-modal-bg");
+  bg.classList.remove("open");
+  bg.setAttribute("aria-hidden", "true");
+}
+async function refreshBackupsList(){
+  const list = document.getElementById("backups-list");
+  list.innerHTML = `<div style="padding:16px; text-align:center; color:var(--ink-soft);">Loading…</div>`;
+  if(!trackerRef){
+    list.innerHTML = `<div style="padding:16px; text-align:center; color:var(--ink-soft);">Not connected to the cloud yet. Wait for the sync indicator to turn green and try again.</div>`;
+    return;
+  }
+  try{
+    const backups = await listBackups();
+    if(!backups.length){
+      list.innerHTML = `<div style="padding:16px; text-align:center; color:var(--ink-soft);">No backups yet. Snapshots are created automatically as the app is used.</div>`;
+      return;
+    }
+    list.innerHTML = backups.map(b => {
+      const ts = b.capturedAt && b.capturedAt.toDate
+        ? b.capturedAt.toDate()
+        : new Date(b.capturedAtLocal || 0);
+      const dateLabel = isNaN(ts.getTime()) ? "Unknown time" : ts.toLocaleString();
+      const p = b.payload || {};
+      const planDays = p.plan && typeof p.plan === "object" ? Object.keys(p.plan).length : 0;
+      const summary = `${(p.todos||[]).length} todos · ${(p.events||[]).length} events · ${(p.notes||[]).length} notes · ${planDays} plan days · ${(p.books||[]).length} books`;
+      const here = b.capturedBy === clientId;
+      return `
+        <div style="display:flex; align-items:center; gap:10px; padding:10px 12px; border-bottom:1px solid var(--line); background:var(--panel);">
+          <div style="flex:1; min-width:0;">
+            <div style="font-weight:600;">${escapeHtml(dateLabel)}${here ? ` <span style="font-weight:400; color:var(--ink-soft); font-size:12px;">· this device</span>` : ""}</div>
+            <div style="font-size:12px; color:var(--ink-soft);">${escapeHtml(summary)}</div>
+          </div>
+          <button class="btn" data-restore="${escapeHtml(b.id)}">Restore</button>
+        </div>
+      `;
+    }).join("");
+  }catch(err){
+    console.error("Failed to list backups:", err);
+    list.innerHTML = `<div style="padding:16px; text-align:center; color:#d94a4a;">Failed to load backups: ${escapeHtml(err.message || String(err))}</div>`;
+  }
+}
+
+document.getElementById("btn-backups").addEventListener("click", openBackupsModal);
+document.getElementById("backups-close").addEventListener("click", closeBackupsModal);
+document.getElementById("backups-refresh").addEventListener("click", refreshBackupsList);
+document.getElementById("backups-modal-bg").addEventListener("click", e => {
+  if(e.target.id === "backups-modal-bg") closeBackupsModal();
+});
+document.getElementById("backups-list").addEventListener("click", async e => {
+  const btn = e.target.closest("button[data-restore]");
+  if(!btn) return;
+  const id = btn.getAttribute("data-restore");
+  if(!confirm("Restore this backup?\n\nYour current household data will be replaced on this device AND every other device. The current state will remain in the backup history so you can undo by restoring a newer snapshot.")) return;
+  btn.disabled = true;
+  const oldLabel = btn.textContent;
+  btn.textContent = "Restoring…";
+  try{
+    await restoreBackup(id);
+    closeBackupsModal();
+  }catch(err){
+    console.error("Restore failed:", err);
+    alert("Restore failed: " + (err.message || err));
+    btn.disabled = false;
+    btn.textContent = oldLabel;
+  }
 });
 
 // Boot
